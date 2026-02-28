@@ -1,7 +1,7 @@
 import { api } from "@/services/api";
-import { LoginPayload } from "./auth.types";
+import { LoginPayload, LoginResponse } from "./auth.types";
 
 export const login = async (data: LoginPayload) => {
-  const res = await api.post("/login", data);
-  return res.data;
+  const res = await api.post<LoginResponse>("/auth/login", data);
+  return res.data; 
 };

@@ -7,7 +7,19 @@ import kampus from "@/assets/images/img-login.png";
 import mumar from "@/assets/images/mumar-login.png";
 import logo from "@/assets/images/logo.png";
 
-const LoginForm = () => {
+interface LoginFormProps {
+  form: { email: string; password: string };
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleLogin: (e: React.FormEvent) => void;
+  isLoading?: boolean;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({
+  form,
+  handleChange,
+  handleLogin,
+  isLoading,
+}) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -24,11 +36,7 @@ const LoginForm = () => {
       {/* ================= LEFT ================= */}
       <div className="max-w-1/2 relative p-4 flex">
         <div className="w-80 h-full rounded-4xl overflow-hidden shadow-md">
-          <img
-            src={kampus}
-            alt="Kampus"
-            className="w-80 h-full object-cover"
-          />
+          <img src={kampus} alt="Kampus" className="w-80 h-full object-cover" />
         </div>
 
         <img
@@ -54,7 +62,7 @@ const LoginForm = () => {
         </div>
 
         {/* FORM */}
-        <form className="space-y-1">
+        <form onSubmit={handleLogin} className="space-y-1">
           {/* EMAIL */}
           <div>
             <label className="block text-[12px] text-gray-600 mb-2">
@@ -63,6 +71,9 @@ const LoginForm = () => {
 
             <Input
               type="text"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               placeholder="Masukkan Email / NIDN / NIP"
               className="
                 w-full h-10
@@ -84,6 +95,9 @@ const LoginForm = () => {
 
             <div className="relative">
               <Input
+                name="password"
+                value={form.password}
+                onChange={handleChange}
                 type={showPassword ? "text" : "password"}
                 placeholder="Masukkan Password"
                 className="
@@ -123,6 +137,7 @@ const LoginForm = () => {
           {/* BUTTON */}
           <Button
             type="submit"
+            disabled={isLoading}
             className="
               w-full h-10
               bg-[#e10600]
@@ -134,7 +149,7 @@ const LoginForm = () => {
               transition
             "
           >
-            Masuk
+            {isLoading ? "Memproses..." : "Masuk"}
           </Button>
 
           {/* DIVIDER */}

@@ -2,14 +2,22 @@ import React, { useState } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import bgImage from "@/assets/images/BG-login.png";
 import { useNavigate } from "react-router-dom";
+import { login } from "../auth/auth.api";
+import axios from "axios";
+import { useAuthStore } from "./auth.store";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+
+  const setUser = useAuthStore((state) => state.setUser);
 
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
@@ -18,10 +26,51 @@ const LoginPage = () => {
     });
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.password) return;
-    navigate("/dashboard");
+
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const payload = {
+        identifier: form.email,
+        password: form.password,
+      };
+
+      const response = await login(payload);
+
+      const token = response.data.token;
+      const user = response.data.user;
+
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("userData", JSON.stringify(user));
+
+      setUser(user);
+      navigate("/admin-dashboard");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const responseData = error.response?.data;
+
+        if (responseData?.errors) {
+          const firstErrorKey = Object.keys(responseData.errors)[0];
+          
+          const specificErrorMessage = responseData.errors[firstErrorKey][0];
+          
+          setErrorMessage(specificErrorMessage); 
+        } 
+        else {
+          setErrorMessage(responseData?.message || "Terjadi kesalahan pada server.");
+        }
+        
+      } else if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -34,10 +83,18 @@ const LoginPage = () => {
 
       {/* LOGIN FORM */}
       <div className="relative z-10">
+        {errorMessage && (
+          <div className="mb-4 mx-4 p-3 bg-red-100 text-red-600 border border-red-300 rounded text-sm text-center font-medium">
+            {errorMessage}
+          </div>
+        )}
+
         <LoginForm
           form={form}
           handleChange={handleChange}
           handleLogin={handleLogin}
+          // Opsional: Kalau LoginForm-mu mendukung props isLoading, bisa dipassing ke sini
+          isLoading={isLoading}
         />
       </div>
 
