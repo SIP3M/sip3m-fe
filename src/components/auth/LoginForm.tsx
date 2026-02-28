@@ -22,6 +22,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
+
+  const handleGoogleLogin = () => {
+    // URL ini sesuai dengan yang kamu sebutkan sebelumnya
+    window.location.href = "https://sip3m-be.vercel.app/api/auth/oauth/google";
+  };
+
   return (
     <div
       className="
@@ -162,6 +168,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           {/* GOOGLE BUTTON */}
           <Button
             type="button"
+            onClick={handleGoogleLogin}
             className="
               w-full h-10 my-1
               bg-white
