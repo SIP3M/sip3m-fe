@@ -1,19 +1,29 @@
 import { createBrowserRouter } from "react-router-dom";
+
 import LoginPage from "@/features/auth/LoginPage";
-import AdminDashboard from "@/features/dashboard/AdminDashboard";
+
+
 import ProtectedRoute from "@/components/common/ProtectedRoute";
+import { APP_ROLES } from "@/constant/roles";
+import AdminDashboard from "@/features/dashboard/AdminDashboard";
+import OAuthCallback from "@/features/auth/OauthCallback";
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
+    path: "/",
     element: <LoginPage />,
   },
   {
-    path: "/",
+    path: "/oauth-callback",
+    element: <OAuthCallback />,
+  },
+  {
+    path: "/admin-dashboard",
     element: (
-      <ProtectedRoute roles={["admin"]}>
+      <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
         <AdminDashboard />
       </ProtectedRoute>
     ),
   },
+
 ]);

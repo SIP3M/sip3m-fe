@@ -1,0 +1,9 @@
+export const APP_ROLES = {
+  ADMIN_LPPM: "ADMIN_LPPM",
+  STAFF_LPPM: "STAFF_LPPM",
+  DOSEN: "DOSEN",
+  REVIEWER: "REVIEWER",
+  REVIEWER_EKSTERNAL: "REVIEWER_EKSTERNAL",
+} as const;
+
+export type AppRole = keyof typeof APP_ROLES;
