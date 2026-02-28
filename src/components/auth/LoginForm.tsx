@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import kampus from "@/assets/images/img-login.png";
 import mumar from "@/assets/images/mumar-login.png";
@@ -22,6 +23,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
+  const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
     // URL ini sesuai dengan yang kamu sebutkan sebelumnya
@@ -170,23 +172,51 @@ const LoginForm: React.FC<LoginFormProps> = ({
             type="button"
             onClick={handleGoogleLogin}
             className="
-              w-full h-10 my-1
-              bg-white
-              border border-[#dddddd]
-              rounded-[14px]
-              text-[13px]
-              text-gray-700
-              hover:bg-gray-50
-              transition
-            "
+    w-full h-10 my-1
+    bg-white
+    border border-[#dddddd]
+    rounded-[14px]
+    text-[13px]
+    text-gray-700
+    hover:bg-gray-50
+    transition
+    flex items-center justify-center gap-3
+  "
           >
+            {/* GOOGLE LOGO */}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 48 48"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.54 0 6.73 1.22 9.24 3.6l6.9-6.9C35.91 2.4 30.38 0 24 0 14.82 0 6.73 5.16 2.69 12.69l8.03 6.23C12.74 13.1 17.89 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.14 24.5c0-1.6-.14-3.14-.41-4.63H24v9.01h12.41c-.54 2.91-2.19 5.37-4.66 7.03l7.16 5.56C43.88 37.14 46.14 31.33 46.14 24.5z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.72 28.92c-.48-1.43-.76-2.95-.76-4.42s.27-2.99.76-4.42l-8.03-6.23C.97 16.98 0 20.38 0 24.5s.97 7.52 2.69 10.65l8.03-6.23z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.38 0 11.74-2.1 15.65-5.7l-7.16-5.56c-2 1.34-4.56 2.13-8.49 2.13-6.11 0-11.26-3.6-13.28-8.42l-8.03 6.23C6.73 42.84 14.82 48 24 48z"
+              />
+            </svg>
             Sign in with Google
           </Button>
 
           {/* REGISTER */}
           <p className="text-center text-[12px] mt-5 text-gray-500">
             Belum punya akun?{" "}
-            <span className="text-[#e10600] font-medium cursor-pointer hover:underline">
+            <span
+              onClick={() => navigate("/register")}
+              className="text-[#e10600] font-medium cursor-pointer hover:underline"
+            >
               Daftar sekarang
             </span>
           </p>

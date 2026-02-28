@@ -1,7 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import LoginPage from "@/features/auth/LoginPage";
-
+import RegisterPage from "@/features/auth/RegisterPage";
+import RegisterDosenPage from "@/features/auth/RegisterDosenPage";
+import RegisterReviewerPage from "@/features/auth/RegisterReviewerPage";
 
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import { APP_ROLES } from "@/constant/roles";
@@ -12,6 +14,18 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+  {
+    path: "/register/dosen",
+    element: <RegisterDosenPage />,
+  },
+  {
+    path: "/register/reviewer",
+    element: <RegisterReviewerPage />,
   },
   {
     path: "/oauth-callback",
@@ -25,5 +39,4 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
-
 ]);
