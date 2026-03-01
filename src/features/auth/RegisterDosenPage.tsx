@@ -5,10 +5,32 @@ const RegisterDosenPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
 
+  const [form, setForm] = useState({
+    nama: "",
+    tempat: "",
+    tanggal: "",
+    jk: "",
+    alamat: "",
+    nohp: "",
+    nidn: "",
+    fakultas: "",
+    prodi: "",
+    username: "",
+    password: "",
+    confirm: "",
+    agree: false,
+  });
+
+  const handleChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
   const nextStep = () => {
-    if (step < 4) {
-      setStep((prev) => prev + 1);
-    }
+    if (step < 4) setStep((prev) => prev + 1);
   };
 
   const prevStep = () => {
@@ -16,8 +38,30 @@ const RegisterDosenPage = () => {
     setStep((prev) => prev - 1);
   };
 
+  /* ================= VALIDASI ================= */
+  const isStep1Valid =
+    form.nama &&
+    form.tempat &&
+    form.tanggal &&
+    form.jk &&
+    form.alamat &&
+    form.nohp;
+
+  const isStep2Valid =
+    form.nidn &&
+    form.fakultas &&
+    form.prodi;
+
+  const isStep3Valid =
+    form.username &&
+    form.password &&
+    form.confirm &&
+    form.password === form.confirm &&
+    form.agree;
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center py-10">
+      
       {/* TITLE */}
       {step !== 4 && (
         <>
@@ -30,9 +74,9 @@ const RegisterDosenPage = () => {
         </>
       )}
 
-      {/* ================= SUCCESS PAGE ================= */}
+      {/* ================= SUCCESS ================= */}
       {step === 4 && (
-        <div className="w-162.5 bg-white rounded-2xl shadow-md p-10 text-center">
+        <div className="w-[650px] bg-white rounded-2xl shadow-md p-10 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-green-600 text-2xl">✓</span>
           </div>
@@ -42,8 +86,7 @@ const RegisterDosenPage = () => {
           </h2>
 
           <p className="text-gray-500 text-sm mb-6">
-            Silakan menunggu verifikasi dari Admin LPPM. Anda akan menerima
-            notifikasi melalui email setelah akun Anda diverifikasi.
+            Silakan menunggu verifikasi dari Admin LPPM.
           </p>
 
           <button
@@ -55,149 +98,115 @@ const RegisterDosenPage = () => {
         </div>
       )}
 
-      {/* ================= FORM CARD ================= */}
+      {/* ================= FORM ================= */}
       {step !== 4 && (
-        <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
-          
-          {/* ================= STEP INDICATOR ================= */}
-          <div className="relative flex items-center justify-between mb-10">
+        <div className="w-[650px] bg-white rounded-2xl shadow-md p-8">
 
-            {/* BACKGROUND LINE */}
-            <div className="absolute top-4 left-0 w-full h-0.5 bg-gray-200"></div>
+          {/* ================= STEP ================= */}
+          <div className="flex items-center justify-between mb-10 px-4">
+            {["Data Pribadi", "Data Akademik", "Akun Login"].map(
+              (label, i) => {
+                const num = i + 1;
 
-            {/* ACTIVE LINE */}
-            <div
-              className="absolute top-4 left-0 h-0.5 bg-[#e10600] transition-all duration-300"
-              style={{
-                width:
-                  step === 1
-                    ? "0%"
-                    : step === 2
-                    ? "50%"
-                    : "100%",
-              }}
-            ></div>
+                return (
+                  <div key={i} className="flex items-center w-full">
+                    
+                    {/* BULATAN */}
+                    <div className="flex flex-col items-center relative z-10">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2
+                        ${
+                          step > num
+                            ? "bg-[#e10600] border-[#e10600] text-white"
+                            : step === num
+                            ? "border-[#e10600] text-[#e10600] bg-white"
+                            : "border-gray-300 text-gray-400 bg-white"
+                        }`}
+                      >
+                        {step > num ? "✓" : num}
+                      </div>
 
-            {/* STEP 1 */}
-            <div className="relative z-10 flex flex-col items-center w-1/3">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 1
-                    ? "bg-[#e10600] text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {step > 1 ? "✓" : "1"}
-              </div>
-              <span className="text-xs mt-2 text-gray-600">
-                Data Pribadi
-              </span>
-            </div>
+                      <span className="text-xs mt-2 text-gray-600 text-center w-[100px]">
+                        {label}
+                      </span>
+                    </div>
 
-            {/* STEP 2 */}
-            <div className="relative z-10 flex flex-col items-center w-1/3">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 2
-                    ? "bg-[#e10600] text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {step > 2 ? "✓" : "2"}
-              </div>
-              <span className="text-xs mt-2 text-gray-600">
-                Data Akademik
-              </span>
-            </div>
-
-            {/* STEP 3 */}
-            <div className="relative z-10 flex flex-col items-center w-1/3">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step >= 3
-                    ? "bg-[#e10600] text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                3
-              </div>
-              <span className="text-xs mt-2 text-gray-600">
-                Akun Login
-              </span>
-            </div>
+                    {/* GARIS */}
+                    {i < 2 && (
+                      <div className="flex-1 h-[2px] mx-2">
+                        <div className="w-full h-full bg-gray-200 relative">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              step > num ? "bg-[#e10600] w-full" : "w-0"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+            )}
           </div>
 
-          {/* ================= STEP 1 ================= */}
-          {step === 1 && (
-            <>
-              <h2 className="text-[16px] font-semibold mb-4">
-                Informasi Pribadi
-              </h2>
+          {/* ================= CONTENT (ANIMASI) ================= */}
+          <div className="transition-all duration-500 ease-in-out">
+            
+            {/* STEP 1 */}
+            {step === 1 && (
+              <div className="space-y-4 animate-fade">
+                <h2 className="font-semibold">Informasi Pribadi</h2>
 
-              <div className="space-y-4">
-                <Input label="Nama Lengkap*" />
-                <Input label="Tempat Lahir*" />
-                <Input type="date" label="Tanggal Lahir*" />
+                <Input name="nama" label="Nama Lengkap*" onChange={handleChange} />
+                <Input name="tempat" label="Tempat Lahir*" onChange={handleChange} />
+                <Input name="tanggal" type="date" label="Tanggal Lahir*" onChange={handleChange} />
 
                 <div>
                   <label className="text-sm">Jenis Kelamin*</label>
-                  <div className="flex gap-4 mt-2 text-sm text-gray-600">
+                  <div className="flex gap-4 mt-2 text-sm">
                     <label>
-                      <input type="radio" name="jk" /> Laki-laki
+                      <input type="radio" name="jk" value="L" onChange={handleChange}/> Laki-laki
                     </label>
                     <label>
-                      <input type="radio" name="jk" /> Perempuan
+                      <input type="radio" name="jk" value="P" onChange={handleChange}/> Perempuan
                     </label>
                   </div>
                 </div>
 
-                <Textarea label="Alamat*" />
-                <Input label="Nomor HP*" />
+                <Textarea name="alamat" label="Alamat*" onChange={handleChange} />
+                <Input name="nohp" label="Nomor HP*" onChange={handleChange} />
               </div>
-            </>
-          )}
+            )}
 
-          {/* ================= STEP 2 ================= */}
-          {step === 2 && (
-            <>
-              <h2 className="text-[16px] font-semibold mb-4">
-                Informasi Akademik
-              </h2>
+            {/* STEP 2 */}
+            {step === 2 && (
+              <div className="space-y-4 animate-fade">
+                <h2 className="font-semibold">Informasi Akademik</h2>
 
-              <div className="space-y-4">
-                <Input label="NIDN*" />
-                <p className="text-xs text-gray-400 -mt-2">
-                  NIDN harus sesuai dengan data resmi kampus.
-                </p>
-                <Select label="Fakultas*" />
-                <Select label="Program Studi*" />
+                <Input name="nidn" label="NIDN*" onChange={handleChange} />
+                <Select name="fakultas" label="Fakultas*" onChange={handleChange} />
+                <Select name="prodi" label="Program Studi*" onChange={handleChange} />
               </div>
-            </>
-          )}
+            )}
 
-          {/* ================= STEP 3 ================= */}
-          {step === 3 && (
-            <>
-              <h2 className="text-[16px] font-semibold mb-4">
-                Informasi Akun
-              </h2>
+            {/* STEP 3 */}
+            {step === 3 && (
+              <div className="space-y-4 animate-fade">
+                <h2 className="font-semibold">Informasi Akun</h2>
 
-              <div className="space-y-4">
-                <Input label="Username*" />
-                <Input type="password" label="Password*" />
-                <Input type="password" label="Konfirmasi Password*" />
+                <Input name="username" label="Username*" onChange={handleChange} />
+                <Input name="password" type="password" label="Password*" onChange={handleChange} />
+                <Input name="confirm" type="password" label="Konfirmasi Password*" onChange={handleChange} />
 
-                <div className="flex items-start gap-2 text-sm text-gray-600">
-                  <input type="checkbox" />
-                  <span>
-                    Saya menyetujui kebijakan privasi dan penggunaan data
-                  </span>
-                </div>
+                <label className="flex gap-2 text-sm">
+                  <input type="checkbox" name="agree" onChange={handleChange} />
+                  Saya menyetujui kebijakan privasi
+                </label>
               </div>
-            </>
-          )}
+            )}
+          </div>
 
-          {/* BUTTON */}
+          {/* ================= BUTTON ================= */}
           <div className="flex gap-4 mt-8">
             <button
               onClick={prevStep}
@@ -207,8 +216,24 @@ const RegisterDosenPage = () => {
             </button>
 
             <button
-              onClick={nextStep}
-              className="w-full bg-[#e10600] text-white py-2 rounded-xl"
+              onClick={() => {
+                if (step === 3) return setStep(4);
+                nextStep();
+              }}
+              disabled={
+                (step === 1 && !isStep1Valid) ||
+                (step === 2 && !isStep2Valid) ||
+                (step === 3 && !isStep3Valid)
+              }
+              className={`w-full py-2 rounded-xl text-white transition
+                ${
+                  (step === 1 && !isStep1Valid) ||
+                  (step === 2 && !isStep2Valid) ||
+                  (step === 3 && !isStep3Valid)
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-[#e10600] hover:bg-[#c50500]"
+                }
+              `}
             >
               {step === 3 ? "Daftar sebagai Dosen" : "Lanjut"}
             </button>
@@ -226,28 +251,24 @@ export default RegisterDosenPage;
 const Input = ({ label, ...props }: any) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <input
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
-    />
+    <input {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]" />
   </div>
 );
 
 const Textarea = ({ label, ...props }: any) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <textarea
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
-    />
+    <textarea {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]" />
   </div>
 );
 
-const Select = ({ label }: any) => (
+const Select = ({ label, ...props }: any) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <select className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]">
-      <option>Pilih</option>
+    <select {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]">
+      <option value="">Pilih</option>
+      <option>Contoh 1</option>
+      <option>Contoh 2</option>
     </select>
   </div>
 );
