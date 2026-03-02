@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../auth/auth.api";
 import axios from "axios";
 import { useAuthStore } from "./auth.store";
+import { motion } from "framer-motion";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-
   const setUser = useAuthStore((state) => state.setUser);
 
   const [form, setForm] = useState({
@@ -54,15 +54,15 @@ const LoginPage = () => {
 
         if (responseData?.errors) {
           const firstErrorKey = Object.keys(responseData.errors)[0];
-          
-          const specificErrorMessage = responseData.errors[firstErrorKey][0];
-          
-          setErrorMessage(specificErrorMessage); 
-        } 
-        else {
-          setErrorMessage(responseData?.message || "Terjadi kesalahan pada server.");
+          const specificErrorMessage =
+            responseData.errors[firstErrorKey][0];
+
+          setErrorMessage(specificErrorMessage);
+        } else {
+          setErrorMessage(
+            responseData?.message || "Terjadi kesalahan pada server."
+          );
         }
-        
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
@@ -74,7 +74,11 @@ const LoginPage = () => {
   };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
       className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
@@ -93,15 +97,14 @@ const LoginPage = () => {
           form={form}
           handleChange={handleChange}
           handleLogin={handleLogin}
-          // Opsional: Kalau LoginForm-mu mendukung props isLoading, bisa dipassing ke sini
           isLoading={isLoading}
         />
       </div>
 
-      <p className="absolute bottom-2 text-[11px] text-gray-600 ">
+      <p className="absolute bottom-2 text-[11px] text-gray-600">
         © 2026 Universitas Muhammadiyah Cirebon. All rights reserved.
       </p>
-    </div>
+    </motion.div>
   );
 };
 

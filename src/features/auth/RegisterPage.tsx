@@ -1,19 +1,42 @@
 import { useNavigate } from "react-router-dom";
-import bg from "@/assets/images/img-login.png"; // background kampus
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+import bg from "@/assets/images/img-login.png";
 import logo from "@/assets/images/logo.png";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  const handleLoginClick = () => {
+    setIsLeaving(true);
+
+    setTimeout(() => {
+      navigate("/");
+    }, 300); // durasi animasi
+  };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 1 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.97 }}
       className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
       style={{ backgroundImage: `url(${bg})` }}
     >
       {/* overlay blur */}
       <div className="absolute inset-0 bg-white/80 backdrop-blur-sm"></div>
 
-      <div className="relative z-10 w-full max-w-5xl">
+      <motion.div
+        animate={
+          isLeaving
+            ? { opacity: 0, scale: 0.96 }
+            : { opacity: 1, scale: 1 }
+        }
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="relative z-10 w-full max-w-5xl"
+      >
         {/* HEADER */}
         <div className="bg-white rounded-[30px] shadow-lg px-8 py-5 flex items-center gap-4 mb-10">
           <img src={logo} className="w-16" />
@@ -31,7 +54,7 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        {/* CARD CONTAINER */}
+        {/* CARD */}
         <div className="grid grid-cols-2 gap-6">
           {/* DOSEN */}
           <div className="bg-white rounded-2xl p-6 shadow-md">
@@ -81,15 +104,17 @@ const RegisterPage = () => {
         {/* LOGIN */}
         <p className="text-center mt-8 text-sm text-gray-600">
           Sudah memiliki akun?{" "}
-          <span
-            onClick={() => navigate("/")}
-            className="text-[#e10600] cursor-pointer hover:underline"
+          <motion.span
+            onClick={handleLoginClick}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="text-[#e10600] cursor-pointer hover:underline inline-block"
           >
             Login di sini
-          </span>
+          </motion.span>
         </p>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
