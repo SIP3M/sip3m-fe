@@ -3,6 +3,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 import kampus from "@/assets/images/img-login.png";
 import mumar from "@/assets/images/mumar-login.png";
@@ -22,24 +23,27 @@ const LoginForm: React.FC<LoginFormProps> = ({
   isLoading,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    // URL ini sesuai dengan yang kamu sebutkan sebelumnya
-    window.location.href = "https://sip3m-be.vercel.app/api/auth/oauth/google";
+    window.location.href =
+      "https://sip3m-be.vercel.app/api/auth/oauth/google";
   };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
       className="
-    w-180 h-130
-    bg-white
-    rounded-4xl
-    shadow-[0_30px_80px_rgba(0,0,0,0.15)]
-    flex
-    overflow-hidden
-  "
+        w-180 h-130
+        bg-white
+        rounded-4xl
+        shadow-[0_30px_80px_rgba(0,0,0,0.15)]
+        flex
+        overflow-hidden
+      "
     >
       {/* ================= LEFT ================= */}
       <div className="max-w-1/2 relative p-4 flex">
@@ -83,15 +87,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               value={form.email}
               onChange={handleChange}
               placeholder="Masukkan Email / NIDN / NIP"
-              className="
-                w-full h-10
-                px-4 text-[13px]
-                bg-[#ededed]
-                border border-[#dddddd]
-                rounded-[14px]
-                focus:ring-2 focus:ring-[#e10600]
-                focus:border-[#e10600]
-              "
+              className="w-full h-10 px-4 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
             />
           </div>
 
@@ -108,16 +104,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={handleChange}
                 type={showPassword ? "text" : "password"}
                 placeholder="Masukkan Password"
-                className="
-      w-full h-10
-      px-4 pr-12
-      text-[13px]
-      bg-[#ededed]
-      border border-[#dddddd]
-      rounded-[14px]
-      focus:ring-2 focus:ring-[#e10600]
-      focus:border-[#e10600]
-    "
+                className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
               />
 
               <button
@@ -143,22 +130,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </div>
 
           {/* BUTTON */}
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="
-              w-full h-10
-              bg-[#e10600]
-              hover:bg-[#c50500]
-              text-white
-              rounded-[14px]
-              text-[15px]
-              font-medium
-              transition
-            "
-          >
-            {isLoading ? "Memproses..." : "Masuk"}
-          </Button>
+          <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-10 bg-[#e10600] hover:bg-[#c50500] text-white rounded-[14px] text-[15px] font-medium transition"
+            >
+              {isLoading ? "Memproses..." : "Masuk"}
+            </Button>
+          </motion.div>
 
           {/* DIVIDER */}
           <div className="flex items-center gap-3 my-1">
@@ -171,43 +151,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
           <Button
             type="button"
             onClick={handleGoogleLogin}
-            className="
-    w-full h-10 my-1
-    bg-white
-    border border-[#dddddd]
-    rounded-[14px]
-    text-[13px]
-    text-gray-700
-    hover:bg-gray-50
-    transition
-    flex items-center justify-center gap-3
-  "
+            className="w-full h-10 my-1 bg-white border border-[#dddddd] rounded-[14px] text-[13px] text-gray-700 hover:bg-gray-50 transition flex items-center justify-center gap-3"
           >
-            {/* GOOGLE LOGO */}
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 48 48"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill="#EA4335"
-                d="M24 9.5c3.54 0 6.73 1.22 9.24 3.6l6.9-6.9C35.91 2.4 30.38 0 24 0 14.82 0 6.73 5.16 2.69 12.69l8.03 6.23C12.74 13.1 17.89 9.5 24 9.5z"
-              />
-              <path
-                fill="#4285F4"
-                d="M46.14 24.5c0-1.6-.14-3.14-.41-4.63H24v9.01h12.41c-.54 2.91-2.19 5.37-4.66 7.03l7.16 5.56C43.88 37.14 46.14 31.33 46.14 24.5z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M10.72 28.92c-.48-1.43-.76-2.95-.76-4.42s.27-2.99.76-4.42l-8.03-6.23C.97 16.98 0 20.38 0 24.5s.97 7.52 2.69 10.65l8.03-6.23z"
-              />
-              <path
-                fill="#34A853"
-                d="M24 48c6.38 0 11.74-2.1 15.65-5.7l-7.16-5.56c-2 1.34-4.56 2.13-8.49 2.13-6.11 0-11.26-3.6-13.28-8.42l-8.03 6.23C6.73 42.84 14.82 48 24 48z"
-              />
-            </svg>
-            Sign in with Google
+            {/* SVG tetap */}
+            <span>Sign in with Google</span>
           </Button>
 
           {/* REGISTER */}
@@ -222,7 +169,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </p>
         </form>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

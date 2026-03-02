@@ -53,6 +53,13 @@ const RegisterReviewerPage = () => {
     form.password === form.confirm &&
     form.agree;
 
+  /* 🔥 ANIMATION VARIANT (GLOBAL) */
+  const variants = {
+    initial: { opacity: 0, x: 60 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -60 },
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center py-10">
       <h1 className="text-[24px] font-semibold text-gray-800">
@@ -64,66 +71,63 @@ const RegisterReviewerPage = () => {
 
       <div className="w-[650px] bg-white rounded-2xl shadow-md p-8">
 
-  {/* STEP */}
-{step <= 3 && (
-  <div className="flex items-center justify-between mb-12 px-10">
+        {/* STEP INDICATOR */}
+        {step <= 3 && (
+          <div className="flex items-center justify-between mb-12 px-6">
+            {["Identitas", "Informasi Profesional", "Akun Login"].map(
+              (label, i) => {
+                const num = i + 1;
 
-    {["Identitas", "Informasi Profesional", "Akun Login"].map(
-      (label, i) => {
-        const num = i + 1;
+                return (
+                  <div key={i} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center relative z-10 bg-white">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2
+                        ${
+                          step > num
+                            ? "bg-[#e10600] border-[#e10600] text-white"
+                            : step === num
+                            ? "border-[#e10600] text-[#e10600]"
+                            : "border-gray-300 text-gray-400"
+                        }`}
+                      >
+                        {step > num ? "✓" : num}
+                      </div>
 
-        return (
-          <div key={i} className="flex items-center flex-1">
+                      <span className="text-xs mt-2 text-gray-600 text-center w-24">
+                        {label}
+                      </span>
+                    </div>
 
-            {/* BULATAN + LABEL */}
-            <div className="flex flex-col items-center relative z-10 bg-white">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2
-                  ${
-                    step > num
-                      ? "bg-[#e10600] border-[#e10600] text-white"
-                      : step === num
-                      ? "border-[#e10600] text-[#e10600] bg-white"
-                      : "border-gray-300 text-gray-400 bg-white"
-                  }`}
-              >
-                {step > num ? "✓" : num}
-              </div>
-
-              <span className="text-xs mt-2 text-gray-600 text-center w-[110px]">
-                {label}
-              </span>
-            </div>
-
-            {/* GARIS (HANYA DI ANTARA STEP) */}
-            {i < 2 && (
-              <div className="relative flex-1 h-[2px] mx-2 mt-[-18px]">
-
-                {/* garis abu */}
-                <div className="absolute inset-0 bg-gray-200" />
-
-                {/* garis merah aktif */}
-                <div
-                  className={`absolute inset-0 transition-all duration-300 ${
-                    step > num ? "bg-[#e10600]" : "bg-transparent"
-                  }`}
-                />
-              </div>
+                    {i < 2 && (
+                      <div className="relative flex-1 h-[2px] mx-2 mt-4">
+                        <div className="absolute inset-0 bg-gray-200" />
+                        <div
+                          className={`absolute inset-0 transition-all duration-300 ${
+                            step > num ? "bg-[#e10600]" : "bg-transparent"
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              }
             )}
           </div>
-        );
-      }
-    )}
-  </div>
-)}
-        {/* ANIMATION WRAPPER */}
+        )}
+
+        {/* 🔥 ANIMATION WRAPPER */}
         <AnimatePresence mode="wait">
+
+          {/* STEP 1 */}
           {step === 1 && (
             <motion.div
               key="step1"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
+              variants={variants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
             >
               <h2 className="text-[16px] font-semibold mb-4">Identitas</h2>
 
@@ -135,12 +139,15 @@ const RegisterReviewerPage = () => {
             </motion.div>
           )}
 
+          {/* STEP 2 */}
           {step === 2 && (
             <motion.div
               key="step2"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
+              variants={variants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
             >
               <h2 className="text-[16px] font-semibold mb-4">
                 Informasi Profesional
@@ -169,17 +176,14 @@ const RegisterReviewerPage = () => {
                     onDrop={(e) => {
                       e.preventDefault();
                       setDragging(false);
-                      const file = e.dataTransfer.files[0];
-                      handleFile(file);
+                      handleFile(e.dataTransfer.files[0]);
                     }}
-                    className={`
-                      mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition
+                    className={`mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition
                       ${
                         dragging
                           ? "border-[#e10600] bg-red-50"
                           : "border-gray-300 bg-[#fafafa]"
-                      }
-                    `}
+                      }`}
                   >
                     <UploadCloud className="mx-auto mb-2 text-gray-400" />
 
@@ -189,7 +193,7 @@ const RegisterReviewerPage = () => {
 
                     <input
                       type="file"
-                      onChange={(e) => handleFile(e.target.files[0])}
+                      onChange={(e) => handleFile(e.target.files![0])}
                       className="hidden"
                       id="upload"
                     />
@@ -216,12 +220,15 @@ const RegisterReviewerPage = () => {
             </motion.div>
           )}
 
+          {/* STEP 3 */}
           {step === 3 && (
             <motion.div
               key="step3"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
+              variants={variants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
             >
               <h2 className="text-[16px] font-semibold mb-4">
                 Informasi Akun
@@ -258,8 +265,9 @@ const RegisterReviewerPage = () => {
         {/* SUCCESS */}
         {step === 4 && (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
             className="text-center py-10"
           >
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-2xl">
@@ -320,20 +328,14 @@ export default RegisterReviewerPage;
 const Input = ({ label, ...props }: any) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <input
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
-    />
+    <input {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]" />
   </div>
 );
 
 const Textarea = ({ label, ...props }: any) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <textarea
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
-    />
+    <textarea {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]" />
   </div>
 );
 
@@ -354,5 +356,14 @@ const PasswordInput = ({ label, show, toggle, ...props }: any) => (
         {show ? <Eye size={18} /> : <EyeOff size={18} />}
       </button>
     </div>
+    <motion.div
+  key={step}
+  initial={{ opacity: 0, x: 50 }}
+  animate={{ opacity: 1, x: 0 }}
+  exit={{ opacity: 0, x: -50 }}
+  transition={{ duration: 0.3 }}
+>
+  {renderStep()}
+</motion.div>
   </div>
 );

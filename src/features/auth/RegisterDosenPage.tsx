@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 const RegisterDosenPage = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const RegisterDosenPage = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center py-10">
-      
+
       {/* TITLE */}
       {step !== 4 && (
         <>
@@ -76,7 +77,11 @@ const RegisterDosenPage = () => {
 
       {/* ================= SUCCESS ================= */}
       {step === 4 && (
-        <div className="w-[650px] bg-white rounded-2xl shadow-md p-10 text-center">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-162.5 bg-white rounded-2xl shadow-md p-10 text-center"
+        >
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-green-600 text-2xl">✓</span>
           </div>
@@ -95,12 +100,12 @@ const RegisterDosenPage = () => {
           >
             Kembali ke Beranda
           </button>
-        </div>
+        </motion.div>
       )}
 
       {/* ================= FORM ================= */}
       {step !== 4 && (
-        <div className="w-[650px] bg-white rounded-2xl shadow-md p-8">
+        <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
 
           {/* ================= STEP ================= */}
           <div className="flex items-center justify-between mb-10 px-4">
@@ -110,7 +115,7 @@ const RegisterDosenPage = () => {
 
                 return (
                   <div key={i} className="flex items-center w-full">
-                    
+
                     {/* BULATAN */}
                     <div className="flex flex-col items-center relative z-10">
                       <div
@@ -126,14 +131,14 @@ const RegisterDosenPage = () => {
                         {step > num ? "✓" : num}
                       </div>
 
-                      <span className="text-xs mt-2 text-gray-600 text-center w-[100px]">
+                      <span className="text-xs mt-2 text-gray-600 text-center w-25">
                         {label}
                       </span>
                     </div>
 
                     {/* GARIS */}
                     {i < 2 && (
-                      <div className="flex-1 h-[2px] mx-2">
+                      <div className="flex-1 h-0.5 mx-2">
                         <div className="w-full h-full bg-gray-200 relative">
                           <div
                             className={`h-full transition-all duration-500 ${
@@ -150,11 +155,18 @@ const RegisterDosenPage = () => {
           </div>
 
           {/* ================= CONTENT (ANIMASI) ================= */}
-          <div className="transition-all duration-500 ease-in-out">
-            
+          <AnimatePresence mode="wait">
+
             {/* STEP 1 */}
             {step === 1 && (
-              <div className="space-y-4 animate-fade">
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -60 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="space-y-4"
+              >
                 <h2 className="font-semibold">Informasi Pribadi</h2>
 
                 <Input name="nama" label="Nama Lengkap*" onChange={handleChange} />
@@ -175,23 +187,37 @@ const RegisterDosenPage = () => {
 
                 <Textarea name="alamat" label="Alamat*" onChange={handleChange} />
                 <Input name="nohp" label="Nomor HP*" onChange={handleChange} />
-              </div>
+              </motion.div>
             )}
 
             {/* STEP 2 */}
             {step === 2 && (
-              <div className="space-y-4 animate-fade">
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -60 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="space-y-4"
+              >
                 <h2 className="font-semibold">Informasi Akademik</h2>
 
                 <Input name="nidn" label="NIDN*" onChange={handleChange} />
                 <Select name="fakultas" label="Fakultas*" onChange={handleChange} />
                 <Select name="prodi" label="Program Studi*" onChange={handleChange} />
-              </div>
+              </motion.div>
             )}
 
             {/* STEP 3 */}
             {step === 3 && (
-              <div className="space-y-4 animate-fade">
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -60 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="space-y-4"
+              >
                 <h2 className="font-semibold">Informasi Akun</h2>
 
                 <Input name="username" label="Username*" onChange={handleChange} />
@@ -202,9 +228,10 @@ const RegisterDosenPage = () => {
                   <input type="checkbox" name="agree" onChange={handleChange} />
                   Saya menyetujui kebijakan privasi
                 </label>
-              </div>
+              </motion.div>
             )}
-          </div>
+
+          </AnimatePresence>
 
           {/* ================= BUTTON ================= */}
           <div className="flex gap-4 mt-8">
@@ -225,7 +252,7 @@ const RegisterDosenPage = () => {
                 (step === 2 && !isStep2Valid) ||
                 (step === 3 && !isStep3Valid)
               }
-              className={`w-full py-2 rounded-xl text-white transition
+              className={`w-full py-2 rounded-xl text-white transition active:scale-95
                 ${
                   (step === 1 && !isStep1Valid) ||
                   (step === 2 && !isStep2Valid) ||
