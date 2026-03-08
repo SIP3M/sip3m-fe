@@ -133,7 +133,7 @@ const RegisterDosenPage = () => {
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-[650px] bg-white rounded-2xl shadow-md p-10 text-center"
+          className="w-162.5 bg-white rounded-2xl shadow-md p-10 text-center"
         >
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-green-600 text-2xl">✓</span>
@@ -158,7 +158,7 @@ const RegisterDosenPage = () => {
 
       {/* ================= FORM ================= */}
       {step !== 4 && (
-        <div className="w-[650px] bg-white rounded-2xl shadow-md p-8">
+        <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
 
           <AnimatePresence mode="wait">
             {step === 1 && (

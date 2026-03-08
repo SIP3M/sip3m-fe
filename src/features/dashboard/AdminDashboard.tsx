@@ -1,7 +1,4 @@
-import Sidebar from "@/components/layout/Sidebar";
-import Navbar from "@/components/layout/Navbar";
 import StatCard from "@/components/dashboard/StatCard";
-
 import { FileText, Users, CheckCircle, Clock } from "lucide-react";
 
 import {
@@ -40,110 +37,102 @@ const lineData = [
 
 export default function AdminDashboard() {
   return (
-    <div className="bg-[#f5f6fa] min-h-screen">
-      <Sidebar />
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard Admin</h1>
+        <p className="text-gray-500 text-sm">
+          Ringkasan aktivitas LPPM UMC hari ini.
+        </p>
+      </div>
 
-      <div className="ml-[260px] flex flex-col min-h-screen">
-        <Navbar />
+      {/* STAT */}
+      <div className="grid grid-cols-4 gap-6">
+        <StatCard
+          title="Total Proposal"
+          value="5"
+          desc="+12% bulan ini"
+          icon={<FileText size={18} />}
+          iconBg="bg-blue-100"
+          iconColor="text-blue-600"
+        />
 
-        <div className="p-6 space-y-6 overflow-y-auto flex-1">
-          <div>
-            <h1 className="text-2xl font-semibold">Dashboard Admin</h1>
-            <p className="text-gray-500 text-sm">
-              Ringkasan aktivitas LPPM UMC hari ini.
-            </p>
-          </div>
+        <StatCard
+          title="Dosen Aktif"
+          value="142"
+          desc="+4 orang baru"
+          icon={<Users size={18} />}
+          iconBg="bg-purple-100"
+          iconColor="text-purple-600"
+        />
 
-          {/* STAT */}
-          <div className="grid grid-cols-4 gap-6">
-            <StatCard
-              title="Total Proposal"
-              value="5"
-              desc="+12% bulan ini"
-              icon={<FileText size={18} />}
-              iconBg="bg-blue-100"
-              iconColor="text-blue-600"
-            />
+        <StatCard
+          title="Proposal Disetujui"
+          value="24"
+          desc="Tahun Ajaran 2023/2024"
+          icon={<CheckCircle size={18} />}
+          iconBg="bg-green-100"
+          iconColor="text-green-600"
+        />
 
-            <StatCard
-              title="Dosen Aktif"
-              value="142"
-              desc="+4 orang baru"
-              icon={<Users size={18} />}
-              iconBg="bg-purple-100"
-              iconColor="text-purple-600"
-            />
+        <StatCard
+          title="Menunggu Review"
+          value="8"
+          desc="Perlu tindakan segera"
+          icon={<Clock size={18} />}
+          iconBg="bg-orange-100"
+          iconColor="text-orange-600"
+        />
+      </div>
 
-            <StatCard
-              title="Proposal Disetujui"
-              value="24"
-              desc="Tahun Ajaran 2023/2024"
-              icon={<CheckCircle size={18} />}
-              iconBg="bg-green-100"
-              iconColor="text-green-600"
-            />
+      {/* CHART */}
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="font-semibold mb-4">Status Proposal</h2>
 
-            <StatCard
-              title="Menunggu Review"
-              value="8"
-              desc="Perlu tindakan segera"
-              icon={<Clock size={18} />}
-              iconBg="bg-orange-100"
-              iconColor="text-orange-600"
-            />
-          </div>
-
-          {/* CHART */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
-              <h2 className="font-semibold mb-4">Status Proposal</h2>
-
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={statusData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
-              <h2 className="font-semibold mb-4">Kategori Penelitian</h2>
-
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={kategoriData} layout="vertical">
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#e11d48" radius={[6, 6, 6, 6]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* LINE CHART */}
-
-          <div className="bg-white p-6 rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
-            <h2 className="font-semibold mb-4">Tren Proposal Masuk</h2>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={lineData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#ef4444"
-                  strokeWidth={3}
-                  dot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={statusData}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="font-semibold mb-4">Kategori Penelitian</h2>
+
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={kategoriData} layout="vertical">
+              <XAxis type="number" />
+              <YAxis dataKey="name" type="category" />
+              <Tooltip />
+              <Bar dataKey="value" fill="#e11d48" radius={[6, 6, 6, 6]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* LINE CHART */}
+      <div className="bg-white p-6 rounded-xl shadow">
+        <h2 className="font-semibold mb-4">Tren Proposal Masuk</h2>
+
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={lineData}>
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#ef4444"
+              strokeWidth={3}
+              dot={{ r: 4 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

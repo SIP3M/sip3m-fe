@@ -6,13 +6,54 @@ import {
   Activity,
   Wallet,
   ClipboardList,
-  LogOut
+  LogOut,
 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const menus = [
+    {
+      name: "Dashboard",
+      icon: LayoutDashboard,
+      path: "/admin-dashboard",
+    },
+    {
+      name: "Manajemen Pengguna",
+      icon: Users,
+      path: "/users",
+    },
+    {
+      name: "Daftar Proposal",
+      icon: FileText,
+      path: "/proposals",
+    },
+    {
+      name: "Plotting Reviewer",
+      icon: UserCheck,
+      path: "/reviewers",
+    },
+    {
+      name: "Monitoring Proyek",
+      icon: Activity,
+      path: "/monitoring",
+    },
+    {
+      name: "Keuangan & Hibah",
+      icon: Wallet,
+      path: "/finance",
+    },
+    {
+      name: "Audit Logs",
+      icon: ClipboardList,
+      path: "/logs",
+    },
+  ];
+
   return (
     <div className="w-[260px] h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
-
       {/* TOP */}
       <div>
         {/* LOGO */}
@@ -29,35 +70,26 @@ export default function Sidebar() {
 
         {/* MENU */}
         <div className="mt-6 space-y-2 px-3">
+          {menus.map((menu, index) => {
+            const Icon = menu.icon;
+            const active = location.pathname === menu.path;
 
-          <MenuItem icon={<LayoutDashboard size={18} />} active>
-            Dashboard
-          </MenuItem>
-
-          <MenuItem icon={<Users size={18} />}>
-            Manajemen Pengguna
-          </MenuItem>
-
-          <MenuItem icon={<FileText size={18} />}>
-            Daftar Proposal
-          </MenuItem>
-
-          <MenuItem icon={<UserCheck size={18} />}>
-            Plotting Reviewer
-          </MenuItem>
-
-          <MenuItem icon={<Activity size={18} />}>
-            Monitoring Proyek
-          </MenuItem>
-
-          <MenuItem icon={<Wallet size={18} />}>
-            Keuangan & Hibah
-          </MenuItem>
-
-          <MenuItem icon={<ClipboardList size={18} />}>
-            Audit Logs
-          </MenuItem>
-
+            return (
+              <div
+                key={index}
+                onClick={() => navigate(menu.path)}
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm cursor-pointer
+                ${
+                  active
+                    ? "bg-red-50 text-red-600 font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <Icon size={18} />
+                {menu.name}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -68,21 +100,6 @@ export default function Sidebar() {
           Keluar
         </button>
       </div>
-
-    </div>
-  );
-}
-
-function MenuItem({ icon, children, active }: any) {
-  return (
-    <div
-      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm cursor-pointer
-      ${active
-        ? "bg-red-50 text-red-600 font-medium"
-        : "text-gray-600 hover:bg-gray-100"}`}
-    >
-      {icon}
-      {children}
     </div>
   );
 }
