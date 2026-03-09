@@ -1,5 +1,6 @@
-import UsersTable from "./UsersTable"
-import { User } from "./users.types"
+import UsersTable from "./UsersTable";
+import { User } from "./users.types";
+import { useNavigate } from "react-router-dom";
 
 const users: User[] = [
   {
@@ -39,17 +40,16 @@ const users: User[] = [
     role: "EXTERNAL",
     status: "Active",
   },
-]
+];
 
 export default function UsersPage() {
+  const navigate = useNavigate();
 
   return (
     <div className="p-8 space-y-6">
-
       {/* HEADER */}
 
       <div className="flex justify-between items-center">
-
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Manajemen Pengguna
@@ -60,16 +60,17 @@ export default function UsersPage() {
           </p>
         </div>
 
-        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow">
+        <button
+          onClick={() => navigate("/users/add")}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow"
+        >
           + Tambah Pengguna
         </button>
-
       </div>
 
       {/* TABLE */}
 
       <UsersTable users={users} />
-
     </div>
-  )
+  );
 }

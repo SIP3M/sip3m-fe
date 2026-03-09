@@ -11,7 +11,7 @@ const roleStyle: Record<string, string> = {
 
 export default function UserRow({ user }: { user: User }) {
   return (
-    <tr className="border-t hover:bg-gray-50 transition">
+    <tr className="bg-white shadow-sm hover:shadow-md transition duration-200">
 
       {/* NAME */}
       <td className="px-6 py-4 flex items-center gap-3">

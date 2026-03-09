@@ -26,8 +26,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    window.location.href =
-      "https://sip3m-be.vercel.app/api/auth/oauth/google";
+    window.location.href = "https://sip3m-be.vercel.app/api/auth/oauth/google";
   };
 
   return (
@@ -103,6 +102,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 value={form.password}
                 onChange={handleChange}
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                data-lpignore= "true"
                 placeholder="Masukkan Password"
                 className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
               />
@@ -112,7 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 inset-y-0 flex items-center text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />} 
               </button>
             </div>
           </div>

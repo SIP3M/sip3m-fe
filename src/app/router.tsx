@@ -13,6 +13,10 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
 import UsersPage from "@/features/users/UsersPage";
+import AddUserPage from "@/features/users/AddUserPage";
+import ProposalList from "@/features/proposals/ProposalList";
+import ReviewList from "@/features/reviews/ReviewList";
+import ProjectList from "@/features/projects/ProjectList";
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +56,22 @@ export const router = createBrowserRouter([
       {
         path: "users",
         element: <UsersPage />,
+      },
+      {
+        path: "users/add",
+        element: <AddUserPage />,
+      },
+      {
+        path: "proposals",
+        element: <ProposalList />,
+      },
+      {
+        path: "plotting-reviewer",
+        element: <ReviewList />,
+      },
+      {
+        path: "/monitoring-project",
+        element: <ProjectList />,
       },
     ],
   },

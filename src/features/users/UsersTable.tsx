@@ -10,7 +10,7 @@ export default function UsersTable({ users }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
 
-      <table className="w-full text-sm">
+      <table className="w-full text-sm border-separate border-spacing-y-3">
 
         <thead className="bg-gray-50 text-gray-500">
 
@@ -24,7 +24,7 @@ export default function UsersTable({ users }: Props) {
 
         </thead>
 
-        <tbody>
+        <tbody className="space-y-3">
 
           {users.map((user) => (
             <UserRow key={user.id} user={user} />

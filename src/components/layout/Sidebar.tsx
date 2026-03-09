@@ -32,13 +32,13 @@ export default function Sidebar() {
     },
     {
       name: "Plotting Reviewer",
-      icon: UserCheck,
-      path: "/reviewers",
+      icon: Users,
+      path: "/plotting-reviewer",
     },
     {
       name: "Monitoring Proyek",
       icon: Activity,
-      path: "/monitoring",
+      path: "/monitoring-project",
     },
     {
       name: "Keuangan & Hibah",
@@ -52,14 +52,19 @@ export default function Sidebar() {
     },
   ];
 
+  const handleLogout = () => {
+    localStorage.clear(); // hapus semua data login
+    navigate("/");
+  };
+
   return (
-    <div className="w-[260px] h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
+    <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
       {/* TOP */}
       <div>
         {/* LOGO */}
         <div className="flex items-center gap-3 px-6 py-5">
-          <div className="w-8 h-8 bg-red-600 text-white flex items-center justify-center rounded font-bold">
-            U
+          <div className="w-8 h-8 text-white flex items-center justify-center rounded font-bold">
+            <img src="/src/assets/images/logo.png" alt="" />
           </div>
 
           <div>
@@ -95,7 +100,10 @@ export default function Sidebar() {
 
       {/* LOGOUT */}
       <div className="px-4 pb-6">
-        <button className="flex items-center gap-3 text-gray-500 hover:text-red-600 text-sm">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 text-gray-500 hover:text-red-600 text-sm"
+        >
           <LogOut size={18} />
           Keluar
         </button>

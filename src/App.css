@@ -40,3 +40,22 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Hilangkan paksa semua elemen tambahan di input */
+input::-ms-reveal,
+input::-ms-clear,
+input::-ms-value {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Hilangkan icon auto-fill Chrome */
+input::-webkit-contacts-auto-fill-button, 
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-caps-lock-indicator,
+input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
