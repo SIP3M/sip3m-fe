@@ -8,7 +8,7 @@ export default function Navbar() {
       <input
         type="text"
         placeholder="Cari proposal, peneliti, atau dokumen..."
-        className="w-[400px] px-4 py-2 bg-gray-100 rounded-lg outline-none text-sm"
+        className="w-100 px-4 py-2 bg-gray-100 rounded-lg outline-none text-sm"
       />
 
       {/* RIGHT */}

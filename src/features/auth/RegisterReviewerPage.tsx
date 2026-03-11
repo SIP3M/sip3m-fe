@@ -69,7 +69,7 @@ const RegisterReviewerPage = () => {
         Sistem Informasi LPPM Universitas Muhammadiyah Cirebon
       </p>
 
-      <div className="w-[650px] bg-white rounded-2xl shadow-md p-8">
+      <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
 
         {/* STEP INDICATOR */}
         {step <= 3 && (
@@ -100,7 +100,7 @@ const RegisterReviewerPage = () => {
                     </div>
 
                     {i < 2 && (
-                      <div className="relative flex-1 h-[2px] mx-2 mt-4">
+                      <div className="relative flex-1 h-0.5 mx-2 mt-4">
                         <div className="absolute inset-0 bg-gray-200" />
                         <div
                           className={`absolute inset-0 transition-all duration-300 ${
