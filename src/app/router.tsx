@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import LoginPage from "@/features/auth/LoginPage";
 import RegisterPage from "@/features/auth/RegisterPage";
@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/common/ProtectedRoute";
 import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import StaffLayout from "@/components/layout/StaffLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
 import UsersPage from "@/features/users/UsersPage";
@@ -42,7 +43,9 @@ export const router = createBrowserRouter([
     element: <OAuthCallback />,
   },
 
-  // DASHBOARD AREA
+  // =========================
+  // ADMIN AREA
+  // =========================
   {
     path: "/",
     element: (
@@ -72,17 +75,97 @@ export const router = createBrowserRouter([
         element: <ReviewList />,
       },
       {
-        path: "/monitoring-project",
+        path: "monitoring-project",
         element: <ProjectList />,
       },
       {
-        path: "/finance",
+        path: "finance",
         element: <FinancePage />,
       },
       {
-        path: "/logs",
+        path: "logs",
         element: <LogsPage />,
-      }
+      },
     ],
+  },
+
+  // =========================
+  // STAFF LPPM
+  // =========================
+  {
+    path: "staff-lppm",
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.STAFF_LPPM]}>
+        <StaffLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "staff-dashboard",
+        element: <AdminDashboard />,
+      },
+    ],
+  },
+
+  // =========================
+  // DOSEN
+  // =========================
+  {
+    path: "dosen-dashboard",
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.DOSEN]}>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <ProposalList />,
+      },
+    ],
+  },
+
+  // =========================
+  // REVIEWER
+  // =========================
+  {
+    path: "reviewer-dashboard",
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.REVIEWER]}>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <ReviewList />,
+      },
+    ],
+  },
+
+  // =========================
+  // REVIEWER EKSTERNAL
+  // =========================
+  {
+    path: "reviewer-eksternal-dashboard",
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.REVIEWER_EKSTERNAL]}>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <ReviewList />,
+      },
+    ],
+  },
+
+  // =========================
+  // FALLBACK ROUTE
+  // =========================
+  {
+    path: "*",
+    element: <Navigate to="/" />,
   },
 ]);

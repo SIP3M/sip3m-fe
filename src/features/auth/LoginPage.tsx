@@ -6,6 +6,7 @@ import { login } from "../auth/auth.api";
 import axios from "axios";
 import { useAuthStore } from "./auth.store";
 import { motion } from "framer-motion";
+import { APP_ROLES } from "@/constant/roles";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -47,7 +48,33 @@ const LoginPage = () => {
       localStorage.setItem("userData", JSON.stringify(user));
 
       setUser(user);
-      navigate("/admin-dashboard");
+
+      // FIX ROLE REDIRECT
+      const role =
+        user?.roles?.role ||
+        user?.roles?.name ||
+        user?.role ||
+        user?.roles;
+
+      if (role === APP_ROLES.ADMIN_LPPM) {
+        navigate("/admin-dashboard");
+      } 
+      else if (role === APP_ROLES.STAFF_LPPM) {
+        navigate("/staff-lppm/admin-dashboard");
+      } 
+      else if (role === APP_ROLES.DOSEN) {
+        navigate("/dosen-dashboard");
+      } 
+      else if (role === APP_ROLES.REVIEWER) {
+        navigate("/reviewer-dashboard");
+      } 
+      else if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
+        navigate("/reviewer-eksternal-dashboard");
+      } 
+      else {
+        navigate("/admin-dashboard"); // fallback supaya tidak stuck
+      }
+
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const responseData = error.response?.data;
@@ -82,10 +109,8 @@ const LoginPage = () => {
       className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      {/* BACKGROUND OVERLAY */}
       <div className="absolute inset-0 backdrop-blur-xxs z-0"></div>
 
-      {/* LOGIN FORM */}
       <div className="relative z-10">
         {errorMessage && (
           <div className="mb-4 mx-4 p-3 bg-red-100 text-red-600 border border-red-300 rounded text-sm text-center font-medium">
