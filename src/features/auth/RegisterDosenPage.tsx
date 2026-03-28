@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { registerDosen } from "./auth.api";
+import { RegisterDosenPayload } from "./auth.types";
+import axios from "axios";
 
 const RegisterDosenPage = () => {
   const navigate = useNavigate();
@@ -19,6 +22,7 @@ const RegisterDosenPage = () => {
     fakultas: "",
     prodi: "",
     username: "",
+    email: "",
     password: "",
     confirm: "",
     agree: false,
@@ -27,7 +31,7 @@ const RegisterDosenPage = () => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value, type, checked } = e.target;
 
@@ -49,23 +53,23 @@ const RegisterDosenPage = () => {
   /* ================= VALIDASI ================= */
   const isStep1Valid = Boolean(
     form.nama &&
-      form.tempat &&
-      form.tanggal &&
-      form.jk &&
-      form.alamat &&
-      form.nohp
+    form.tempat &&
+    form.tanggal &&
+    form.jk &&
+    form.alamat &&
+    form.nohp,
   );
 
-  const isStep2Valid = Boolean(
-    form.nidn && form.fakultas && form.prodi
-  );
+  const isStep2Valid = Boolean(form.nidn && form.fakultas && form.prodi);
 
   const isStep3Valid = Boolean(
     form.username &&
-      form.password &&
-      form.confirm &&
-      form.password === form.confirm &&
-      form.agree
+    form.email.includes("@") && 
+    form.email.includes(".") && 
+    form.password &&
+    form.confirm &&
+    form.password === form.confirm &&
+    form.agree,
   );
 
   /* ================= SUBMIT API ================= */
@@ -74,41 +78,37 @@ const RegisterDosenPage = () => {
     setError("");
 
     try {
-      const payload = {
-        nama: form.nama,
+      const payload: RegisterDosenPayload = {
+        name: form.nama,
         tempat_lahir: form.tempat,
         tanggal_lahir: form.tanggal,
         jenis_kelamin: form.jk,
         alamat: form.alamat,
-        no_hp: form.nohp,
+        nomor_hp: form.nohp,
         nidn: form.nidn,
         fakultas: form.fakultas,
-        prodi: form.prodi,
+        program_studi: form.prodi,
         username: form.username,
         password: form.password,
+        email: form.email,
+        konfirmasi_password: form.confirm,
       };
 
-      const response = await fetch(
-        "https://sip3m-be.vercel.app/auth/register/dosen", 
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      console.log("Data Payload yang mau dikirim:", payload);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registrasi gagal");
-      }
+      await registerDosen(payload);
 
       // jika sukses
       setStep(4);
-    } catch (err: any) {
-      setError(err.message || "Terjadi kesalahan");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const backendMessage = err.response?.data?.message || err.message;
+        setError(backendMessage);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui");
+      }
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,6 @@ const RegisterDosenPage = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center py-10">
-
       {step !== 4 && (
         <>
           <h1 className="text-[24px] font-semibold text-gray-800">
@@ -139,9 +138,7 @@ const RegisterDosenPage = () => {
             <span className="text-green-600 text-2xl">✓</span>
           </div>
 
-          <h2 className="text-xl font-semibold mb-3">
-            Registrasi Berhasil
-          </h2>
+          <h2 className="text-xl font-semibold mb-3">Registrasi Berhasil</h2>
 
           <p className="text-gray-500 text-sm mb-6">
             Silakan menunggu verifikasi dari Admin LPPM.
@@ -159,7 +156,6 @@ const RegisterDosenPage = () => {
       {/* ================= FORM ================= */}
       {step !== 4 && (
         <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
-
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
@@ -197,8 +193,8 @@ const RegisterDosenPage = () => {
                       <input
                         type="radio"
                         name="jk"
-                        value="L"
-                        checked={form.jk === "L"}
+                        value="Laki-laki"
+                        checked={form.jk === "Laki-laki"}
                         onChange={handleChange}
                       />{" "}
                       Laki-laki
@@ -207,8 +203,8 @@ const RegisterDosenPage = () => {
                       <input
                         type="radio"
                         name="jk"
-                        value="P"
-                        checked={form.jk === "P"}
+                        value="Perempuan"
+                        checked={form.jk === "Perempuan"}
                         onChange={handleChange}
                       />{" "}
                       Perempuan
@@ -276,6 +272,15 @@ const RegisterDosenPage = () => {
                   value={form.username}
                   onChange={handleChange}
                 />
+
+                <Input
+                  name="email"
+                  type="email"
+                  label="Email Resmi/Aktif*"
+                  placeholder="contoh@umc.ac.id"
+                  value={form.email}
+                  onChange={handleChange}
+                />
                 <Input
                   name="password"
                   type="password"
@@ -301,9 +306,7 @@ const RegisterDosenPage = () => {
                   Saya menyetujui kebijakan privasi
                 </label>
 
-                {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
-                )}
+                {error && <p className="text-red-500 text-sm">{error}</p>}
               </motion.div>
             )}
           </AnimatePresence>
@@ -332,8 +335,8 @@ const RegisterDosenPage = () => {
               {loading
                 ? "Memproses..."
                 : step === 3
-                ? "Daftar sebagai Dosen"
-                : "Lanjut"}
+                  ? "Daftar sebagai Dosen"
+                  : "Lanjut"}
             </button>
           </div>
         </div>
