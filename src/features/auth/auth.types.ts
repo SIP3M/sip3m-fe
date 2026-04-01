@@ -9,12 +9,24 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  nidn: string | null;      
-  fakultas: string | null;  
-  roles: {                  
+  username: string;
+  nomor_hp: string | null;
+  is_active: boolean;
+  nidn?: string | null;
+  fakultas?: string | null;
+  program_studi?: string | null;
+  instansi?: string | null;
+  bidang_keahlian?: string | null;
+  pengalaman_review?: string | null;
+  roles: {
     id: number;
     roles: string;
   };
+}
+
+export interface GetCurrentUserResponse {
+  message?: string;
+  data: User;
 }
 
 export interface LoginResponse {
@@ -29,12 +41,12 @@ export interface LoginResponse {
 export interface RegisterDosenPayload {
   name: string;
   tempat_lahir: string;
-  tanggal_lahir: string; 
-  jenis_kelamin: string; 
+  tanggal_lahir: string;
+  jenis_kelamin: string;
   alamat: string;
-  nomor_hp: string;      
+  nomor_hp: string;
   email: string;
-  nidn: string;         
+  nidn: string;
   fakultas: string;
   program_studi: string;
   username: string;
