@@ -11,8 +11,8 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Ambil token dari penyimpanan (localStorage)
-    const token = localStorage.getItem("token");
-    
+    const token = localStorage.getItem("accessToken");
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -20,5 +20,5 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
