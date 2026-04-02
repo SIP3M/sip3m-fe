@@ -73,7 +73,7 @@ export default function Pagination({
                     ? "cursor-default text-gray-400"
                     : "border border-gray-300 hover:bg-gray-50 text-gray-700"
               }
-              ${(num === "..." || isLoading) && "cursor-not-allowed"}
+              ${(num === "..." || isLoading) ? "cursor-not-allowed" : ""}
             `}
           >
             {num}

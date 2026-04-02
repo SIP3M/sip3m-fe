@@ -63,12 +63,14 @@ export default function AddUserPage() {
   const validateForm = (): boolean => {
     setFieldErrors({});
 
-    if (!form.name.trim() || form.name.length < 3) {
+    const trimmedName = form.name.trim();
+    if (!trimmedName || trimmedName.length < 3) {
       setError("Nama lengkap minimal 3 karakter");
       return false;
     }
 
-    if (!form.email.includes("@")) {
+    const trimmedEmail = form.email.trim();
+    if (!trimmedEmail.includes("@")) {
       setError("Email tidak valid");
       return false;
     }

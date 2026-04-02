@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import UsersTable from "./UsersTable";
 import { User } from "./users.types";
 import { useNavigate } from "react-router-dom";
@@ -27,9 +27,11 @@ export default function UsersPage() {
     "" | "active" | "pending"
   >("");
   const isInitialLoading = isLoading && users.length === 0;
+  const latestRequestId = useRef(0);
 
   // Fetch users
   const fetchUsers = async (page: number = 1) => {
+    const requestId = ++latestRequestId.current;
     setIsLoading(true);
     setError(null);
 
@@ -41,6 +43,8 @@ export default function UsersPage() {
         status: selectedStatus || undefined,
       });
 
+      if (requestId !== latestRequestId.current) return;
+
       setUsers(response.data);
       if (response.pagination) {
         setCurrentPage(response.pagination.page);
@@ -49,22 +53,28 @@ export default function UsersPage() {
         setPerPage(response.pagination.per_page);
       }
     } catch (err: any) {
+      if (requestId !== latestRequestId.current) return;
       const message =
         err.response?.data?.message || err.message || "Failed to fetch users";
       setError(message);
       console.error("Error fetching users:", err);
     } finally {
-      setIsLoading(false);
+      if (requestId === latestRequestId.current) {
+        setIsLoading(false);
+      }
     }
   };
 
-  // Fetch on mount
-  useEffect(() => {
-    fetchUsers(1);
-  }, []);
+  const isFirstRender = useRef(true);
 
-  // Fetch saat filter berubah (reset ke page 1)
+  // Fetch on filter change (debounced); runs immediately on first render
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      fetchUsers(1);
+      return;
+    }
+
     const timer = setTimeout(() => {
       setCurrentPage(1);
       fetchUsers(1);

@@ -9,6 +9,7 @@ import {
 // Simple cache for users data
 const cache = new Map<string, { data: GetUsersResponse; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 50;
 
 const sanitizeCreateUserPayload = (data: CreateUserPayload) => {
   const normalized: CreateUserPayload = {
@@ -73,6 +74,21 @@ export const getUsers = async (
         status: params?.status || undefined,
       },
     });
+
+    // Evict expired entries before inserting a new one
+    for (const [key, value] of cache.entries()) {
+      if (Date.now() - value.timestamp >= CACHE_DURATION) {
+        cache.delete(key);
+      }
+    }
+
+    // If still at the size limit, remove the oldest entry
+    if (cache.size >= MAX_CACHE_SIZE) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        cache.delete(oldestKey);
+      }
+    }
 
     // Cache the response
     cache.set(cacheKey, { data: res.data, timestamp: Date.now() });
