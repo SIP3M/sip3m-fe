@@ -1,6 +1,6 @@
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
@@ -17,6 +17,11 @@ export default function AddUserPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     username?: string;
@@ -137,7 +142,11 @@ export default function AddUserPage() {
       };
 
       await createUser(payload);
-      navigate("/users");
+      setSuccessMessage({
+        name: form.name,
+        email: form.email,
+      });
+      setShowSuccess(true);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data as
@@ -223,6 +232,43 @@ export default function AddUserPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        navigate("/users");
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, navigate]);
+
+  if (showSuccess) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] p-12 text-center max-w-md w-full mx-4">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={40} className="text-green-600" />
+          </div>
+
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+            Pengguna Berhasil Ditambahkan!
+          </h2>
+
+          <p className="text-gray-500 text-sm mb-2">{successMessage?.name}</p>
+
+          <p className="text-gray-400 text-xs mb-6">{successMessage?.email}</p>
+
+          <p className="text-gray-500 text-xs">
+            Mengalihkan ke daftar pengguna...
+          </p>
+
+          <div className="mt-6 flex justify-center">
+            <Loader2 size={20} className="text-green-500 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center space-y-6">
