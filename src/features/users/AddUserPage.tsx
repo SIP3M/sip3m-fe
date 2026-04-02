@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
+import Button from "@/components/ui/Button";
 
 const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
   "ADMIN_LPPM",
@@ -598,23 +599,23 @@ export default function AddUserPage() {
 
           {/* BUTTON */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => navigate("/users")}
               disabled={isLoading}
-              className="px-5 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
             >
               Batal
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2"
             >
-              <Save size={16} />
+              <Save className="h-4 w-4" />
               {isLoading ? "Menyimpan..." : "Simpan Pengguna"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
