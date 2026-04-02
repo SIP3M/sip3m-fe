@@ -1,12 +1,229 @@
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { createUser } from "./Users.api";
+import { CreateUserPayload, CreateUserRole } from "./users.types";
+import axios from "axios";
+
+const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
+  "ADMIN_LPPM",
+  "STAFF_LPPM",
+  "DOSEN",
+  "REVIEWER",
+  "REVIEWER_EKSTERNAL",
+];
 
 export default function AddUserPage() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    username?: string;
+    nidn_nip?: string;
+  }>({});
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    username: "",
+    password: "",
+    passwordConfirm: "",
+    roles: "" as CreateUserRole | "",
+    nidn_nip: "",
+    fakultas: "",
+    program_studi: "",
+    tempat_lahir: "",
+    tanggal_lahir: "",
+    jenis_kelamin: "",
+    alamat: "",
+    nomor_hp: "",
+    is_active: true,
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    if (name === "email" || name === "username" || name === "nidn_nip") {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    setFieldErrors({});
+
+    if (!form.name.trim() || form.name.length < 3) {
+      setError("Nama lengkap minimal 3 karakter");
+      return false;
+    }
+
+    if (!form.email.includes("@")) {
+      setError("Email tidak valid");
+      return false;
+    }
+
+    if (!form.password || form.password.length < 6) {
+      setError("Password minimal 6 karakter");
+      return false;
+    }
+
+    if (form.password !== form.passwordConfirm) {
+      setError("Password dan konfirmasi password tidak cocok");
+      return false;
+    }
+
+    if (!form.roles) {
+      setError("Pilih role pengguna");
+      return false;
+    }
+
+    if (form.username && form.username.trim().length < 3) {
+      setError("Username minimal 3 karakter");
+      return false;
+    }
+
+    if (
+      form.jenis_kelamin &&
+      form.jenis_kelamin !== "Laki-laki" &&
+      form.jenis_kelamin !== "Perempuan"
+    ) {
+      setError("Jenis kelamin harus Laki-laki atau Perempuan");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const payload: CreateUserPayload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        roles: form.roles as CreateUserRole,
+        username: form.username.trim() || undefined,
+        nidn_nip: form.nidn_nip.trim() || undefined,
+        fakultas: form.fakultas.trim() || undefined,
+        program_studi: form.program_studi.trim() || undefined,
+        tempat_lahir: form.tempat_lahir.trim() || undefined,
+        tanggal_lahir: form.tanggal_lahir || undefined,
+        jenis_kelamin: form.jenis_kelamin || undefined,
+        alamat: form.alamat.trim() || undefined,
+        nomor_hp: form.nomor_hp.trim() || undefined,
+        is_active: form.is_active,
+      };
+
+      await createUser(payload);
+      navigate("/users");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const responseData = err.response?.data as
+          | {
+              message?: string;
+              errors?: Array<{ field?: string; message?: string }>;
+              error?: { code?: string; field?: string };
+            }
+          | undefined;
+
+        const message = responseData?.message || err.message;
+
+        if (responseData?.errors?.length) {
+          const nextFieldErrors: {
+            email?: string;
+            username?: string;
+            nidn_nip?: string;
+          } = {};
+
+          responseData.errors.forEach((item) => {
+            if (item.field === "email") {
+              nextFieldErrors.email = item.message || "Email tidak valid";
+            }
+            if (item.field === "username") {
+              nextFieldErrors.username = item.message || "Username tidak valid";
+            }
+            if (item.field === "nidn_nip") {
+              nextFieldErrors.nidn_nip = item.message || "NIDN/NIP tidak valid";
+            }
+          });
+
+          setFieldErrors(nextFieldErrors);
+        } else if (err.response?.status === 409) {
+          const conflictField = responseData?.error?.field;
+
+          if (conflictField === "email") {
+            setFieldErrors((prev) => ({
+              ...prev,
+              email: message || "Email sudah digunakan.",
+            }));
+          } else if (conflictField === "username") {
+            setFieldErrors((prev) => ({
+              ...prev,
+              username: message || "Username sudah digunakan.",
+            }));
+          } else if (conflictField === "nidn_nip") {
+            setFieldErrors((prev) => ({
+              ...prev,
+              nidn_nip: message || "NIDN/NIP sudah digunakan.",
+            }));
+          } else {
+            const lowerMsg = (message || "").toLowerCase();
+            if (lowerMsg.includes("email")) {
+              setFieldErrors((prev) => ({
+                ...prev,
+                email: message || "Email sudah digunakan.",
+              }));
+            }
+            if (lowerMsg.includes("username")) {
+              setFieldErrors((prev) => ({
+                ...prev,
+                username: message || "Username sudah digunakan.",
+              }));
+            }
+            if (lowerMsg.includes("nidn") || lowerMsg.includes("nip")) {
+              setFieldErrors((prev) => ({
+                ...prev,
+                nidn_nip: message || "NIDN/NIP sudah digunakan.",
+              }));
+            }
+          }
+        } else if (err.response?.status === 400 && !responseData?.message) {
+          setError("Data tidak valid. Periksa kembali input Anda.");
+          return;
+        }
+
+        setError(message);
+      } else {
+        setError("Terjadi kesalahan saat membuat pengguna");
+      }
+      console.error("Error creating user:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center space-y-6">
-
       {/* HEADER */}
       <div className="flex items-start gap-3 w-full max-w-3xl">
         <button
@@ -28,36 +245,73 @@ export default function AddUserPage() {
 
       {/* CARD FORM */}
       <div className="bg-white w-full max-w-3xl p-10 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
-        <div className="space-y-6">
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* NAMA */}
           <div>
             <label className="text-sm font-medium text-gray-700">
-              Nama Lengkap
+              Nama Lengkap <span className="text-red-500">*</span>
             </label>
 
             <input
               type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
               placeholder="Contoh: Dr. Ahmad Dahlan, M.Kom"
               className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              required
             />
           </div>
 
           {/* EMAIL */}
           <div>
             <label className="text-sm font-medium text-gray-700">
-              Email
+              Email <span className="text-red-500">*</span>
             </label>
 
             <input
               type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               placeholder="nama@umc.ac.id"
-              className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              className={`mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${fieldErrors.email ? "border border-red-400 focus:ring-red-500" : "focus:ring-red-500"}`}
+              required
             />
+            {fieldErrors.email && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+            )}
           </div>
 
-          {/* NIDN */}
+          {/* USERNAME */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Username <span className="text-gray-400">(Opsional)</span>
+            </label>
+
+            <input
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="nama_pengguna"
+              className={`mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${fieldErrors.username ? "border border-red-400 focus:ring-red-500" : "focus:ring-red-500"}`}
+            />
+            {fieldErrors.username && (
+              <p className="mt-1 text-xs text-red-600">
+                {fieldErrors.username}
+              </p>
+            )}
+          </div>
+
+          {/* NIDN / NIP */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               NIDN / NIP <span className="text-gray-400">(Opsional)</span>
@@ -65,22 +319,38 @@ export default function AddUserPage() {
 
             <input
               type="text"
+              name="nidn_nip"
+              value={form.nidn_nip}
+              onChange={handleChange}
               placeholder="Nomor Induk Dosen / Pegawai"
-              className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              className={`mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${fieldErrors.nidn_nip ? "border border-red-400 focus:ring-red-500" : "focus:ring-red-500"}`}
             />
+            {fieldErrors.nidn_nip && (
+              <p className="mt-1 text-xs text-red-600">
+                {fieldErrors.nidn_nip}
+              </p>
+            )}
           </div>
 
           {/* ROLE */}
           <div>
             <label className="text-sm font-medium text-gray-700">
-              Role
+              Role <span className="text-red-500">*</span>
             </label>
 
-            <select className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+            <select
+              name="roles"
+              value={form.roles}
+              onChange={handleChange}
+              className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              required
+            >
               <option value="">Pilih Role</option>
-              <option value="admin">Admin LPPM</option>
-              <option value="dosen">Dosen</option>
-              <option value="reviewer">Reviewer</option>
+              {CREATE_ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
             </select>
 
             <p className="text-xs text-gray-400 mt-1">
@@ -88,7 +358,7 @@ export default function AddUserPage() {
             </p>
           </div>
 
-          {/* STATUS */}
+          {/* STATUS AKUN */}
           <div>
             <label className="text-sm font-medium text-gray-700">
               Status Akun
@@ -96,12 +366,26 @@ export default function AddUserPage() {
 
             <div className="flex gap-6 mt-3">
               <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input type="radio" name="status" defaultChecked />
+                <input
+                  type="radio"
+                  name="is_active"
+                  checked={form.is_active === true}
+                  onChange={() =>
+                    setForm((prev) => ({ ...prev, is_active: true }))
+                  }
+                />
                 Active
               </label>
 
               <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input type="radio" name="status" />
+                <input
+                  type="radio"
+                  name="is_active"
+                  checked={form.is_active === false}
+                  onChange={() =>
+                    setForm((prev) => ({ ...prev, is_active: false }))
+                  }
+                />
                 Non-Active
               </label>
             </div>
@@ -111,44 +395,180 @@ export default function AddUserPage() {
           <div className="grid grid-cols-2 gap-5">
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
 
               <input
                 type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Min 6 karakter"
                 className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
               />
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Konfirmasi Password
+                Konfirmasi Password <span className="text-red-500">*</span>
               </label>
 
               <input
                 type="password"
+                name="passwordConfirm"
+                value={form.passwordConfirm}
+                onChange={handleChange}
+                placeholder="Ulangi password"
                 className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
               />
             </div>
           </div>
 
-          {/* BUTTON */}
-          <div className="flex justify-end gap-3 pt-4">
+          {/* ADDITIONAL FIELDS */}
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-4">
+              Informasi Tambahan{" "}
+              <span className="text-gray-400">(Opsional)</span>
+            </h3>
 
+            <div className="space-y-4">
+              {/* FAKULTAS */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Fakultas
+                </label>
+
+                <input
+                  type="text"
+                  name="fakultas"
+                  value={form.fakultas}
+                  onChange={handleChange}
+                  placeholder="Contoh: Teknik"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              {/* PROGRAM STUDI */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Program Studi
+                </label>
+
+                <input
+                  type="text"
+                  name="program_studi"
+                  value={form.program_studi}
+                  onChange={handleChange}
+                  placeholder="Contoh: Teknik Informatika"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              {/* TEMPAT LAHIR */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Tempat Lahir
+                </label>
+
+                <input
+                  type="text"
+                  name="tempat_lahir"
+                  value={form.tempat_lahir}
+                  onChange={handleChange}
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              {/* TANGGAL LAHIR */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Tanggal Lahir
+                </label>
+
+                <input
+                  type="date"
+                  name="tanggal_lahir"
+                  value={form.tanggal_lahir}
+                  onChange={handleChange}
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              {/* JENIS KELAMIN */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Jenis Kelamin
+                </label>
+
+                <select
+                  name="jenis_kelamin"
+                  value={form.jenis_kelamin}
+                  onChange={handleChange}
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="">Pilih Jenis Kelamin</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+
+              {/* ALAMAT */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Alamat
+                </label>
+
+                <input
+                  type="text"
+                  name="alamat"
+                  value={form.alamat}
+                  onChange={handleChange}
+                  placeholder="Jl. Merdeka No. 1"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              {/* NOMOR HP */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Nomor HP
+                </label>
+
+                <input
+                  type="text"
+                  name="nomor_hp"
+                  value={form.nomor_hp}
+                  onChange={handleChange}
+                  placeholder="081234567890"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* BUTTON */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
+              type="button"
               onClick={() => navigate("/users")}
-              className="px-5 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+              disabled={isLoading}
+              className="px-5 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
             >
               Batal
             </button>
 
-            <button className="flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-red-700 transition">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Save size={16} />
-              Simpan Pengguna
+              {isLoading ? "Menyimpan..." : "Simpan Pengguna"}
             </button>
-
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
