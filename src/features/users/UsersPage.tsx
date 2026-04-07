@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import UsersTable from "./UsersTable";
 import { User } from "./users.types";
 import { useNavigate } from "react-router-dom";
-import { getUsers } from "./Users.api";
+import axios from "axios";
+import { deleteUser, getUsers } from "./Users.api";
 import { AppRole, APP_ROLES } from "@/constant/roles";
 import Pagination from "@/components/common/Pagination";
 
@@ -52,10 +53,13 @@ export default function UsersPage() {
         setTotalItems(response.pagination.total_items);
         setPerPage(response.pagination.per_page);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (requestId !== latestRequestId.current) return;
-      const message =
-        err.response?.data?.message || err.message || "Failed to fetch users";
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message || "Failed to fetch users"
+        : err instanceof Error
+          ? err.message
+          : "Failed to fetch users";
       setError(message);
       console.error("Error fetching users:", err);
     } finally {
@@ -88,6 +92,34 @@ export default function UsersPage() {
       setCurrentPage(page);
       fetchUsers(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleViewUser = (user: User) => {
+    navigate(`/users/${user.id}`);
+  };
+
+  const handleEditUser = (user: User) => {
+    navigate(`/users/${user.id}/edit`);
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    const confirmed = window.confirm(
+      `Hapus user ${user.name}? Tindakan ini tidak bisa dibatalkan.`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteUser(user.id);
+      await fetchUsers(currentPage);
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message || "Gagal menghapus user"
+        : err instanceof Error
+          ? err.message
+          : "Gagal menghapus user";
+      setError(message);
     }
   };
 
@@ -177,7 +209,12 @@ export default function UsersPage() {
       {users.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Table */}
-          <UsersTable users={users} />
+          <UsersTable
+            users={users}
+            onView={handleViewUser}
+            onEdit={handleEditUser}
+            onDelete={handleDeleteUser}
+          />
 
           {/* Pagination Footer */}
           {totalPages > 1 && (

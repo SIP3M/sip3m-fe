@@ -40,6 +40,23 @@ export interface CreateUserPayload {
   is_active?: boolean;
 }
 
+export interface UpdateUserPayload {
+  name?: string;
+  email?: string;
+  username?: string;
+  password?: string;
+  roles?: CreateUserRole;
+  nidn_nip?: string;
+  fakultas?: string;
+  program_studi?: string;
+  tempat_lahir?: string;
+  tanggal_lahir?: string;
+  jenis_kelamin?: string;
+  alamat?: string;
+  nomor_hp?: string;
+  is_active?: boolean;
+}
+
 export interface GetUsersResponse {
   data: User[];
   pagination?: {
@@ -53,6 +70,19 @@ export interface GetUsersResponse {
 export interface CreateUserResponse {
   message: string;
   data: User;
+}
+
+export interface GetUserResponse {
+  data: User;
+}
+
+export interface UpdateUserResponse {
+  message: string;
+  data: User;
+}
+
+export interface DeleteUserResponse {
+  message: string;
 }
 
 export interface GetUsersParams {

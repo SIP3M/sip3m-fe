@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -103,7 +103,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onChange={handleChange}
                 type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
-                data-lpignore= "true"
+                data-lpignore="true"
                 placeholder="Masukkan Password"
                 className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
               />
@@ -113,7 +113,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 inset-y-0 flex items-center text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />} 
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
