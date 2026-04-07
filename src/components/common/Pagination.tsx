@@ -1,4 +1,12 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Pagination as ShadcnPagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface PaginationProps {
   page: number;
@@ -47,48 +55,71 @@ export default function Pagination({
   }
 
   return (
-    <div className="flex items-center justify-center gap-2">
-      {/* Previous Button */}
-      <button
-        onClick={() => onPageChange(page - 1)}
-        disabled={page === 1 || isLoading}
-        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        <ChevronLeft size={18} />
-      </button>
-
-      {/* Page Numbers */}
-      <div className="flex items-center gap-1">
-        {pageNumbers.map((num, idx) => (
-          <button
-            key={idx}
-            onClick={() => typeof num === "number" && onPageChange(num)}
-            disabled={num === "..." || isLoading}
-            className={`
-              px-3 py-2 rounded-lg text-sm font-medium transition
-              ${
-                num === page
-                  ? "bg-red-600 text-white"
-                  : num === "..."
-                    ? "cursor-default text-gray-400"
-                    : "border border-gray-300 hover:bg-gray-50 text-gray-700"
+    <ShadcnPagination>
+      <PaginationContent className="gap-2">
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            text=""
+            onClick={(e) => {
+              e.preventDefault();
+              if (page > 1 && !isLoading) {
+                onPageChange(page - 1);
               }
-              ${(num === "..." || isLoading) ? "cursor-not-allowed" : ""}
-            `}
-          >
-            {num}
-          </button>
-        ))}
-      </div>
+            }}
+            aria-disabled={page === 1 || isLoading}
+            className={`size-8 p-0 rounded-lg border border-gray-300 hover:bg-gray-50 ${
+              page === 1 || isLoading ? "pointer-events-none opacity-50" : ""
+            }`}
+          />
+        </PaginationItem>
 
-      {/* Next Button */}
-      <button
-        onClick={() => onPageChange(page + 1)}
-        disabled={page === totalPages || isLoading}
-        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        <ChevronRight size={18} />
-      </button>
-    </div>
+        {pageNumbers.map((num, idx) => (
+          <PaginationItem key={idx}>
+            {num === "..." ? (
+              <PaginationEllipsis className="text-gray-400" />
+            ) : (
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!isLoading) {
+                    onPageChange(num as number);
+                  }
+                }}
+                isActive={num === page}
+                aria-disabled={isLoading}
+                className={
+                  num === page
+                    ? "rounded-lg border border-red-600 bg-red-600 text-white hover:bg-red-700 hover:text-white"
+                    : `rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 ${isLoading ? "pointer-events-none opacity-50" : ""}`
+                }
+              >
+                {num}
+              </PaginationLink>
+            )}
+          </PaginationItem>
+        ))}
+
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            text=""
+            onClick={(e) => {
+              e.preventDefault();
+              if (page < totalPages && !isLoading) {
+                onPageChange(page + 1);
+              }
+            }}
+            aria-disabled={page === totalPages || isLoading}
+            className={`size-8 p-0 rounded-lg border border-gray-300 hover:bg-gray-50 ${
+              page === totalPages || isLoading
+                ? "pointer-events-none opacity-50"
+                : ""
+            }`}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </ShadcnPagination>
   );
 }

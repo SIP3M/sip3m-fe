@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Eye } from "lucide-react";
 import { User } from "./users.types";
 
 const roleStyle: Record<string, string> = {
@@ -14,7 +14,14 @@ const statusStyle = {
   inactive: "bg-red-100 text-red-600",
 };
 
-export default function UserRow({ user }: { user: User }) {
+interface Props {
+  user: User;
+  onView: (user: User) => void;
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+}
+
+export default function UserRow({ user, onView, onEdit, onDelete }: Props) {
   const statusLabel = user.is_active ? "Active" : "Inactive";
   const statusKey = user.is_active ? "active" : "inactive";
   const displayRole = user.roles.roles || "UNKNOWN";
@@ -28,7 +35,13 @@ export default function UserRow({ user }: { user: User }) {
         </div>
 
         <div>
-          <p className="font-medium text-gray-800">{user.name}</p>
+          <button
+            type="button"
+            onClick={() => onView(user)}
+            className="font-medium text-gray-800 text-left hover:text-red-600 transition"
+          >
+            {user.name}
+          </button>
 
           {user.nidn && (
             <p className="text-xs text-gray-400">NIDN: {user.nidn}</p>
@@ -58,15 +71,26 @@ export default function UserRow({ user }: { user: User }) {
       </td>
 
       {/* ACTION */}
-      <td className="px-6 py-4 flex gap-4">
+      <td className="px-6 py-4 flex gap-3">
+        <button
+          type="button"
+          onClick={() => onView(user)}
+          className="text-gray-500 hover:text-emerald-600 transition"
+          aria-label={`Lihat detail ${user.name}`}
+        >
+          <Eye size={18} />
+        </button>
+
         <Pencil
           size={18}
           className="text-gray-500 hover:text-blue-600 cursor-pointer transition"
+          onClick={() => onEdit(user)}
         />
 
         <Trash2
           size={18}
           className="text-gray-500 hover:text-red-600 cursor-pointer transition"
+          onClick={() => onDelete(user)}
         />
       </td>
     </tr>
