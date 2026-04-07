@@ -3,11 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/* --- DEFINISI TIPE (Agar tidak Putih Kosong) --- */
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+}
+interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  show: boolean;
+  toggle: () => void;
+}
+
 const RegisterReviewerPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [dragging, setDragging] = useState(false);
-
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -25,8 +37,12 @@ const RegisterReviewerPage = () => {
     agree: false,
   });
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  // Perbaikan tipe event pada Change
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setForm({
       ...form,
       [name]: type === "checkbox" ? checked : value,
@@ -43,17 +59,18 @@ const RegisterReviewerPage = () => {
     setStep((s) => s - 1);
   };
 
-  const isStep1Valid = form.nama && form.email && form.nohp;
-  const isStep2Valid =
-    form.instansi && form.bidang && form.pengalaman && form.file;
-  const isStep3Valid =
+  const isStep1Valid = Boolean(form.nama && form.email && form.nohp);
+  const isStep2Valid = Boolean(
+    form.instansi && form.bidang && form.pengalaman && form.file,
+  );
+  const isStep3Valid = Boolean(
     form.username &&
     form.password &&
     form.confirm &&
     form.password === form.confirm &&
-    form.agree;
+    form.agree,
+  );
 
-  /* 🔥 ANIMATION VARIANT (GLOBAL) */
   const variants = {
     initial: { opacity: 0, x: 60 },
     animate: { opacity: 1, x: 0 },
@@ -70,103 +87,105 @@ const RegisterReviewerPage = () => {
       </p>
 
       <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
-
-        {/* STEP INDICATOR */}
         {step <= 3 && (
           <div className="flex items-center justify-between mb-12 px-6">
             {["Identitas", "Informasi Profesional", "Akun Login"].map(
               (label, i) => {
                 const num = i + 1;
-
                 return (
                   <div key={i} className="flex items-center flex-1">
                     <div className="flex flex-col items-center relative z-10 bg-white">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2
-                        ${
-                          step > num
-                            ? "bg-[#e10600] border-[#e10600] text-white"
-                            : step === num
-                            ? "border-[#e10600] text-[#e10600]"
-                            : "border-gray-300 text-gray-400"
-                        }`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${step > num ? "bg-[#e10600] border-[#e10600] text-white" : step === num ? "border-[#e10600] text-[#e10600]" : "border-gray-300 text-gray-400"}`}
                       >
                         {step > num ? "✓" : num}
                       </div>
-
                       <span className="text-xs mt-2 text-gray-600 text-center w-24">
                         {label}
                       </span>
                     </div>
-
                     {i < 2 && (
                       <div className="relative flex-1 h-0.5 mx-2 mt-4">
                         <div className="absolute inset-0 bg-gray-200" />
                         <div
-                          className={`absolute inset-0 transition-all duration-300 ${
-                            step > num ? "bg-[#e10600]" : "bg-transparent"
-                          }`}
+                          className={`absolute inset-0 transition-all duration-300 ${step > num ? "bg-[#e10600]" : "bg-transparent"}`}
                         />
                       </div>
                     )}
                   </div>
                 );
-              }
+              },
             )}
           </div>
         )}
 
-        {/* 🔥 ANIMATION WRAPPER */}
         <AnimatePresence mode="wait">
-
-          {/* STEP 1 */}
           {step === 1 && (
             <motion.div
-              key="step1"
+              key="1"
               variants={variants}
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              transition={{ duration: 0.4 }}
             >
               <h2 className="text-[16px] font-semibold mb-4">Identitas</h2>
-
               <div className="space-y-4">
-                <Input name="nama" label="Nama Lengkap*" onChange={handleChange} />
-                <Input name="email" label="Email*" onChange={handleChange} />
-                <Input name="nohp" label="Nomor HP*" onChange={handleChange} />
+                <Input
+                  name="nama"
+                  label="Nama Lengkap*"
+                  value={form.nama}
+                  onChange={handleChange}
+                />
+                <Input
+                  name="email"
+                  label="Email*"
+                  value={form.email}
+                  onChange={handleChange}
+                />
+                <Input
+                  name="nohp"
+                  label="Nomor HP*"
+                  value={form.nohp}
+                  onChange={handleChange}
+                />
               </div>
             </motion.div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <motion.div
-              key="step2"
+              key="2"
               variants={variants}
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              transition={{ duration: 0.4 }}
             >
               <h2 className="text-[16px] font-semibold mb-4">
                 Informasi Profesional
               </h2>
-
               <div className="space-y-4">
-                <Input name="instansi" label="Instansi*" onChange={handleChange} />
-                <Input name="bidang" label="Bidang Keahlian*" onChange={handleChange} />
-
+                <Input
+                  name="instansi"
+                  label="Instansi*"
+                  value={form.instansi}
+                  onChange={handleChange}
+                />
+                <Input
+                  name="bidang"
+                  label="Bidang Keahlian*"
+                  value={form.bidang}
+                  onChange={handleChange}
+                />
                 <Textarea
                   name="pengalaman"
                   label="Pengalaman Review*"
+                  value={form.pengalaman}
                   onChange={handleChange}
                 />
-
-                {/* DRAG DROP */}
                 <div>
                   <label className="text-sm text-gray-600">Upload CV*</label>
-
                   <div
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -176,85 +195,80 @@ const RegisterReviewerPage = () => {
                     onDrop={(e) => {
                       e.preventDefault();
                       setDragging(false);
-                      handleFile(e.dataTransfer.files[0]);
+                      if (e.dataTransfer.files[0])
+                        handleFile(e.dataTransfer.files[0]);
                     }}
-                    className={`mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition
-                      ${
-                        dragging
-                          ? "border-[#e10600] bg-red-50"
-                          : "border-gray-300 bg-[#fafafa]"
-                      }`}
+                    className={`mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragging ? "border-[#e10600] bg-red-50" : "border-gray-300 bg-[#fafafa]"}`}
                   >
                     <UploadCloud className="mx-auto mb-2 text-gray-400" />
-
                     <p className="text-sm text-gray-500">
                       Drag & drop file atau klik untuk upload
                     </p>
-
                     <input
                       type="file"
-                      onChange={(e) => handleFile(e.target.files![0])}
+                      onChange={(e) =>
+                        e.target.files && handleFile(e.target.files[0])
+                      }
                       className="hidden"
                       id="upload"
                     />
-
                     <label
                       htmlFor="upload"
                       className="text-xs text-[#e10600] cursor-pointer"
                     >
                       Pilih file
                     </label>
-
                     {form.file && (
                       <p className="text-xs mt-2 text-green-600">
                         {form.file.name}
                       </p>
                     )}
                   </div>
-
-                  <p className="text-xs text-gray-400 mt-1">
-                    PDF, DOC, DOCX (Max 5MB)
-                  </p>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <motion.div
-              key="step3"
+              key="3"
               variants={variants}
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              transition={{ duration: 0.4 }}
             >
-              <h2 className="text-[16px] font-semibold mb-4">
-                Informasi Akun
-              </h2>
-
+              <h2 className="text-[16px] font-semibold mb-4">Informasi Akun</h2>
               <div className="space-y-4">
-                <Input name="username" label="Username*" onChange={handleChange} />
-
+                <Input
+                  name="username"
+                  label="Username*"
+                  value={form.username}
+                  onChange={handleChange}
+                />
                 <PasswordInput
                   label="Password*"
                   name="password"
+                  value={form.password}
                   show={showPass}
                   toggle={() => setShowPass(!showPass)}
                   onChange={handleChange}
                 />
-
                 <PasswordInput
                   label="Konfirmasi Password*"
                   name="confirm"
+                  value={form.confirm}
                   show={showConfirm}
                   toggle={() => setShowConfirm(!showConfirm)}
                   onChange={handleChange}
                 />
-
-                <label className="text-sm flex gap-2">
-                  <input type="checkbox" name="agree" onChange={handleChange} />
+                <label className="text-sm flex gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="agree"
+                    checked={form.agree}
+                    onChange={handleChange}
+                  />{" "}
                   Saya menyetujui kebijakan privasi
                 </label>
               </div>
@@ -262,42 +276,33 @@ const RegisterReviewerPage = () => {
           )}
         </AnimatePresence>
 
-        {/* SUCCESS */}
         {step === 4 && (
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
             className="text-center py-10"
           >
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-2xl">
               ✓
             </div>
-
             <h2 className="text-lg font-semibold">Registrasi Berhasil</h2>
-            <p className="text-gray-500 text-sm mt-2">
-              Akun Anda menunggu verifikasi LPPM
-            </p>
-
             <button
               onClick={() => navigate("/")}
-              className="mt-6 bg-[#e10600] text-white px-6 py-2 rounded-xl"
+              className="mt-6 bg-[#e10600] text-white px-6 py-2 rounded-xl cursor-pointer"
             >
               Kembali ke Beranda
             </button>
           </motion.div>
         )}
 
-        {/* BUTTON */}
         {step <= 3 && (
           <div className="flex gap-4 mt-8">
             <button
               onClick={back}
-              className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl"
+              className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl cursor-pointer hover:bg-red-50 transition-colors"
             >
               Kembali
             </button>
-
             <button
               onClick={() => (step === 3 ? setStep(4) : next())}
               disabled={
@@ -305,13 +310,7 @@ const RegisterReviewerPage = () => {
                 (step === 2 && !isStep2Valid) ||
                 (step === 3 && !isStep3Valid)
               }
-              className={`w-full py-2 rounded-xl text-white ${
-                (step === 1 && !isStep1Valid) ||
-                (step === 2 && !isStep2Valid) ||
-                (step === 3 && !isStep3Valid)
-                  ? "bg-gray-300"
-                  : "bg-[#e10600]"
-              }`}
+              className={`w-full py-2 rounded-xl text-white transition-all ${(step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid) || (step === 3 && !isStep3Valid) ? "bg-[#e10600] disabled:opacity-50 disabled:cursor-not-allowed" : "bg-[#e10600] cursor-pointer hover:bg-red-700"}`}
             >
               {step === 3 ? "Daftar sebagai Reviewer" : "Lanjut"}
             </button>
@@ -322,24 +321,33 @@ const RegisterReviewerPage = () => {
   );
 };
 
-export default RegisterReviewerPage;
-
-/* COMPONENTS */
-const Input = ({ label, ...props }: any) => (
+/* --- KOMPONEN BAWAH (FIXED TYPES) --- */
+const Input = ({ label, ...props }: InputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <input {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]" />
+    <input
+      {...props}
+      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
+    />
   </div>
 );
 
-const Textarea = ({ label, ...props }: any) => (
+const Textarea = ({ label, ...props }: TextareaProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
-    <textarea {...props} className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]" />
+    <textarea
+      {...props}
+      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
+    />
   </div>
 );
 
-const PasswordInput = ({ label, show, toggle, ...props }: any) => (
+const PasswordInput = ({
+  label,
+  show,
+  toggle,
+  ...props
+}: PasswordInputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <div className="relative">
@@ -351,19 +359,12 @@ const PasswordInput = ({ label, show, toggle, ...props }: any) => (
       <button
         type="button"
         onClick={toggle}
-        className="absolute right-3 top-3 text-gray-500"
+        className="absolute right-3 top-3 text-gray-500 cursor-pointer"
       >
         {show ? <Eye size={18} /> : <EyeOff size={18} />}
       </button>
     </div>
-    <motion.div
-  key={step}
-  initial={{ opacity: 0, x: 50 }}
-  animate={{ opacity: 1, x: 0 }}
-  exit={{ opacity: 0, x: -50 }}
-  transition={{ duration: 0.3 }}
->
-  {renderStep()}
-</motion.div>
   </div>
 );
+
+export default RegisterReviewerPage;

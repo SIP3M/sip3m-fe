@@ -1,9 +1,15 @@
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
+
+interface IProposalInputs {
+  title: string;
+  abstract: string;
+  file: FileList; 
+}
 
 export default function ProposalWizard() {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit } = useForm<IProposalInputs>();
 
-  const onSubmit = (data: any) => {
+  const onSubmit: SubmitHandler<IProposalInputs> = (data) => {
     console.log(data);
   };
 

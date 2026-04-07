@@ -94,7 +94,9 @@ export default function AdminDashboard() {
             <BarChart data={statusData}>
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip />
+              <Tooltip 
+              cursor={{ fill: 'transparent' }}
+              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}/>
               <Bar dataKey="value" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -106,8 +108,14 @@ export default function AdminDashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={kategoriData} layout="vertical">
               <XAxis type="number" />
-              <YAxis dataKey="name" type="category" />
-              <Tooltip />
+              <YAxis 
+              dataKey="name" 
+              type="category"
+              width={65}
+              tick={{ fontSize: 12 }} />
+              <Tooltip 
+              cursor={{ fill: 'transparent' }}
+              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}/>
               <Bar dataKey="value" fill="#e11d48" radius={[6, 6, 6, 6]} />
             </BarChart>
           </ResponsiveContainer>

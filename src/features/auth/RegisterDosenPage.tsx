@@ -5,6 +5,20 @@ import { registerDosen } from "./auth.api";
 import { RegisterDosenPayload } from "./auth.types";
 import axios from "axios";
 
+/* ================= TYPES FOR PROPS ================= */
+
+interface BaseInputProps {
+  label: string;
+}
+
+// Mewarisi atribut asli dari elemen HTML terkait
+interface InputProps
+  extends BaseInputProps, React.InputHTMLAttributes<HTMLInputElement> {}
+interface TextareaProps
+  extends BaseInputProps, React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+interface SelectProps
+  extends BaseInputProps, React.SelectHTMLAttributes<HTMLSelectElement> {}
+
 const RegisterDosenPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -33,11 +47,17 @@ const RegisterDosenPage = () => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+
+    // Perbaikan di sini: Cek apakah target adalah HTMLInputElement sebelum mengambil 'checked'
+    const isCheckbox = type === "checkbox";
+    const checkedValue = isCheckbox
+      ? (e.target as HTMLInputElement).checked
+      : value;
 
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: checkedValue,
     }));
   };
 
@@ -64,8 +84,8 @@ const RegisterDosenPage = () => {
 
   const isStep3Valid = Boolean(
     form.username &&
-    form.email.includes("@") && 
-    form.email.includes(".") && 
+    form.email.includes("@") &&
+    form.email.includes(".") &&
     form.password &&
     form.confirm &&
     form.password === form.confirm &&
@@ -98,7 +118,6 @@ const RegisterDosenPage = () => {
 
       await registerDosen(payload);
 
-      // jika sukses
       setStep(4);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -314,7 +333,10 @@ const RegisterDosenPage = () => {
           <div className="flex gap-4 mt-8">
             <button
               onClick={prevStep}
-              className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl"
+              className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl 
+             cursor-pointer transition-all duration-200 
+             hover:bg-red-50 hover:shadow-sm 
+             active:scale-[0.97] active:bg-red-100"
             >
               Kembali
             </button>
@@ -330,7 +352,10 @@ const RegisterDosenPage = () => {
                 (step === 2 && !isStep2Valid) ||
                 (step === 3 && !isStep3Valid)
               }
-              className="w-full py-2 rounded-xl text-white bg-[#e10600]"
+              className="w-full py-2 rounded-xl text-white bg-[#e10600] 
+             transition-all duration-200
+             disabled:opacity-50 disabled:cursor-not-allowed
+             enabled:hover:bg-red-700 enabled:cursor-pointer enabled:active:scale-[0.98]"
             >
               {loading
                 ? "Memproses..."
@@ -347,9 +372,9 @@ const RegisterDosenPage = () => {
 
 export default RegisterDosenPage;
 
-/* ================= COMPONENT ================= */
+/* ================= COMPONENT (CLEAN TYPES) ================= */
 
-const Input = ({ label, ...props }: any) => (
+const Input = ({ label, ...props }: InputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <input
@@ -359,7 +384,7 @@ const Input = ({ label, ...props }: any) => (
   </div>
 );
 
-const Textarea = ({ label, ...props }: any) => (
+const Textarea = ({ label, ...props }: TextareaProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <textarea
@@ -369,7 +394,7 @@ const Textarea = ({ label, ...props }: any) => (
   </div>
 );
 
-const Select = ({ label, ...props }: any) => (
+const Select = ({ label, ...props }: SelectProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <select
