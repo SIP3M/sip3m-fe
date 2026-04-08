@@ -1,9 +1,24 @@
-import { ArrowLeft, Save, CheckCircle, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  CheckCircle,
+  Loader2,
+  ChevronDown,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
   "ADMIN_LPPM",
@@ -63,6 +78,13 @@ export default function AddUserPage() {
         [name]: undefined,
       }));
     }
+  };
+
+  const handleRoleSelect = (role: CreateUserRole) => {
+    setForm((prev) => ({
+      ...prev,
+      roles: role,
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -292,332 +314,358 @@ export default function AddUserPage() {
       </div>
 
       {/* CARD FORM */}
-      <div className="bg-white w-full max-w-3xl p-10 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
-        {/* ERROR MESSAGE */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* NAMA */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Nama Lengkap <span className="text-red-500">*</span>
-            </label>
-
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Contoh: Dr. Ahmad Dahlan, M.Kom"
-              className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
-            />
-          </div>
-
-          {/* EMAIL */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Email <span className="text-red-500">*</span>
-            </label>
-
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="nama@umc.ac.id"
-              className={`mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${fieldErrors.email ? "border border-red-400 focus:ring-red-500" : "focus:ring-red-500"}`}
-              required
-            />
-            {fieldErrors.email && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
-            )}
-          </div>
-
-          {/* USERNAME */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Username <span className="text-gray-400">(Opsional)</span>
-            </label>
-
-            <input
-              type="text"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="nama_pengguna"
-              className={`mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${fieldErrors.username ? "border border-red-400 focus:ring-red-500" : "focus:ring-red-500"}`}
-            />
-            {fieldErrors.username && (
-              <p className="mt-1 text-xs text-red-600">
-                {fieldErrors.username}
-              </p>
-            )}
-          </div>
-
-          {/* NIDN / NIP */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              NIDN / NIP <span className="text-gray-400">(Opsional)</span>
-            </label>
-
-            <input
-              type="text"
-              name="nidn_nip"
-              value={form.nidn_nip}
-              onChange={handleChange}
-              placeholder="Nomor Induk Dosen / Pegawai"
-              className={`mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${fieldErrors.nidn_nip ? "border border-red-400 focus:ring-red-500" : "focus:ring-red-500"}`}
-            />
-            {fieldErrors.nidn_nip && (
-              <p className="mt-1 text-xs text-red-600">
-                {fieldErrors.nidn_nip}
-              </p>
-            )}
-          </div>
-
-          {/* ROLE */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Role <span className="text-red-500">*</span>
-            </label>
-
-            <select
-              name="roles"
-              value={form.roles}
-              onChange={handleChange}
-              className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
-            >
-              <option value="">Pilih Role</option>
-              {CREATE_ROLE_OPTIONS.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-
-            <p className="text-xs text-gray-400 mt-1">
-              Hak akses akan disesuaikan dengan peran yang dipilih.
-            </p>
-          </div>
-
-          {/* STATUS AKUN */}
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Status Akun
-            </label>
-
-            <div className="flex gap-6 mt-3">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input
-                  type="radio"
-                  name="is_active"
-                  checked={form.is_active === true}
-                  onChange={() =>
-                    setForm((prev) => ({ ...prev, is_active: true }))
-                  }
-                />
-                Active
-              </label>
-
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input
-                  type="radio"
-                  name="is_active"
-                  checked={form.is_active === false}
-                  onChange={() =>
-                    setForm((prev) => ({ ...prev, is_active: false }))
-                  }
-                />
-                Non-Active
-              </label>
+      <Card className="w-full max-w-3xl rounded-2xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+        <CardContent className="p-10">
+          {/* ERROR MESSAGE */}
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
             </div>
-          </div>
+          )}
 
-          {/* PASSWORD */}
-          <div className="grid grid-cols-2 gap-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* NAMA */}
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Password <span className="text-red-500">*</span>
+                Nama Lengkap <span className="text-red-500">*</span>
               </label>
 
-              <input
-                type="password"
-                name="password"
-                value={form.password}
+              <Input
+                type="text"
+                name="name"
+                value={form.name}
                 onChange={handleChange}
-                placeholder="Min 6 karakter"
-                className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Contoh: Dr. Ahmad Dahlan, M.Kom"
+                className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                 required
               />
             </div>
 
+            {/* EMAIL */}
             <div>
               <label className="text-sm font-medium text-gray-700">
-                Konfirmasi Password <span className="text-red-500">*</span>
+                Email <span className="text-red-500">*</span>
               </label>
 
-              <input
-                type="password"
-                name="passwordConfirm"
-                value={form.passwordConfirm}
+              <Input
+                type="email"
+                name="email"
+                value={form.email}
                 onChange={handleChange}
-                placeholder="Ulangi password"
-                className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="nama@umc.ac.id"
+                className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                aria-invalid={Boolean(fieldErrors.email)}
                 required
               />
+              {fieldErrors.email && (
+                <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+              )}
             </div>
-          </div>
 
-          {/* ADDITIONAL FIELDS */}
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-sm font-medium text-gray-700 mb-4">
-              Informasi Tambahan{" "}
-              <span className="text-gray-400">(Opsional)</span>
-            </h3>
+            {/* USERNAME */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Username <span className="text-gray-400">(Opsional)</span>
+              </label>
 
-            <div className="space-y-4">
-              {/* FAKULTAS */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Fakultas
-                </label>
+              <Input
+                type="text"
+                name="username"
+                value={form.username}
+                onChange={handleChange}
+                placeholder="nama_pengguna"
+                className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                aria-invalid={Boolean(fieldErrors.username)}
+              />
+              {fieldErrors.username && (
+                <p className="mt-1 text-xs text-red-600">
+                  {fieldErrors.username}
+                </p>
+              )}
+            </div>
 
-                <input
-                  type="text"
-                  name="fakultas"
-                  value={form.fakultas}
-                  onChange={handleChange}
-                  placeholder="Contoh: Teknik"
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
+            {/* NIDN / NIP */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                NIDN / NIP <span className="text-gray-400">(Opsional)</span>
+              </label>
 
-              {/* PROGRAM STUDI */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Program Studi
-                </label>
+              <Input
+                type="text"
+                name="nidn_nip"
+                value={form.nidn_nip}
+                onChange={handleChange}
+                placeholder="Nomor Induk Dosen / Pegawai"
+                className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                aria-invalid={Boolean(fieldErrors.nidn_nip)}
+              />
+              {fieldErrors.nidn_nip && (
+                <p className="mt-1 text-xs text-red-600">
+                  {fieldErrors.nidn_nip}
+                </p>
+              )}
+            </div>
 
-                <input
-                  type="text"
-                  name="program_studi"
-                  value={form.program_studi}
-                  onChange={handleChange}
-                  placeholder="Contoh: Teknik Informatika"
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
+            {/* ROLE */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Role <span className="text-red-500">*</span>
+              </label>
 
-              {/* TEMPAT LAHIR */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Tempat Lahir
-                </label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-2 w-full justify-between bg-gray-50 font-normal border-red-800"
+                  >
+                    <span
+                      className={form.roles ? "text-gray-900" : "text-gray-500"}
+                    >
+                      {form.roles
+                        ? form.roles.replaceAll("_", " ")
+                        : "Pilih Role"}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-70" />
+                  </Button>
+                </DropdownMenuTrigger>
 
-                <input
-                  type="text"
-                  name="tempat_lahir"
-                  value={form.tempat_lahir}
-                  onChange={handleChange}
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-
-              {/* TANGGAL LAHIR */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Tanggal Lahir
-                </label>
-
-                <input
-                  type="date"
-                  name="tanggal_lahir"
-                  value={form.tanggal_lahir}
-                  onChange={handleChange}
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-
-              {/* JENIS KELAMIN */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Jenis Kelamin
-                </label>
-
-                <select
-                  name="jenis_kelamin"
-                  value={form.jenis_kelamin}
-                  onChange={handleChange}
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                <DropdownMenuContent
+                  className="w-[var(--radix-dropdown-menu-trigger-width)]"
+                  align="start"
                 >
-                  <option value="">Pilih Jenis Kelamin</option>
-                  <option value="Laki-laki">Laki-laki</option>
-                  <option value="Perempuan">Perempuan</option>
-                </select>
-              </div>
+                  {CREATE_ROLE_OPTIONS.map((role) => (
+                    <DropdownMenuItem
+                      key={role}
+                      onSelect={() => handleRoleSelect(role)}
+                      className="cursor-pointer"
+                    >
+                      {role.replaceAll("_", " ")}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-              {/* ALAMAT */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Alamat
+              <input type="hidden" name="roles" value={form.roles} required />
+
+              <p className="text-xs text-gray-400 mt-1">
+                Hak akses akan disesuaikan dengan peran yang dipilih.
+              </p>
+            </div>
+
+            {/* STATUS AKUN */}
+            <div>
+              <label className="text-sm font-medium text-gray-700">
+                Status Akun
+              </label>
+
+              <div className="flex gap-6 mt-3">
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="radio"
+                    name="is_active"
+                    checked={form.is_active === true}
+                    onChange={() =>
+                      setForm((prev) => ({ ...prev, is_active: true }))
+                    }
+                  />
+                  Active
                 </label>
 
-                <input
-                  type="text"
-                  name="alamat"
-                  value={form.alamat}
+                <label className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="radio"
+                    name="is_active"
+                    checked={form.is_active === false}
+                    onChange={() =>
+                      setForm((prev) => ({ ...prev, is_active: false }))
+                    }
+                  />
+                  Non-Active
+                </label>
+              </div>
+            </div>
+
+            {/* PASSWORD */}
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Password <span className="text-red-500">*</span>
+                </label>
+
+                <Input
+                  type="password"
+                  name="password"
+                  value={form.password}
                   onChange={handleChange}
-                  placeholder="Jl. Merdeka No. 1"
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Min 6 karakter"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  required
                 />
               </div>
 
-              {/* NOMOR HP */}
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  Nomor HP
+                  Konfirmasi Password <span className="text-red-500">*</span>
                 </label>
 
-                <input
-                  type="text"
-                  name="nomor_hp"
-                  value={form.nomor_hp}
+                <Input
+                  type="password"
+                  name="passwordConfirm"
+                  value={form.passwordConfirm}
                   onChange={handleChange}
-                  placeholder="081234567890"
-                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="Ulangi password"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  required
                 />
               </div>
             </div>
-          </div>
 
-          {/* BUTTON */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => navigate("/users")}
-              disabled={isLoading}
-              className="px-5 py-2 text-sm rounded-lg bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
-            >
-              Batal
-            </button>
+            {/* ADDITIONAL FIELDS */}
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-4">
+                Informasi Tambahan{" "}
+                <span className="text-gray-400">(Opsional)</span>
+              </h3>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save size={16} />
-              {isLoading ? "Menyimpan..." : "Simpan Pengguna"}
-            </button>
-          </div>
-        </form>
-      </div>
+              <div className="space-y-4">
+                {/* FAKULTAS */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Fakultas
+                  </label>
+
+                  <Input
+                    type="text"
+                    name="fakultas"
+                    value={form.fakultas}
+                    onChange={handleChange}
+                    placeholder="Contoh: Teknik"
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  />
+                </div>
+
+                {/* PROGRAM STUDI */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Program Studi
+                  </label>
+
+                  <Input
+                    type="text"
+                    name="program_studi"
+                    value={form.program_studi}
+                    onChange={handleChange}
+                    placeholder="Contoh: Teknik Informatika"
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  />
+                </div>
+
+                {/* TEMPAT LAHIR */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Tempat Lahir
+                  </label>
+
+                  <Input
+                    type="text"
+                    name="tempat_lahir"
+                    value={form.tempat_lahir}
+                    onChange={handleChange}
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  />
+                </div>
+
+                {/* TANGGAL LAHIR */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Tanggal Lahir
+                  </label>
+
+                  <Input
+                    type="date"
+                    name="tanggal_lahir"
+                    value={form.tanggal_lahir}
+                    onChange={handleChange}
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  />
+                </div>
+
+                {/* JENIS KELAMIN */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Jenis Kelamin
+                  </label>
+
+                  <select
+                    name="jenis_kelamin"
+                    value={form.jenis_kelamin}
+                    onChange={handleChange}
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="">Pilih Jenis Kelamin</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+
+                {/* ALAMAT */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Alamat
+                  </label>
+
+                  <Input
+                    type="text"
+                    name="alamat"
+                    value={form.alamat}
+                    onChange={handleChange}
+                    placeholder="Jl. Merdeka No. 1"
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  />
+                </div>
+
+                {/* NOMOR HP */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Nomor HP
+                  </label>
+
+                  <Input
+                    type="text"
+                    name="nomor_hp"
+                    value={form.nomor_hp}
+                    onChange={handleChange}
+                    placeholder="081234567890"
+                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* BUTTON */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate("/users")}
+                disabled={isLoading}
+              >
+                Batal
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Save className="h-4 w-4" />
+                {isLoading ? "Menyimpan..." : "Simpan Pengguna"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

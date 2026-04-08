@@ -2,8 +2,12 @@ import { api } from "@/services/api";
 import {
   CreateUserPayload,
   CreateUserResponse,
+  DeleteUserResponse,
+  GetUserResponse,
   GetUsersResponse,
   GetUsersParams,
+  UpdateUserPayload,
+  UpdateUserResponse,
 } from "./users.types";
 
 // Simple cache for users data
@@ -122,6 +126,53 @@ export const createUser = async (
 
   const res = await api.post<CreateUserResponse>("/users", payload);
   // Clear cache setelah create
+  clearUsersCache();
+  return res.data;
+};
+
+export const getUserById = async (id: number): Promise<GetUserResponse> => {
+  const res = await api.get<GetUserResponse>(`/users/${id}`);
+  return res.data;
+};
+
+const sanitizeUpdateUserPayload = (data: UpdateUserPayload) => {
+  const normalized: UpdateUserPayload = {
+    ...data,
+    name: data.name?.trim(),
+    email: data.email?.trim(),
+    username: data.username?.trim(),
+    password: data.password?.trim(),
+    nidn_nip: data.nidn_nip?.trim(),
+    fakultas: data.fakultas?.trim(),
+    program_studi: data.program_studi?.trim(),
+    tempat_lahir: data.tempat_lahir?.trim(),
+    jenis_kelamin: data.jenis_kelamin?.trim(),
+    alamat: data.alamat?.trim(),
+    nomor_hp: data.nomor_hp?.trim(),
+  };
+
+  return Object.fromEntries(
+    Object.entries(normalized).filter(([, value]) => {
+      if (typeof value === "string") {
+        return value.length > 0;
+      }
+      return value !== undefined && value !== null;
+    }),
+  ) as UpdateUserPayload;
+};
+
+export const updateUser = async (
+  id: number,
+  data: UpdateUserPayload,
+): Promise<UpdateUserResponse> => {
+  const payload = sanitizeUpdateUserPayload(data);
+  const res = await api.put<UpdateUserResponse>(`/users/${id}`, payload);
+  clearUsersCache();
+  return res.data;
+};
+
+export const deleteUser = async (id: number): Promise<DeleteUserResponse> => {
+  const res = await api.delete<DeleteUserResponse>(`/users/${id}`);
   clearUsersCache();
   return res.data;
 };

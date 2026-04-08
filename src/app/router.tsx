@@ -15,6 +15,8 @@ import StaffLayout from "@/components/layout/StaffLayout";
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
 import UsersPage from "@/features/users/UsersPage";
 import AddUserPage from "@/features/users/AddUserPage";
+import UserDetailPage from "@/features/users/UserDetailPage";
+import EditUserPage from "@/features/users/EditUserPage";
 import ProposalList from "@/features/proposals/ProposalList";
 import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
@@ -65,6 +67,14 @@ export const router = createBrowserRouter([
       {
         path: "users/add",
         element: <AddUserPage />,
+      },
+      {
+        path: "users/:id",
+        element: <UserDetailPage />,
+      },
+      {
+        path: "users/:id/edit",
+        element: <EditUserPage />,
       },
       {
         path: "proposals",

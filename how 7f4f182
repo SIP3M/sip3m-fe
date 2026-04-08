@@ -1,0 +1,8 @@
+[33mcommit 7f4f182374f801b971120676fad80ee70292fad2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: 98e6716 b40f027
+Author: faqihasy <faqih8158@gmail.com>
+Date:   Sat Mar 28 19:59:34 2026 +0700
+
+    Merge pull request #5 from SIP3M/fix_integrasi_api
+    
+    Refactor API registration handling and submit logic
