@@ -4,6 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { registerDosen } from "./auth.api";
 import { RegisterDosenPayload } from "./auth.types";
 import axios from "axios";
+import type {
+  InputProps,
+  RegisterDosenForm,
+  SelectProps,
+  TextareaProps,
+} from "./RegisterDosenPage.types";
 
 const RegisterDosenPage = () => {
   const navigate = useNavigate();
@@ -11,7 +17,7 @@ const RegisterDosenPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterDosenForm>({
     nama: "",
     tempat: "",
     tanggal: "",
@@ -33,7 +39,9 @@ const RegisterDosenPage = () => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked =
+      e.target instanceof HTMLInputElement ? e.target.checked : false;
 
     setForm((prev) => ({
       ...prev,
@@ -64,8 +72,8 @@ const RegisterDosenPage = () => {
 
   const isStep3Valid = Boolean(
     form.username &&
-    form.email.includes("@") && 
-    form.email.includes(".") && 
+    form.email.includes("@") &&
+    form.email.includes(".") &&
     form.password &&
     form.confirm &&
     form.password === form.confirm &&
@@ -349,7 +357,7 @@ export default RegisterDosenPage;
 
 /* ================= COMPONENT ================= */
 
-const Input = ({ label, ...props }: any) => (
+const Input = ({ label, ...props }: InputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <input
@@ -359,7 +367,7 @@ const Input = ({ label, ...props }: any) => (
   </div>
 );
 
-const Textarea = ({ label, ...props }: any) => (
+const Textarea = ({ label, ...props }: TextareaProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <textarea
@@ -369,7 +377,7 @@ const Textarea = ({ label, ...props }: any) => (
   </div>
 );
 
-const Select = ({ label, ...props }: any) => (
+const Select = ({ label, ...props }: SelectProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <select
