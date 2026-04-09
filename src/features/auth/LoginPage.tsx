@@ -7,6 +7,18 @@ import axios from "axios";
 import { useAuthStore } from "./auth.store";
 import { motion } from "framer-motion";
 import { APP_ROLES } from "@/constant/roles";
+import { User } from "./auth.types";
+
+const getDashboardPathByRole = (role?: string) => {
+  if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
+  if (role === APP_ROLES.STAFF_LPPM) return "/staff-lppm/staff-dashboard";
+  if (role === APP_ROLES.DOSEN) return "/dosen-dashboard";
+  if (role === APP_ROLES.REVIEWER) return "/reviewer-dashboard";
+  if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
+    return "/reviewer-eksternal-dashboard";
+  }
+  return "/admin-dashboard";
+};
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -49,45 +61,20 @@ const LoginPage = () => {
 
       setUser(user);
 
-      // FIX ROLE REDIRECT
-      const role =
-        user?.roles?.role ||
-        user?.roles?.name ||
-        user?.role ||
-        user?.roles;
-
-      if (role === APP_ROLES.ADMIN_LPPM) {
-        navigate("/admin-dashboard");
-      } 
-      else if (role === APP_ROLES.STAFF_LPPM) {
-        navigate("/staff-lppm/admin-dashboard");
-      } 
-      else if (role === APP_ROLES.DOSEN) {
-        navigate("/dosen-dashboard");
-      } 
-      else if (role === APP_ROLES.REVIEWER) {
-        navigate("/reviewer-dashboard");
-      } 
-      else if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
-        navigate("/reviewer-eksternal-dashboard");
-      } 
-      else {
-        navigate("/admin-dashboard"); // fallback supaya tidak stuck
-      }
-
+      const role = (user as User | undefined)?.roles?.roles;
+      navigate(getDashboardPathByRole(role));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const responseData = error.response?.data;
 
         if (responseData?.errors) {
           const firstErrorKey = Object.keys(responseData.errors)[0];
-          const specificErrorMessage =
-            responseData.errors[firstErrorKey][0];
+          const specificErrorMessage = responseData.errors[firstErrorKey][0];
 
           setErrorMessage(specificErrorMessage);
         } else {
           setErrorMessage(
-            responseData?.message || "Terjadi kesalahan pada server."
+            responseData?.message || "Terjadi kesalahan pada server.",
           );
         }
       } else if (error instanceof Error) {

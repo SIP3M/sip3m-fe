@@ -18,27 +18,27 @@ export default function Sidebar() {
     {
       name: "Dashboard",
       icon: LayoutDashboard,
-      path: "/staff-dashboard",
+      path: "/staff-lppm/staff-dashboard",
     },
     {
       name: "Verifikasi Proposal",
       icon: Users,
-      path: "/verifikasi-proposal",
+      path: "/staff-lppm/verifikasi-proposal",
     },
     {
       name: "Plotting Reviewer",
       icon: Users,
-      path: "/plotting-reviewer",
+      path: "/staff-lppm/plotting-reviewer",
     },
     {
       name: "Monitoring Proyek",
       icon: Activity,
-      path: "/monitoring-project",
+      path: "/staff-lppm/monitoring-project",
     },
     {
       name: "Keuangan & Hibah",
       icon: Wallet,
-      path: "/finance",
+      path: "/staff-lppm/finance",
     },
   ];
 

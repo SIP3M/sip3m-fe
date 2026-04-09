@@ -11,8 +11,13 @@ import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
+import RoleLayout from "@/components/layout/RoleLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
+import StaffDashboard from "@/features/dashboard/StaffDashboard";
+import DosenDashboard from "@/features/dashboard/DosenDashboard";
+import ReviewerDashboard from "@/features/dashboard/ReviewerDashboard";
+import ReviewerEksternalDashboard from "@/features/dashboard/ReviewerEksternalDashboard";
 import UsersPage from "@/features/users/UsersPage";
 import AddUserPage from "@/features/users/AddUserPage";
 import UserDetailPage from "@/features/users/UserDetailPage";
@@ -21,7 +26,6 @@ import ProposalList from "@/features/proposals/ProposalList";
 import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
 import FinancePage from "@/features/finance/FinancePage";
-import LogsPage from "@/features/logs/LogsPage";
 
 export const router = createBrowserRouter([
   {
@@ -92,10 +96,6 @@ export const router = createBrowserRouter([
         path: "finance",
         element: <FinancePage />,
       },
-      {
-        path: "logs",
-        element: <LogsPage />,
-      },
     ],
   },
 
@@ -112,7 +112,23 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "staff-dashboard",
-        element: <AdminDashboard />,
+        element: <StaffDashboard />,
+      },
+      {
+        path: "verifikasi-proposal",
+        element: <ProposalList />,
+      },
+      {
+        path: "plotting-reviewer",
+        element: <ReviewList />,
+      },
+      {
+        path: "monitoring-project",
+        element: <ProjectList />,
+      },
+      {
+        path: "finance",
+        element: <FinancePage />,
       },
     ],
   },
@@ -124,12 +140,16 @@ export const router = createBrowserRouter([
     path: "dosen-dashboard",
     element: (
       <ProtectedRoute roles={[APP_ROLES.DOSEN]}>
-        <DashboardLayout />
+        <RoleLayout />
       </ProtectedRoute>
     ),
     children: [
       {
         index: true,
+        element: <DosenDashboard />,
+      },
+      {
+        path: "proposals",
         element: <ProposalList />,
       },
     ],
@@ -142,12 +162,16 @@ export const router = createBrowserRouter([
     path: "reviewer-dashboard",
     element: (
       <ProtectedRoute roles={[APP_ROLES.REVIEWER]}>
-        <DashboardLayout />
+        <RoleLayout />
       </ProtectedRoute>
     ),
     children: [
       {
         index: true,
+        element: <ReviewerDashboard />,
+      },
+      {
+        path: "reviews",
         element: <ReviewList />,
       },
     ],
@@ -160,12 +184,16 @@ export const router = createBrowserRouter([
     path: "reviewer-eksternal-dashboard",
     element: (
       <ProtectedRoute roles={[APP_ROLES.REVIEWER_EKSTERNAL]}>
-        <DashboardLayout />
+        <RoleLayout />
       </ProtectedRoute>
     ),
     children: [
       {
         index: true,
+        element: <ReviewerEksternalDashboard />,
+      },
+      {
+        path: "reviews",
         element: <ReviewList />,
       },
     ],

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import UsersTable from "./UsersTable";
 import { User } from "./users.types";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +23,7 @@ export default function UsersPage() {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState<AppRole | "">();
+  const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
   const [selectedStatus, setSelectedStatus] = useState<
     "" | "active" | "pending"
   >("");
@@ -31,43 +31,48 @@ export default function UsersPage() {
   const latestRequestId = useRef(0);
 
   // Fetch users
-  const fetchUsers = async (page: number = 1) => {
-    const requestId = ++latestRequestId.current;
-    setIsLoading(true);
-    setError(null);
+  const fetchUsers = useCallback(
+    async (page: number = 1) => {
+      const requestId = ++latestRequestId.current;
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const response = await getUsers({
-        page,
-        search: searchQuery || undefined,
-        roles: (selectedRole as AppRole) || undefined,
-        status: selectedStatus || undefined,
-      });
+      try {
+        const response = await getUsers({
+          page,
+          search: searchQuery || undefined,
+          roles: selectedRole || undefined,
+          status: selectedStatus || undefined,
+        });
 
-      if (requestId !== latestRequestId.current) return;
+        if (requestId !== latestRequestId.current) return;
 
-      setUsers(response.data);
-      if (response.pagination) {
-        setCurrentPage(response.pagination.page);
-        setTotalPages(response.pagination.total_pages);
-        setTotalItems(response.pagination.total_items);
-        setPerPage(response.pagination.per_page);
+        setUsers(response.data);
+        if (response.pagination) {
+          setCurrentPage(response.pagination.page);
+          setTotalPages(response.pagination.total_pages);
+          setTotalItems(response.pagination.total_items);
+          setPerPage(response.pagination.per_page);
+        }
+      } catch (err: unknown) {
+        if (requestId !== latestRequestId.current) return;
+        const message = axios.isAxiosError(err)
+          ? err.response?.data?.message ||
+            err.message ||
+            "Failed to fetch users"
+          : err instanceof Error
+            ? err.message
+            : "Failed to fetch users";
+        setError(message);
+        console.error("Error fetching users:", err);
+      } finally {
+        if (requestId === latestRequestId.current) {
+          setIsLoading(false);
+        }
       }
-    } catch (err: unknown) {
-      if (requestId !== latestRequestId.current) return;
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message || "Failed to fetch users"
-        : err instanceof Error
-          ? err.message
-          : "Failed to fetch users";
-      setError(message);
-      console.error("Error fetching users:", err);
-    } finally {
-      if (requestId === latestRequestId.current) {
-        setIsLoading(false);
-      }
-    }
-  };
+    },
+    [searchQuery, selectedRole, selectedStatus],
+  );
 
   const isFirstRender = useRef(true);
 
@@ -85,7 +90,7 @@ export default function UsersPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedRole, selectedStatus]);
+  }, [fetchUsers]);
 
   const handlePageChange = (page: number) => {
     if (page > 0 && page <= totalPages) {
@@ -164,7 +169,7 @@ export default function UsersPage() {
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">Semua Role</option>
-            {Object.entries(APP_ROLES).map(([key, value]) => (
+            {Object.entries(APP_ROLES).map(([, value]) => (
               <option key={value} value={value}>
                 {value}
               </option>
@@ -174,7 +179,9 @@ export default function UsersPage() {
           {/* Status Filter */}
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus((e.target.value as any) || "")}
+            onChange={(e) =>
+              setSelectedStatus(e.target.value as "" | "active" | "pending")
+            }
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">Semua Status</option>
