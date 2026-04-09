@@ -21,7 +21,7 @@ import ProposalList from "@/features/proposals/ProposalList";
 import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
 import FinancePage from "@/features/finance/FinancePage";
-// import LogsPage from "@/features/logs/LogsPage";
+import LogsPage from "@/features/logs/LogsPage";
 
 export const router = createBrowserRouter([
   {
@@ -92,10 +92,10 @@ export const router = createBrowserRouter([
         path: "finance",
         element: <FinancePage />,
       },
-      // {
-      //   path: "logs",
-      //   element: <LogsPage />,
-      // },
+      {
+        path: "logs",
+        element: <LogsPage />,
+      },
     ],
   },
 
