@@ -27,6 +27,10 @@ import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
 import FinancePage from "@/features/finance/FinancePage";
 
+import ProposalStaff from "@/features/proposals/ProposalStaff";
+import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
+import ReviewListStaff from "@/features/reviews/ReviewListStaff";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -86,7 +90,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "plotting-reviewer",
-        element: <ReviewList />,
+        element: <ReviewListStaff />,
       },
       {
         path: "monitoring-project",
@@ -116,7 +120,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "verifikasi-proposal",
-        element: <ProposalList />,
+        element: <ProposalStaff />,
+      },
+      {
+        path: "/staff-lppm/verifikasi-proposal/:id",
+        element: <ProposalVerifyDetail />,
       },
       {
         path: "plotting-reviewer",
