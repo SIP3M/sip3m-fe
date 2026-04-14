@@ -3,7 +3,11 @@ export type ProposalStatus =
   | "SUBMITTED"
   | "APPROVED"
   | "DRAFT"
-  | "REVISION";
+  | "REVISION"
+  | "ADMIN_VERIFIED"
+  | "UNDER_REVIEW"
+  | "REJECTED"
+  | "ACCEPTED";
 
 export interface Proposal {
   id: number;
