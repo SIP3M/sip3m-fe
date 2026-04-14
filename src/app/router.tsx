@@ -29,7 +29,6 @@ import FinancePage from "@/features/finance/FinancePage";
 
 import ProposalStaff from "@/features/proposals/ProposalStaff";
 import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
-import ReviewListStaff from "@/features/reviews/ReviewListStaff";
 
 export const router = createBrowserRouter([
   {
@@ -90,7 +89,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "plotting-reviewer",
-        element: <ReviewListStaff />,
+        element: <ReviewList />,
       },
       {
         path: "monitoring-project",

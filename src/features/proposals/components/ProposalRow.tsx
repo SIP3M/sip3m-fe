@@ -3,23 +3,34 @@ import { Proposal } from "../proposal.types";
 
 const statusStyle: Record<string, string> = {
   REVIEW: "bg-yellow-100 text-yellow-700",
+  UNDER_REVIEW: "bg-yellow-100 text-yellow-700",
   SUBMITTED: "bg-orange-100 text-orange-600",
+  APPROVED: "bg-green-100 text-green-600",
   ACCEPTED: "bg-green-100 text-green-600",
   DRAFT: "bg-gray-100 text-gray-500",
   REVISION: "bg-red-100 text-red-600",
   REVISI: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
+  ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
 };
 
-const getStatusKey = (status: string) => status.trim().toUpperCase();
+const getStatusKey = (status: string) =>
+  status
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 
 const getStatusLabel = (status: string) => {
   const key = getStatusKey(status);
 
   const statusLabel: Record<string, string> = {
     REVIEW: "Review",
+    UNDER_REVIEW: "Under Review",
     SUBMITTED: "Submitted",
+    APPROVED: "Approved",
     ACCEPTED: "Approved",
+    ADMIN_VERIFIED: "Admin Verified",
     DRAFT: "Draft",
     REVISION: "Revision",
     REVISI: "Revisi",
