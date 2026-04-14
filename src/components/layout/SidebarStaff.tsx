@@ -43,7 +43,7 @@ export default function Sidebar() {
     {
       name: "Audit Logs",
       icon: ClipboardList,
-      path: "/logs",
+      path: "/staff-lppm/logs",
     },
   ];
 
