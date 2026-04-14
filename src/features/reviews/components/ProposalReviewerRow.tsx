@@ -44,8 +44,8 @@ export default function ProposalReviewerRow({ proposal, onSelect }: Props) {
         </span>
       </td>
 
-      {/* ACTION */}
       <td className="px-6 py-4">
+
         <button
           type="button"
           onClick={() => onSelect(proposal)}
@@ -58,6 +58,7 @@ export default function ProposalReviewerRow({ proposal, onSelect }: Props) {
         >
           Pilih
         </button>
+
       </td>
     </tr>
   );

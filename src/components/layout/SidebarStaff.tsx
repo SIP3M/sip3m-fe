@@ -40,6 +40,11 @@ export default function Sidebar() {
       icon: Wallet,
       path: "/staff-lppm/finance",
     },
+    {
+      name: "Audit Logs",
+      icon: ClipboardList,
+      path: "/logs",
+    },
   ];
 
   const handleLogout = () => {

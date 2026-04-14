@@ -244,12 +244,14 @@ export default function ReviewList() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-left">
+
               <tr>
                 <th className="px-6 py-4">Judul Proposal</th>
                 <th className="px-6 py-4">Kategori</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Aksi</th>
               </tr>
+
             </thead>
 
             <tbody>
