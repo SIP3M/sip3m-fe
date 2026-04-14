@@ -30,6 +30,7 @@ import FinancePage from "@/features/finance/FinancePage";
 import ProposalStaff from "@/features/proposals/ProposalStaff";
 import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
 import ReviewListStaff from "@/features/reviews/ReviewListStaff";
+import LogsPage from "@/features/logs/LogsPage";
 
 export const router = createBrowserRouter([
   {
@@ -90,7 +91,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "plotting-reviewer",
-        element: <ReviewListStaff />,
+        element: <ReviewList />,
       },
       {
         path: "monitoring-project",
@@ -99,6 +100,10 @@ export const router = createBrowserRouter([
       {
         path: "finance",
         element: <FinancePage />,
+      },
+      {
+        path: "logs",
+        element: <LogsPage />,
       },
     ],
   },
@@ -128,7 +133,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "plotting-reviewer",
-        element: <ReviewList />,
+        element: <ReviewListStaff />,
       },
       {
         path: "monitoring-project",
@@ -137,6 +142,10 @@ export const router = createBrowserRouter([
       {
         path: "finance",
         element: <FinancePage />,
+      },
+      {
+        path: "logs",
+        element: <LogsPage />,
       },
     ],
   },

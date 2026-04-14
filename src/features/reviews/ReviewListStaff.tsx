@@ -1,274 +1,178 @@
-// import { useState } from "react"
-// import ProposalReviewerRow from "./components/ProposalReviewerRow"
-// import { ReviewProposal } from "./review.types"
-
-// const proposals: ReviewProposal[] = [
-//   {
-//     id: 1,
-//     title: "Pengembangan Algoritma AI untuk Deteksi Hama Padi di Cirebon",
-//     category: "Penelitian Terapan",
-//     reviewer: "Dr. Ahmad",
-//   },
-//   {
-//     id: 2,
-//     title: "Pemberdayaan UMKM Batik Trusmi Melalui Digital Marketing",
-//     category: "Pengabdian Masyarakat",
-//   },
-// ]
-
-// export default function ReviewListStaff() {
-
-//   const [selectedProposal, setSelectedProposal] =
-//     useState<ReviewProposal | null>(proposals[0])
-
-//   return (
-//     <div className="p-8">
-
-//       {/* HEADER */}
-
-//       <div className="mb-6">
-//         <h1 className="text-2xl font-semibold text-gray-800">
-//           Plotting Reviewer
-//         </h1>
-
-//         <p className="text-sm text-gray-500">
-//           Tentukan reviewer untuk proposal yang masuk.
-//         </p>
-//       </div>
-
-
-//       {/* GRID */}
-
-//       <div className="grid grid-cols-[2fr_1fr] gap-6">
-
-//         {/* LEFT TABLE */}
-
-//         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-
-//           <table className="w-full text-sm">
-
-//             <thead className="bg-gray-50 text-gray-500 text-left">
-
-//               <tr>
-//                 <th className="px-6 py-4">Judul Proposal</th>
-//                 <th className="px-6 py-4">Kategori</th>
-//                 <th className="px-6 py-4">Reviewer Saat Ini</th>
-//                 <th className="px-6 py-4"></th>
-//               </tr>
-
-//             </thead>
-
-//             <tbody>
-
-//               {proposals.map((p) => (
-
-//                 <ProposalReviewerRow
-//                   key={p.id}
-//                   proposal={p}
-//                   onSelect={setSelectedProposal}
-//                   active={selectedProposal?.id === p.id}
-//                 />
-
-//               ))}
-
-//             </tbody>
-
-//           </table>
-
-//         </div>
-
-
-//         {/* RIGHT PANEL */}
-
-//         <div className="bg-white rounded-xl shadow-sm p-6 h-fit">
-
-//           <h2 className="font-semibold text-gray-800 mb-1">
-//             Tugaskan Reviewer
-//           </h2>
-
-//           <p className="text-xs text-gray-400 mb-4">
-//             ID: PROP-001
-//           </p>
-
-//           {selectedProposal && (
-
-//             <>
-
-//               <div className="bg-gray-100 p-3 rounded-lg text-sm mb-5">
-
-//                 <p className="text-gray-400 text-xs mb-1">
-//                   Judul Proposal
-//                 </p>
-
-//                 <p className="text-gray-700">
-//                   {selectedProposal.title}
-//                 </p>
-
-//               </div>
-
-
-//               <div className="mb-4">
-
-//                 <label className="text-sm text-gray-600">
-//                   Pilih Reviewer 1
-//                 </label>
-
-//                 <input
-//                   type="text"
-//                   className="mt-1 w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500"
-//                 />
-
-//               </div>
-
-
-//               <div className="mb-6">
-
-//                 <label className="text-sm text-gray-600">
-//                   Pilih Reviewer 2 (Opsional)
-//                 </label>
-
-//                 <input
-//                   type="text"
-//                   className="mt-1 w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-500"
-//                 />
-
-//               </div>
-
-
-//               <button className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">
-//                 Simpan Penugasan
-//               </button>
-
-//             </>
-
-//           )}
-
-//         </div>
-
-//       </div>
-
-//     </div>
-//   )
-// }
-
 import { useState } from "react"
-import ProposalReviewerRow from "./components/ProposalReviewerRow"
+import { UserCheck } from "lucide-react"
 import { ReviewProposal } from "./review.types"
-import { User } from "lucide-react"
+import { User as UserIcon } from "lucide-react"
 
 const proposals: ReviewProposal[] = [
   {
     id: 1,
     title: "Pengembangan Algoritma AI untuk Deteksi Hama Padi di Cirebon",
     category: "Penelitian Terapan",
+    status: "Accepted",
     reviewer: "Dr. Ahmad"
   },
   {
     id: 2,
     title: "Pemberdayaan UMKM Batik Trusmi Melalui Digital Marketing",
-    category: "Pengabdian Masyarakat"
+    category: "Pengabdian Masyarakat",
+    status: "Under Review",
+    reviewer: "Dr. Sugiyanto",
   }
 ]
 
-export default function ReviewList() {
-
+export default function ReviewListStaff() {
   const [selectedProposal, setSelectedProposal] =
     useState<ReviewProposal | null>(null)
 
+  const [reviewerA, setReviewerA] = useState("")
+  const [reviewerB, setReviewerB] = useState("")
+
   return (
-    <div className="p-8">
+    <div className="p-10 bg-gray-100 min-h-screen">
 
       {/* HEADER */}
-
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-semibold text-gray-800">
           Plotting Reviewer
         </h1>
-
         <p className="text-gray-500 text-sm">
           Tentukan reviewer untuk proposal yang masuk.
         </p>
       </div>
 
-
-      {/* MAIN GRID */}
-
       <div className="grid grid-cols-[2fr_1fr] gap-6">
 
-        {/* LEFT TABLE */}
-
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        {/* TABLE */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
           <table className="w-full text-sm">
 
-            <thead className="bg-gray-50 text-gray-500 text-left">
+            <thead className="bg-gray-50 text-gray-500">
               <tr>
-                <th className="px-6 py-4">Judul Proposal</th>
-                <th className="px-6 py-4">Kategori</th>
-                <th className="px-6 py-4">Reviewer Saat Ini</th>
-                <th className="px-6 py-4">Aksi</th>
+                <th className="px-6 py-4 text-left font-medium">Judul Proposal</th>
+                <th className="px-6 py-4 text-left font-medium">Kategori</th>
+                <th className="px-6 py-4 text-left font-medium">Reviewer Saat Ini</th>
+                <th className="px-6 py-4 text-left font-medium">Aksi</th>
               </tr>
             </thead>
 
             <tbody>
-
-              {proposals.map((p) => (
-                <ProposalReviewerRow
+              {proposals.map((p, index) => (
+                <tr
                   key={p.id}
-                  proposal={p}
-                  onSelect={setSelectedProposal}
-                />
-              ))}
+                  className={`border-t ${index === 0 ? "bg-red-50" : ""}`}
+                >
+                  <td className="px-6 py-4 text-gray-700">{p.title}</td>
 
+                  <td className="px-6 py-4 text-gray-600">{p.category}</td>
+
+                  <td className="px-6 py-4">
+                    {p.status === "Accepted" ? (
+                      <span className="text-green-600 flex items-center gap-2">
+                        <UserCheck size={16} />
+                        Assigned
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 italic">
+                        Belum ada
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => setSelectedProposal(p)}
+                      className={`
+                        px-4 py-1.5 rounded-full text-xs font-medium
+                        ${p.status === "Accepted"
+                          ? "bg-red-500 text-white"
+                          : "border border-gray-300 text-gray-600"}
+                      `}
+                    >
+                      Pilih
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
 
           </table>
-
         </div>
 
-
         {/* RIGHT PANEL */}
-
-        <div className="bg-white rounded-xl shadow-sm min-w-[280px] flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 min-w-[300px]">
 
           {selectedProposal ? (
+            <div>
 
-            <div className="p-6 w-full">
-
-              <h2 className="font-semibold text-lg mb-4">
-                Assign Reviewer
+              <h2 className="font-semibold text-gray-800">
+                Tugaskan Reviewer
               </h2>
 
-              <p className="text-sm text-gray-500 mb-4">
-                {selectedProposal.title}
+              <p className="text-xs text-gray-400 mb-4">
+                ID: PROP-00{selectedProposal.id}
               </p>
 
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                Pilih Reviewer
-              </button>
+              {/* BOX TABLE STYLE */}
+              <div className="bg-gray-100 rounded-lg p-3 mb-4">
+                <p className="text-xs text-gray-400 mb-1">
+                  Judul Proposal
+                </p>
+                <p className="text-sm text-gray-700">
+                  {selectedProposal.title}
+                </p>
+              </div>
+
+              {/* FORM TABLE STYLE */}
+              <div className="space-y-4">
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Pilih Reviewer 1
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewerA}
+                    onChange={(e) => setReviewerA(e.target.value)}
+                    className="w-full h-[42px] rounded-lg border border-gray-300 px-3 text-sm bg-white shadow-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Pilih Reviewer 2 (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewerB}
+                    onChange={(e) => setReviewerB(e.target.value)}
+                    className="w-full h-[42px] rounded-lg border border-gray-300 px-3 text-sm bg-white shadow-sm"
+                  />
+                </div>
+
+                <button
+                  className="w-full h-[44px] rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
+                >
+                  Simpan Penugasan
+                </button>
+
+              </div>
 
             </div>
-
           ) : (
-
-            <div className="text-center text-gray-400 p-6">
-
-              <User size={48} className="mx-auto mb-3"/>
-
+            <div className="text-center text-gray-400 flex flex-col items-center justify-center h-full">
+              <UserIcon size={48} className="mb-3" />
               <p>
                 Pilih proposal di sebelah kiri
                 <br />
                 untuk menugaskan reviewer.
               </p>
-
             </div>
-
           )}
 
         </div>
 
       </div>
-
     </div>
   )
 }
