@@ -11,6 +11,7 @@ import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
+import DosenLayout from "@/components/layout/DosenLayout"
 import RoleLayout from "@/components/layout/RoleLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
@@ -32,6 +33,9 @@ import ProposalStaff from "@/features/proposals/ProposalStaff";
 import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
 import ReviewListStaff from "@/features/reviews/ReviewListStaff";
 import LogsPage from "@/features/logs/LogsPage";
+
+import ProposalDosen from "@/features/proposals/ProposalDosen";
+import ProjectDosen from "@/features/projects/ProjectDosen";
 
 export const router = createBrowserRouter([
   {
@@ -162,7 +166,7 @@ export const router = createBrowserRouter([
     path: "dosen-dashboard",
     element: (
       <ProtectedRoute roles={[APP_ROLES.DOSEN]}>
-        <RoleLayout />
+        <DosenLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -172,8 +176,12 @@ export const router = createBrowserRouter([
       },
       {
         path: "proposals",
-        element: <ProposalList />,
+        element: <ProposalDosen />,
       },
+      {
+        path: "project-dosen",
+        element: <ProjectDosen />,
+      }
     ],
   },
 
