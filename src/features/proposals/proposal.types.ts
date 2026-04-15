@@ -40,3 +40,25 @@ export interface GetAllProposalsResponse {
   data: Proposal[];
   meta: ProposalMeta;
 }
+
+export interface GetProposalByIdResponse {
+  message: string;
+  data: Proposal;
+}
+
+export type ProposalStatusUpdate =
+  | "ADMIN_VERIFIED"
+  | "UNDER_REVIEW"
+  | "REVISION"
+  | "ACCEPTED"
+  | "REJECTED";
+
+export interface UpdateProposalStatusPayload {
+  status: ProposalStatusUpdate;
+  notes?: string;
+}
+
+export interface UpdateProposalStatusResponse {
+  message: string;
+  data: Proposal;
+}

@@ -1,4 +1,5 @@
 import { Eye, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Proposal } from "../proposal.types";
 
 const statusStyle: Record<string, string> = {
@@ -53,7 +54,6 @@ export default function ProposalRow({ proposal, rowNumber }: Props) {
   const researcherName =
     proposal.user?.name || `ID Peneliti: ${proposal.lead_researcher_id}`;
   const researcherNidn = proposal.user?.nidn_nip || "-";
-  const previewLink = proposal.proposal_file_path || proposal.rab_file_path;
 
   return (
     <tr className="hover:bg-gray-50 transition">
@@ -97,19 +97,13 @@ export default function ProposalRow({ proposal, rowNumber }: Props) {
           <FileText size={18} className="text-gray-300" />
         )}
 
-        {previewLink ? (
-          <a
-            href={previewLink}
-            target="_blank"
-            rel="noreferrer"
-            className="text-red-500 hover:text-red-700"
-            aria-label="Lihat detail file"
-          >
-            <Eye size={18} />
-          </a>
-        ) : (
-          <Eye size={18} className="text-gray-300" />
-        )}
+        <Link
+          to={`/proposals/${proposal.id}`}
+          className="text-red-500 hover:text-red-700"
+          aria-label="Lihat detail proposal"
+        >
+          <Eye size={18} />
+        </Link>
       </td>
     </tr>
   );

@@ -3,6 +3,7 @@ export interface ReviewProposal {
   title: string;
   category: string;
   status: string;
+  reviewer: string;
 }
 
 export interface ReviewerOption {

@@ -28,6 +28,7 @@ const mapReviewProposal = (proposal: {
   title: proposal.title,
   category: proposal.skema,
   status: mapProposalStatusLabel(proposal.status),
+  reviewer: "",
 });
 
 const mapReviewerOption = (user: User): ReviewerOption | null => {
@@ -220,12 +221,20 @@ export default function ReviewList() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-10 min-h-screen">
+      {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Plotting Reviewer</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          Plotting Reviewer
+        </h1>
         <p className="text-gray-500 text-sm">
-          Tentukan reviewer untuk proposal yang masuk.
+          Tentukan reviewer untuk proposal yang masuk
         </p>
+
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          Catatan: Proposal hanya bisa ditugaskan ke reviewer jika statusnya
+          <span className="font-semibold"> ADMIN_VERIFIED</span>.
+        </div>
       </div>
 
       {error && (
@@ -241,17 +250,18 @@ export default function ReviewList() {
       )}
 
       <div className="grid grid-cols-[2fr_1fr] gap-6">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        {/* TABLE */}
+        <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-left">
-
+            <thead className="bg-gray-50 text-gray-500">
               <tr>
-                <th className="px-6 py-4">Judul Proposal</th>
-                <th className="px-6 py-4">Kategori</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Aksi</th>
+                <th className="px-6 py-4 text-left font-medium">
+                  Judul Proposal
+                </th>
+                <th className="px-6 py-4 text-left font-medium">Kategori</th>
+                <th className="px-6 py-4 text-left font-medium">Status</th>
+                <th className="px-6 py-4 text-left font-medium">Aksi</th>
               </tr>
-
             </thead>
 
             <tbody>
@@ -286,24 +296,32 @@ export default function ReviewList() {
           </table>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm min-w-[280px]">
+        {/* RIGHT PANEL */}
+        <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 min-w-[280px] flex flex-col justify-between">
           {selectedProposal ? (
-            <div className="p-6 w-full">
-              <h2 className="font-semibold text-lg mb-2">Assign Reviewer</h2>
-              <p className="text-sm text-gray-500 mb-4">
-                {selectedProposal.title}
+            <div>
+              <h2 className="font-semibold text-gray-800 mb-1">
+                Tugaskan Reviewer
+              </h2>
+
+              <p className="text-xs text-gray-400 mb-4">
+                ID: PROP-00{selectedProposal.id}
               </p>
+
+              <div className="bg-gray-100 p-3 rounded-lg text-sm text-gray-700 mb-4">
+                {selectedProposal.title}
+              </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">
-                    Reviewer 1
+                  <label className="mb-1 block text-xs text-gray-500">
+                    Pilih Reviewer 1
                   </label>
                   <select
                     value={reviewerA}
                     onChange={(e) => setReviewerA(e.target.value)}
                     disabled={isLoadingReviewers || isAssigning}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
                   >
                     <option value="">Pilih reviewer pertama</option>
                     {reviewers.map((reviewer) => (
@@ -315,14 +333,14 @@ export default function ReviewList() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">
-                    Reviewer 2
+                  <label className="mb-1 block text-xs text-gray-500">
+                    Pilih Reviewer 2 (Opsional)
                   </label>
                   <select
                     value={reviewerB}
                     onChange={(e) => setReviewerB(e.target.value)}
                     disabled={isLoadingReviewers || isAssigning}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
                   >
                     <option value="">Pilih reviewer kedua</option>
                     {reviewerBOptions.map((reviewer) => (
@@ -341,11 +359,11 @@ export default function ReviewList() {
                   }
                   className={`w-full rounded-lg px-4 py-2 text-white ${
                     isAssigning || isLoadingReviewers || !isEligibleProposal
-                      ? "bg-blue-300 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
+                      ? "bg-red-300 cursor-not-allowed"
+                      : "bg-red-500 hover:bg-red-600"
                   }`}
                 >
-                  {isAssigning ? "Menyimpan..." : "Assign 2 Reviewer"}
+                  {isAssigning ? "Menyimpan..." : "Simpan Penugasan"}
                 </button>
 
                 {!isEligibleProposal && (
@@ -357,15 +375,13 @@ export default function ReviewList() {
               </div>
             </div>
           ) : (
-            <div className="h-full min-h-[220px] flex items-center justify-center text-center text-gray-400 p-6">
-              <div>
-                <UserIcon size={48} className="mx-auto mb-3" />
-                <p>
-                  Pilih proposal di sebelah kiri
-                  <br />
-                  untuk menugaskan reviewer.
-                </p>
-              </div>
+            <div className="text-center text-gray-400 flex flex-col items-center justify-center h-full">
+              <UserIcon size={48} className="mb-3" />
+              <p>
+                Pilih proposal di sebelah kiri
+                <br />
+                untuk menugaskan reviewer.
+              </p>
             </div>
           )}
         </div>
