@@ -32,7 +32,7 @@ export default function Sidebar() {
     },
     {
       name: "Plotting Reviewer",
-      icon: Users,
+      icon: UserCheck,
       path: "/plotting-reviewer",
     },
     {

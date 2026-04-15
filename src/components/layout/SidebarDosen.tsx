@@ -7,8 +7,6 @@ import {
   Wallet,
   ClipboardList,
   LogOut,
-  ClipboardCheck,
-  SquareCheck,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -20,17 +18,17 @@ export default function Sidebar() {
     {
       name: "Dashboard",
       icon: LayoutDashboard,
-      path: "/staff-lppm/staff-dashboard",
+      path: "/dosen-dashboard",
     },
     {
-      name: "Verifikasi Proposal",
-      icon: ClipboardCheck,
-      path: "/staff-lppm/verifikasi-proposal",
+      name: "Proposal Saya",
+      icon: FileText,
+      path: "/dosen-dashboard/proposals",
     },
     {
-      name: "Plotting Reviewer",
-      icon: UserCheck,
-      path: "/staff-lppm/plotting-reviewer",
+      name: "Proyek Saya",
+      icon: Activity,
+      path: "/dosen-dashboard/project-dosen",
     },
     {
       name: "Monitoring Proyek",
@@ -74,7 +72,11 @@ export default function Sidebar() {
         <div className="mt-6 space-y-2 px-3">
           {menus.map((menu, index) => {
             const Icon = menu.icon;
-            const active = location.pathname === menu.path;
+            const isDashboard = menu.path === "/dosen-dashboard";
+
+const active = isDashboard
+  ? location.pathname === menu.path
+  : location.pathname.startsWith(menu.path);
 
             return (
               <div
