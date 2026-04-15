@@ -28,6 +28,7 @@ const mapReviewProposal = (proposal: {
   title: proposal.title,
   category: proposal.skema,
   status: mapProposalStatusLabel(proposal.status),
+  reviewer: "",
 });
 
 const mapReviewerOption = (user: User): ReviewerOption | null => {
@@ -228,6 +229,11 @@ export default function ReviewList() {
         <p className="text-gray-500 text-sm">
           Tentukan reviewer untuk proposal yang masuk
         </p>
+
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          Catatan: Proposal hanya bisa ditugaskan ke reviewer jika statusnya
+          <span className="font-semibold"> ADMIN_VERIFIED</span>.
+        </div>
       </div>
 
       {error && (

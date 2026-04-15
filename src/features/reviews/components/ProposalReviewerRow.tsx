@@ -14,7 +14,11 @@ const statusStyle: Record<string, string> = {
 };
 
 const getStatusKey = (status: string) =>
-  status.trim().replace(/\s+/g, "_").toUpperCase();
+  status
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 
 interface Props {
   proposal: ReviewProposal;
@@ -45,7 +49,6 @@ export default function ProposalReviewerRow({ proposal, onSelect }: Props) {
       </td>
 
       <td className="px-6 py-4">
-
         <button
           type="button"
           onClick={() => onSelect(proposal)}
@@ -58,7 +61,6 @@ export default function ProposalReviewerRow({ proposal, onSelect }: Props) {
         >
           Pilih
         </button>
-
       </td>
     </tr>
   );

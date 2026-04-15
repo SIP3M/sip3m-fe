@@ -23,6 +23,7 @@ import AddUserPage from "@/features/users/AddUserPage";
 import UserDetailPage from "@/features/users/UserDetailPage";
 import EditUserPage from "@/features/users/EditUserPage";
 import ProposalList from "@/features/proposals/ProposalList";
+import ProposalDetail from "@/features/proposals/ProposalDetail";
 import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
 import FinancePage from "@/features/finance/FinancePage";
@@ -88,6 +89,10 @@ export const router = createBrowserRouter([
       {
         path: "proposals",
         element: <ProposalList />,
+      },
+      {
+        path: "proposals/:id",
+        element: <ProposalDetail />,
       },
       {
         path: "plotting-reviewer",
