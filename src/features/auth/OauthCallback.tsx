@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "./auth.store";
 import { APP_ROLES } from "@/constant/roles";
+import { setAuthSession } from "@/services/storage";
 
 const getDashboardPathByRole = (role?: string) => {
   if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
@@ -27,8 +28,11 @@ const OAuthCallback = () => {
       try {
         const user = JSON.parse(decodeURIComponent(userDataRaw));
 
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("userData", JSON.stringify(user));
+        setAuthSession({
+          token,
+          user,
+          rememberMe: true,
+        });
 
         setUser(user);
 
