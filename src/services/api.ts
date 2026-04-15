@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAccessToken } from "./storage";
 
 export const api = axios.create({
   baseURL: "https://sip3m-be.vercel.app/api",
@@ -10,8 +11,7 @@ export const api = axios.create({
 // Menambahkan Token Otomatis ke setiap Request
 api.interceptors.request.use(
   (config) => {
-    // Ambil token dari penyimpanan (localStorage)
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;

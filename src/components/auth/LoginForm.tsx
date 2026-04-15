@@ -13,6 +13,8 @@ interface LoginFormProps {
   form: { email: string; password: string };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleLogin: (e: React.FormEvent) => void;
+  rememberMe: boolean;
+  handleRememberMeChange: (checked: boolean) => void;
   isLoading?: boolean;
 }
 
@@ -20,6 +22,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
   form,
   handleChange,
   handleLogin,
+  rememberMe,
+  handleRememberMeChange,
   isLoading,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -102,7 +106,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 value={form.password}
                 onChange={handleChange}
                 type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
+                autoComplete="current-password"
                 data-lpignore="true"
                 placeholder="Masukkan Password"
                 className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
@@ -121,7 +125,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
           {/* REMEMBER */}
           <div className="flex justify-between items-center text-[12px] mt-2">
             <label className="flex items-center gap-2 text-gray-500">
-              <input type="checkbox" className="w-4 h-3" />
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => handleRememberMeChange(e.target.checked)}
+                className="w-4 h-3"
+              />
               Ingat saya
             </label>
 

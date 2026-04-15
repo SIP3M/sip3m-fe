@@ -8,6 +8,7 @@ import { useAuthStore } from "./auth.store";
 import { motion } from "framer-motion";
 import { APP_ROLES } from "@/constant/roles";
 import { User } from "./auth.types";
+import { setAuthSession } from "@/services/storage";
 
 const getDashboardPathByRole = (role?: string) => {
   if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
@@ -28,6 +29,7 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -49,6 +51,7 @@ const LoginPage = () => {
       const payload = {
         identifier: form.email,
         password: form.password,
+        remember_me: rememberMe,
       };
 
       const response = await login(payload);
@@ -56,8 +59,11 @@ const LoginPage = () => {
       const token = response.data.token;
       const user = response.data.user;
 
-      localStorage.setItem("accessToken", token);
-      localStorage.setItem("userData", JSON.stringify(user));
+      setAuthSession({
+        token,
+        user,
+        rememberMe,
+      });
 
       setUser(user);
 
@@ -109,6 +115,8 @@ const LoginPage = () => {
           form={form}
           handleChange={handleChange}
           handleLogin={handleLogin}
+          rememberMe={rememberMe}
+          handleRememberMeChange={setRememberMe}
           isLoading={isLoading}
         />
       </div>
