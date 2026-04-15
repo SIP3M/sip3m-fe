@@ -222,11 +222,10 @@ export default function ReviewList() {
 
   return (
     <div className="p-10 min-h-screen">
+
       {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">
-          Plotting Reviewer
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-800">Plotting Reviewer</h1>
         <p className="text-gray-500 text-sm">
           Tentukan reviewer untuk proposal yang masuk
         </p>
@@ -250,14 +249,14 @@ export default function ReviewList() {
       )}
 
       <div className="grid grid-cols-[2fr_1fr] gap-6">
+
         {/* TABLE */}
         <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">
+
             <thead className="bg-gray-50 text-gray-500">
               <tr>
-                <th className="px-6 py-4 text-left font-medium">
-                  Judul Proposal
-                </th>
+                <th className="px-6 py-4 text-left font-medium">Judul Proposal</th>
                 <th className="px-6 py-4 text-left font-medium">Kategori</th>
                 <th className="px-6 py-4 text-left font-medium">Status</th>
                 <th className="px-6 py-4 text-left font-medium">Aksi</th>
@@ -267,19 +266,13 @@ export default function ReviewList() {
             <tbody>
               {isLoadingProposals ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-8 text-center text-gray-500"
-                  >
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                     Memuat proposal...
                   </td>
                 </tr>
               ) : proposals.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-8 text-center text-gray-500"
-                  >
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                     Tidak ada proposal.
                   </td>
                 </tr>
@@ -293,11 +286,13 @@ export default function ReviewList() {
                 ))
               )}
             </tbody>
+
           </table>
         </div>
 
         {/* RIGHT PANEL */}
         <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 min-w-[280px] flex flex-col justify-between">
+
           {selectedProposal ? (
             <div>
               <h2 className="font-semibold text-gray-800 mb-1">
@@ -368,8 +363,7 @@ export default function ReviewList() {
 
                 {!isEligibleProposal && (
                   <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
-                    Proposal harus berstatus ADMIN_VERIFIED sebelum reviewer
-                    bisa ditugaskan.
+                    Proposal harus berstatus ADMIN_VERIFIED sebelum reviewer bisa ditugaskan.
                   </p>
                 )}
               </div>
@@ -384,7 +378,9 @@ export default function ReviewList() {
               </p>
             </div>
           )}
+
         </div>
+
       </div>
     </div>
   );
