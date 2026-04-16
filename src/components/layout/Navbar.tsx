@@ -1,4 +1,4 @@
-import { Bell } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 
 export default function Navbar() {
@@ -9,12 +9,20 @@ export default function Navbar() {
 
   return (
     <div className="w-full bg-white px-8 py-4 flex items-center justify-between shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
+      
       {/* SEARCH */}
-      <input
-        type="text"
-        placeholder="Cari proposal, peneliti, atau dokumen..."
-        className="w-100 px-4 py-2 bg-gray-100 rounded-lg outline-none text-sm"
-      />
+      <div className="relative">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        />
+
+        <input
+          type="text"
+          placeholder="Cari proposal, peneliti, atau dokumen..."
+          className="w-100 pl-9 pr-4 py-2 bg-gray-100 rounded-lg outline-none text-sm"
+        />
+      </div>
 
       {/* RIGHT */}
       <div className="flex items-center gap-6">

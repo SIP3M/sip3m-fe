@@ -8,8 +8,10 @@ import {
   ClipboardList,
   LogOut,
   Upload,
+  Globe,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Global } from "recharts";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -37,14 +39,9 @@ export default function Sidebar() {
       path: "/dosen-dashboard/laporan",
     },
     {
-      name: "Keuangan & Hibah",
-      icon: Wallet,
-      path: "/staff-lppm/finance",
-    },
-    {
-      name: "Audit Logs",
-      icon: ClipboardList,
-      path: "/staff-lppm/logs",
+      name: "Repository Publik",
+      icon: Globe,
+      path: "/dosen-dashboard/repository-publik",
     },
   ];
 

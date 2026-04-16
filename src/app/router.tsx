@@ -37,6 +37,7 @@ import LogsPage from "@/features/logs/LogsPage";
 import ProposalDosen from "@/features/proposals/ProposalDosen";
 import ProjectDosen from "@/features/projects/ProjectDosen";
 import Laporan from "@/features/laporan/Laporan";
+import PublicationList from "@/features/repository/PublicationList";
 
 export const router = createBrowserRouter([
   {
@@ -186,6 +187,10 @@ export const router = createBrowserRouter([
       {
         path: "laporan",
         element: <Laporan />
+      },
+      {
+        path: "repository-publik",
+        element: <PublicationList />
       }
     ],
   },
