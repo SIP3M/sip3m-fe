@@ -36,6 +36,7 @@ import LogsPage from "@/features/logs/LogsPage";
 
 import ProposalDosen from "@/features/proposals/ProposalDosen";
 import ProjectDosen from "@/features/projects/ProjectDosen";
+import Laporan from "@/features/laporan/Laporan";
 
 export const router = createBrowserRouter([
   {
@@ -181,6 +182,10 @@ export const router = createBrowserRouter([
       {
         path: "project-dosen",
         element: <ProjectDosen />,
+      },
+      {
+        path: "laporan",
+        element: <Laporan />
       }
     ],
   },

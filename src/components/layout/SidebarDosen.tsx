@@ -7,6 +7,7 @@ import {
   Wallet,
   ClipboardList,
   LogOut,
+  Upload,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -31,9 +32,9 @@ export default function Sidebar() {
       path: "/dosen-dashboard/project-dosen",
     },
     {
-      name: "Monitoring Proyek",
-      icon: Activity,
-      path: "/staff-lppm/monitoring-project",
+      name: "Laporan",
+      icon: Upload,
+      path: "/dosen-dashboard/laporan",
     },
     {
       name: "Keuangan & Hibah",
