@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { registerDosen } from "./auth.api";
 import { RegisterDosenPayload } from "./auth.types";
 import axios from "axios";
+import { CheckCircle } from "lucide-react";
+
 import type {
   InputProps,
   RegisterDosenForm,
@@ -61,23 +63,23 @@ const RegisterDosenPage = () => {
   /* ================= VALIDASI ================= */
   const isStep1Valid = Boolean(
     form.nama &&
-    form.tempat &&
-    form.tanggal &&
-    form.jk &&
-    form.alamat &&
-    form.nohp,
+      form.tempat &&
+      form.tanggal &&
+      form.jk &&
+      form.alamat &&
+      form.nohp,
   );
 
   const isStep2Valid = Boolean(form.nidn && form.fakultas && form.prodi);
 
   const isStep3Valid = Boolean(
     form.username &&
-    form.email.includes("@") &&
-    form.email.includes(".") &&
-    form.password &&
-    form.confirm &&
-    form.password === form.confirm &&
-    form.agree,
+      form.email.includes("@") &&
+      form.email.includes(".") &&
+      form.password &&
+      form.confirm &&
+      form.password === form.confirm &&
+      form.agree,
   );
 
   /* ================= SUBMIT API ================= */
@@ -106,7 +108,6 @@ const RegisterDosenPage = () => {
 
       await registerDosen(payload);
 
-      // jika sukses
       setStep(4);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -132,6 +133,34 @@ const RegisterDosenPage = () => {
           <p className="text-gray-500 text-sm mb-6">
             Sistem Informasi LPPM Universitas Muhammadiyah Cirebon
           </p>
+
+          {/* STEP INDICATOR */}
+          <div className="flex justify-center items-center gap-3 mb-6">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 flex items-center justify-center rounded-full text-sm transition-all duration-300
+                  ${
+                    step === s
+                      ? "bg-[#e10600] text-white scale-110"
+                      : step > s
+                        ? "bg-green-100 text-green-600"
+                        : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {step > s ? <CheckCircle size={16} /> : s}
+                </div>
+
+                {s !== 3 && (
+                  <div
+                    className={`w-10 h-[2px] ${
+                      step > s ? "bg-green-400" : "bg-gray-300"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </>
       )}
 
@@ -146,18 +175,22 @@ const RegisterDosenPage = () => {
             <span className="text-green-600 text-2xl">✓</span>
           </div>
 
-          <h2 className="text-xl font-semibold mb-3">Registrasi Berhasil</h2>
+          <h2 className="text-xl font-semibold mb-3">
+            Registrasi Berhasil
+          </h2>
 
           <p className="text-gray-500 text-sm mb-6">
             Silakan menunggu verifikasi dari Admin LPPM.
           </p>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/")}
             className="w-full bg-[#e10600] text-white py-3 rounded-xl"
           >
             Kembali ke Beranda
-          </button>
+          </motion.button>
         </motion.div>
       )}
 
@@ -165,6 +198,7 @@ const RegisterDosenPage = () => {
       {step !== 4 && (
         <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
           <AnimatePresence mode="wait">
+            {/* STEP 1 */}
             {step === 1 && (
               <motion.div
                 key="step1"
@@ -174,67 +208,46 @@ const RegisterDosenPage = () => {
                 transition={{ duration: 0.4 }}
                 className="space-y-4"
               >
-                <Input
-                  name="nama"
-                  label="Nama Lengkap*"
-                  value={form.nama}
-                  onChange={handleChange}
-                />
-                <Input
-                  name="tempat"
-                  label="Tempat Lahir*"
-                  value={form.tempat}
-                  onChange={handleChange}
-                />
-                <Input
-                  name="tanggal"
-                  type="date"
-                  label="Tanggal Lahir*"
-                  value={form.tanggal}
-                  onChange={handleChange}
-                />
+                <Input name="nama" label="Nama Lengkap*" value={form.nama} onChange={handleChange}/>
+                <Input name="tempat" label="Tempat Lahir*" value={form.tempat} onChange={handleChange}/>
+                <Input name="tanggal" type="date" label="Tanggal Lahir*" value={form.tanggal} onChange={handleChange}/>
 
+                {/* FIX: JENIS KELAMIN */}
                 <div>
-                  <label className="text-sm">Jenis Kelamin*</label>
-                  <div className="flex gap-4 mt-2 text-sm">
-                    <label>
+                  <label className="text-sm text-gray-600">Jenis Kelamin*</label>
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="jk"
                         value="Laki-laki"
                         checked={form.jk === "Laki-laki"}
                         onChange={handleChange}
-                      />{" "}
-                      Laki-laki
+                        className="accent-[#e10600]"
+                      />
+                      <span className="text-sm">Laki-laki</span>
                     </label>
-                    <label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="jk"
                         value="Perempuan"
                         checked={form.jk === "Perempuan"}
                         onChange={handleChange}
-                      />{" "}
-                      Perempuan
+                        className="accent-[#e10600]"
+                      />
+                      <span className="text-sm">Perempuan</span>
                     </label>
                   </div>
                 </div>
 
-                <Textarea
-                  name="alamat"
-                  label="Alamat*"
-                  value={form.alamat}
-                  onChange={handleChange}
-                />
-                <Input
-                  name="nohp"
-                  label="Nomor HP*"
-                  value={form.nohp}
-                  onChange={handleChange}
-                />
+                <Textarea name="alamat" label="Alamat*" value={form.alamat} onChange={handleChange}/>
+                <Input name="nohp" label="Nomor HP*" value={form.nohp} onChange={handleChange}/>
               </motion.div>
             )}
 
+            {/* STEP 2 */}
             {step === 2 && (
               <motion.div
                 key="step2"
@@ -244,27 +257,13 @@ const RegisterDosenPage = () => {
                 transition={{ duration: 0.4 }}
                 className="space-y-4"
               >
-                <Input
-                  name="nidn"
-                  label="NIDN*"
-                  value={form.nidn}
-                  onChange={handleChange}
-                />
-                <Select
-                  name="fakultas"
-                  label="Fakultas*"
-                  value={form.fakultas}
-                  onChange={handleChange}
-                />
-                <Select
-                  name="prodi"
-                  label="Program Studi*"
-                  value={form.prodi}
-                  onChange={handleChange}
-                />
+                <Input name="nidn" label="NIDN*" value={form.nidn} onChange={handleChange}/>
+                <Select name="fakultas" label="Fakultas*" value={form.fakultas} onChange={handleChange}/>
+                <Select name="prodi" label="Program Studi*" value={form.prodi} onChange={handleChange}/>
               </motion.div>
             )}
 
+            {/* STEP 3 */}
             {step === 3 && (
               <motion.div
                 key="step3"
@@ -274,35 +273,10 @@ const RegisterDosenPage = () => {
                 transition={{ duration: 0.4 }}
                 className="space-y-4"
               >
-                <Input
-                  name="username"
-                  label="Username*"
-                  value={form.username}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  name="email"
-                  type="email"
-                  label="Email Resmi/Aktif*"
-                  placeholder="contoh@umc.ac.id"
-                  value={form.email}
-                  onChange={handleChange}
-                />
-                <Input
-                  name="password"
-                  type="password"
-                  label="Password*"
-                  value={form.password}
-                  onChange={handleChange}
-                />
-                <Input
-                  name="confirm"
-                  type="password"
-                  label="Konfirmasi Password*"
-                  value={form.confirm}
-                  onChange={handleChange}
-                />
+                <Input name="username" label="Username*" value={form.username} onChange={handleChange}/>
+                <Input name="email" type="email" label="Email*" value={form.email} onChange={handleChange}/>
+                <Input name="password" type="password" label="Password*" value={form.password} onChange={handleChange}/>
+                <Input name="confirm" type="password" label="Konfirmasi Password*" value={form.confirm} onChange={handleChange}/>
 
                 <label className="flex gap-2 text-sm">
                   <input
@@ -314,20 +288,32 @@ const RegisterDosenPage = () => {
                   Saya menyetujui kebijakan privasi
                 </label>
 
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error && (
+                  <motion.p
+                    initial={{ x: -10 }}
+                    animate={{ x: 0 }}
+                    className="text-red-500 text-sm"
+                  >
+                    {error}
+                  </motion.p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
 
           <div className="flex gap-4 mt-8">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={prevStep}
               className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl"
             >
               Kembali
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => {
                 if (step === 3) return handleSubmit();
                 nextStep();
@@ -338,14 +324,14 @@ const RegisterDosenPage = () => {
                 (step === 2 && !isStep2Valid) ||
                 (step === 3 && !isStep3Valid)
               }
-              className="w-full py-2 rounded-xl text-white bg-[#e10600]"
+              className="w-full py-2 rounded-xl text-white bg-[#e10600] disabled:opacity-50"
             >
               {loading
                 ? "Memproses..."
                 : step === 3
                   ? "Daftar sebagai Dosen"
                   : "Lanjut"}
-            </button>
+            </motion.button>
           </div>
         </div>
       )}
@@ -362,7 +348,9 @@ const Input = ({ label, ...props }: InputProps) => (
     <label className="text-sm text-gray-600">{label}</label>
     <input
       {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
+      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]
+      focus:outline-none focus:ring-2 focus:ring-[#e10600]/30
+      focus:border-[#e10600] transition"
     />
   </div>
 );
@@ -372,7 +360,9 @@ const Textarea = ({ label, ...props }: TextareaProps) => (
     <label className="text-sm text-gray-600">{label}</label>
     <textarea
       {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
+      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]
+      focus:outline-none focus:ring-2 focus:ring-[#e10600]/30
+      focus:border-[#e10600] transition"
     />
   </div>
 );
@@ -382,7 +372,9 @@ const Select = ({ label, ...props }: SelectProps) => (
     <label className="text-sm text-gray-600">{label}</label>
     <select
       {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]"
+      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]
+      focus:outline-none focus:ring-2 focus:ring-[#e10600]/30
+      focus:border-[#e10600] transition"
     >
       <option value="">Pilih</option>
       <option value="Fakultas 1">Fakultas 1</option>
