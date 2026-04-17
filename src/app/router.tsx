@@ -12,7 +12,6 @@ import { APP_ROLES } from "@/constant/roles";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
 import DosenLayout from "@/components/layout/DosenLayout";
-import RoleLayout from "@/components/layout/RoleLayout";
 import ReviewerLayout from "@/components/layout/ReviewerLayout";
 import EksternalLayout from "@/components/layout/EksternalLayout";
 
@@ -29,6 +28,7 @@ import ProposalList from "@/features/proposals/ProposalList";
 import ProposalDetail from "@/features/proposals/ProposalDetail";
 import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
+import ProjectDetail from "@/features/projects/ProjectDetail";
 import FinancePage from "@/features/finance/FinancePage";
 
 import ProposalStaff from "@/features/proposals/ProposalStaff";
@@ -116,6 +116,10 @@ export const router = createBrowserRouter([
         element: <ProjectList />,
       },
       {
+        path: "monitoring-project/:id",
+        element: <ProjectDetail />,
+      },
+      {
         path: "finance",
         element: <FinancePage />,
       },
@@ -156,6 +160,10 @@ export const router = createBrowserRouter([
       {
         path: "monitoring-project",
         element: <ProjectList />,
+      },
+      {
+        path: "monitoring-project/:id",
+        element: <ProjectDetail />,
       },
       {
         path: "finance",
@@ -226,9 +234,9 @@ export const router = createBrowserRouter([
         element: <ReviewListReviewer />,
       },
       {
-        path :"riwayat-review",
+        path: "riwayat-review",
         element: <HistoryReview />,
-      }
+      },
     ],
   },
 

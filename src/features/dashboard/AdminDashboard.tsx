@@ -1,9 +1,18 @@
 import StatCard from "@/components/dashboard/StatCard";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { FileText, Users, CheckCircle, Clock } from "lucide-react";
+import { getAdminDashboard } from "./dashboard.api";
+import {
+  AdminDashboardData,
+  AdminStatusChartItem,
+  ProposalStatusKey,
+} from "./dashboard.types";
 
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
@@ -12,49 +21,112 @@ import {
   Line,
 } from "recharts";
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg shadow-md px-3 py-2 text-xs">
-        <p className="font-medium text-gray-700 mb-1">
-          {label}
-        </p>
-        <p className="text-gray-500">
-          Jumlah:{" "}
-          <span className="font-semibold text-gray-800">
-            {payload[0].value}
-          </span>
-        </p>
-      </div>
-    );
-  }
-  return null;
+const EMPTY_DASHBOARD_DATA: AdminDashboardData = {
+  summaryCards: {
+    totalProposal: 0,
+    dosenAktif: 0,
+    proposalDisetujui: 0,
+    menungguReview: 0,
+  },
+  statusChart: [],
+  kategoriChart: [],
+  trendBulanan: [],
 };
 
-const statusData = [
-  { name: "Draft", value: 1, fill: "#94a3b8" },
-  { name: "Review", value: 1, fill: "#facc15" },
-  { name: "Revisi", value: 1, fill: "#fb923c" },
-  { name: "Disetujui", value: 1, fill: "#22c55e" },
-  { name: "Ditolak", value: 1, fill: "#ef4444" },
-];
+const statusLabelMap: Record<string, string> = {
+  DRAFT: "Draft",
+  SUBMITTED: "Submitted",
+  ADMIN_VERIFIED: "Admin Verified",
+  UNDER_REVIEW: "Under Review",
+  REVISION: "Revision",
+  ACCEPTED: "Disetujui",
+  REJECTED: "Ditolak",
+};
 
-const kategoriData = [
-  { name: "Penelitian Dasar", value: 12 },
-  { name: "Penelitian Terapan", value: 8 },
-  { name: "Pengabdian", value: 15 },
-];
+const statusColorMap: Record<string, string> = {
+  DRAFT: "#94a3b8",
+  SUBMITTED: "#fb923c",
+  ADMIN_VERIFIED: "#3b82f6",
+  UNDER_REVIEW: "#facc15",
+  REVISION: "#f97316",
+  ACCEPTED: "#22c55e",
+  REJECTED: "#ef4444",
+};
 
-const lineData = [
-  { name: "Jan", value: 4 },
-  { name: "Feb", value: 7 },
-  { name: "Mar", value: 5 },
-  { name: "Apr", value: 12 },
-  { name: "May", value: 9 },
-  { name: "Jun", value: 15 },
-];
+const getStatusKey = (status: ProposalStatusKey) =>
+  String(status)
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+const mapStatusChartData = (items: AdminStatusChartItem[]) => {
+  return items.map((item) => {
+    const key = getStatusKey(item.status);
+
+    return {
+      name: statusLabelMap[key] || key,
+      value: item.jumlah,
+      fill: statusColorMap[key] || "#94a3b8",
+    };
+  });
+};
 
 export default function AdminDashboard() {
+  const [dashboardData, setDashboardData] =
+    useState<AdminDashboardData>(EMPTY_DASHBOARD_DATA);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await getAdminDashboard();
+        setDashboardData(response.data);
+      } catch (err: unknown) {
+        const message = axios.isAxiosError(err)
+          ? err.response?.data?.message ||
+            err.message ||
+            "Gagal memuat data dashboard admin."
+          : err instanceof Error
+            ? err.message
+            : "Gagal memuat data dashboard admin.";
+
+        setError(message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadDashboard();
+  }, []);
+
+  const statusData = useMemo(
+    () => mapStatusChartData(dashboardData.statusChart),
+    [dashboardData.statusChart],
+  );
+
+  const kategoriData = useMemo(
+    () =>
+      dashboardData.kategoriChart.map((item) => ({
+        name: item.skema || "Tanpa Skema",
+        value: item.jumlah,
+      })),
+    [dashboardData.kategoriChart],
+  );
+
+  const lineData = useMemo(
+    () =>
+      dashboardData.trendBulanan.map((item) => ({
+        name: item.bulan,
+        value: item.jumlah,
+      })),
+    [dashboardData.trendBulanan],
+  );
+
   return (
     <div className="space-y-6">
       {/* HEADER */}
@@ -65,12 +137,18 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* STAT */}
       <div className="grid grid-cols-4 gap-6">
         <StatCard
           title="Total Proposal"
-          value="5"
-          desc="+12% bulan ini"
+          value={isLoading ? "..." : dashboardData.summaryCards.totalProposal}
+          desc="Total proposal terdaftar"
           icon={<FileText size={18} />}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
@@ -78,8 +156,8 @@ export default function AdminDashboard() {
 
         <StatCard
           title="Dosen Aktif"
-          value="142"
-          desc="+4 orang baru"
+          value={isLoading ? "..." : dashboardData.summaryCards.dosenAktif}
+          desc="Dosen aktif di sistem"
           icon={<Users size={18} />}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
@@ -87,8 +165,10 @@ export default function AdminDashboard() {
 
         <StatCard
           title="Proposal Disetujui"
-          value="24"
-          desc="Tahun Ajaran 2023/2024"
+          value={
+            isLoading ? "..." : dashboardData.summaryCards.proposalDisetujui
+          }
+          desc="Status accepted"
           icon={<CheckCircle size={18} />}
           iconBg="bg-green-100"
           iconColor="text-green-600"
@@ -96,8 +176,8 @@ export default function AdminDashboard() {
 
         <StatCard
           title="Menunggu Review"
-          value="8"
-          desc="Perlu tindakan segera"
+          value={isLoading ? "..." : dashboardData.summaryCards.menungguReview}
+          desc="Proposal menunggu review"
           icon={<Clock size={18} />}
           iconBg="bg-orange-100"
           iconColor="text-orange-600"
@@ -112,17 +192,20 @@ export default function AdminDashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={statusData}>
               <XAxis dataKey="name" tick={{ fontSize: 13 }} />
-              <YAxis tick={{fontSize:13}} />
+              <YAxis tick={{ fontSize: 13 }} allowDecimals={false} />
               <Tooltip
-                cursor={false} 
+                cursor={false}
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",
                   borderRadius: "8px",
                 }}
-                content={<CustomTooltip />}
               />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {statusData.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -140,13 +223,12 @@ export default function AdminDashboard() {
                 tick={{ fontSize: 12 }}
               />
               <Tooltip
-                cursor={false} 
+                cursor={false}
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",
                   borderRadius: "8px",
                 }}
-                content={<CustomTooltip />}
               />
               <Bar dataKey="value" fill="#e11d48" radius={[6, 6, 6, 6]} />
             </BarChart>
@@ -161,7 +243,7 @@ export default function AdminDashboard() {
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={lineData}>
             <XAxis dataKey="name" />
-            <YAxis />
+            <YAxis allowDecimals={false} />
             <Tooltip />
 
             <Line
