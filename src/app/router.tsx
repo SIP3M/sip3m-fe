@@ -11,8 +11,10 @@ import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
-import DosenLayout from "@/components/layout/DosenLayout"
+import DosenLayout from "@/components/layout/DosenLayout";
 import RoleLayout from "@/components/layout/RoleLayout";
+import ReviewerLayout from "@/components/layout/ReviewerLayout";
+import EksternalLayout from "@/components/layout/EksternalLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
 import StaffDashboard from "@/features/dashboard/StaffDashboard";
@@ -38,6 +40,11 @@ import ProposalDosen from "@/features/proposals/ProposalDosen";
 import ProjectDosen from "@/features/projects/ProjectDosen";
 import Laporan from "@/features/laporan/Laporan";
 import PublicationList from "@/features/repository/PublicationList";
+
+import ReviewDetailPage from "@/features/dashboard/ReviewDetailPage";
+import ReviewListReviewer from "@/features/reviews/ReviewListReviewer";
+import HistoryReview from "@/features/reviews/HistoryReview";
+import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
 
 export const router = createBrowserRouter([
   {
@@ -186,12 +193,12 @@ export const router = createBrowserRouter([
       },
       {
         path: "laporan",
-        element: <Laporan />
+        element: <Laporan />,
       },
       {
         path: "repository-publik",
-        element: <PublicationList />
-      }
+        element: <PublicationList />,
+      },
     ],
   },
 
@@ -202,7 +209,7 @@ export const router = createBrowserRouter([
     path: "reviewer-dashboard",
     element: (
       <ProtectedRoute roles={[APP_ROLES.REVIEWER]}>
-        <RoleLayout />
+        <ReviewerLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -211,9 +218,17 @@ export const router = createBrowserRouter([
         element: <ReviewerDashboard />,
       },
       {
-        path: "reviews",
-        element: <ReviewList />,
+        path: "reviews/:id",
+        element: <ReviewDetailPage />,
       },
+      {
+        path: "proposal-saya",
+        element: <ReviewListReviewer />,
+      },
+      {
+        path :"riwayat-review",
+        element: <HistoryReview />,
+      }
     ],
   },
 
@@ -224,7 +239,7 @@ export const router = createBrowserRouter([
     path: "reviewer-eksternal-dashboard",
     element: (
       <ProtectedRoute roles={[APP_ROLES.REVIEWER_EKSTERNAL]}>
-        <RoleLayout />
+        <EksternalLayout />
       </ProtectedRoute>
     ),
     children: [
@@ -234,7 +249,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "reviews",
-        element: <ReviewList />,
+        element: <ReviewListEksternal />,
       },
     ],
   },

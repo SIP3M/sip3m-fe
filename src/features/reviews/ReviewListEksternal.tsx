@@ -12,7 +12,7 @@ type Publication = {
   views: number;
 };
 
-export default function ReviewerEksternalDashboard() {
+export default function ReviewListEksternal() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<"terbaru" | "terpopuler">("terbaru");
 

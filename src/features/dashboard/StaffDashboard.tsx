@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export default function StaffDashboard() {
   return (
-    <div className="h-screen overflow-y-auto  p-6">
+    <div className="min-h-screen p-6">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">

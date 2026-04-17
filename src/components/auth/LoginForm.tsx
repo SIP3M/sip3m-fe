@@ -101,15 +101,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </label>
 
             <div className="relative">
-              <Input
+              <input
                 name="password"
                 value={form.password}
                 onChange={handleChange}
                 type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
                 placeholder="Masukkan Password"
-                className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
+                className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600] outline-none"
               />
 
               <button
@@ -117,7 +119,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 inset-y-0 flex items-center text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
             </div>
           </div>
@@ -164,6 +166,29 @@ const LoginForm: React.FC<LoginFormProps> = ({
             className="w-full h-10 my-1 bg-white border border-[#dddddd] rounded-[14px] text-[13px] text-gray-700 hover:bg-gray-50 transition flex items-center justify-center gap-3"
           >
             {/* SVG tetap */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 48 48"
+              className="w-5 h-5"
+            >
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.54 0 6.67 1.22 9.15 3.6l6.85-6.85C35.9 2.4 30.37 0 24 0 14.6 0 6.5 5.48 2.6 13.44l7.98 6.2C12.4 13.36 17.7 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.5 24c0-1.6-.14-3.14-.4-4.64H24v9.3h12.7c-.55 2.96-2.2 5.48-4.7 7.18l7.3 5.7C43.9 37.1 46.5 31 46.5 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.6 28.36A14.5 14.5 0 019.5 24c0-1.52.26-2.98.72-4.36l-7.98-6.2A24 24 0 000 24c0 3.9.94 7.6 2.6 10.56l8-6.2z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.37 0 11.73-2.1 15.64-5.7l-7.3-5.7c-2.02 1.36-4.6 2.15-8.34 2.15-6.3 0-11.6-3.86-13.42-9.14l-8 6.2C6.5 42.52 14.6 48 24 48z"
+              />
+            </svg>
+
             <span>Sign in with Google</span>
           </Button>
 
