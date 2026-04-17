@@ -1,71 +1,134 @@
+import { FileText, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { CheckSquare, ClipboardCheck, Clock3 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export default function ReviewerDashboard() {
   const navigate = useNavigate();
 
+  const data = [
+    {
+      id: 1,
+      title: "Pengembangan Algoritma AI untuk Deteksi Hama",
+      category: "Penelitian Terapan",
+      deadline: "3 Hari Lagi",
+      status: "REVIEW",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-800">
+    <div className="p-6 min-h-screen bg-gray-50">
+
+      {/* HEADER */}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-gray-800">
           Dashboard Reviewer
         </h1>
         <p className="text-sm text-gray-500">
-          Ringkasan tugas review proposal yang sedang berjalan.
+          Kelola tugas review proposal penelitian.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ClipboardCheck className="h-4 w-4 text-blue-600" /> Perlu
-              Direview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500">
-              Proposal baru yang menunggu penilaian Anda.
-            </p>
-          </CardContent>
-        </Card>
+      {/* TOP CARDS */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Clock3 className="h-4 w-4 text-orange-600" /> Deadline Terdekat
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500">
-              Pantau jadwal agar review selesai tepat waktu.
+        {/* TUGAS BARU */}
+        <div className="bg-white border-2 border-red-500 rounded-xl p-5 flex justify-between">
+          <div>
+            <p className="text-sm text-gray-500">Tugas Baru</p>
+            <p className="text-2xl font-bold mt-1">1</p>
+            <p className="text-xs text-gray-400 mt-2">
+              Perlu diselesaikan segera
             </p>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="bg-red-100 p-2 rounded-lg">
+            <FileText className="text-red-600" size={18} />
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CheckSquare className="h-4 w-4 text-emerald-600" /> Selesai
-              Direview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500">
-              Riwayat proposal yang sudah Anda nilai.
+        {/* SELESAI */}
+        <div className="bg-white border-2 border-green-500 rounded-xl p-5 flex justify-between">
+          <div>
+            <p className="text-sm text-gray-500">Selesai Direview</p>
+            <p className="text-2xl font-bold mt-1">1</p>
+            <p className="text-xs text-gray-400 mt-2">
+              Dalam tahun ini
             </p>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="bg-green-100 p-2 rounded-lg">
+            <CheckCircle className="text-green-600" size={18} />
+          </div>
+        </div>
+
+        {/* STATISTIK */}
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <p className="text-sm text-gray-500 mb-4">
+            Statistik Review
+          </p>
+
+          <div className="flex items-center gap-3 mb-3">
+            <p className="text-xs w-12">Aktif</p>
+            <div className="flex-1 bg-gray-200 h-2 rounded">
+              <div className="bg-red-500 h-2 rounded w-[80%]" />
+            </div>
+            <p className="text-xs">1</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <p className="text-xs w-12">Selesai</p>
+            <div className="flex-1 bg-gray-200 h-2 rounded">
+              <div className="bg-green-500 h-2 rounded w-[80%]" />
+            </div>
+            <p className="text-xs">1</p>
+          </div>
+        </div>
+
       </div>
 
-      <Button
-        onClick={() => navigate("/reviewer-dashboard/reviews")}
-        className="bg-red-600 hover:bg-red-700 text-white"
-      >
-        Buka Halaman Review
-      </Button>
+      {/* TABLE */}
+      <div className="bg-white rounded-xl p-5 shadow-sm">
+
+        <div className="mb-4">
+          <h2 className="font-semibold text-gray-800">
+            Daftar Tugas Review
+          </h2>
+          <p className="text-sm text-gray-500">
+            Proposal yang menunggu penilaian Anda.
+          </p>
+        </div>
+
+        {/* HEADER */}
+        <div className="grid grid-cols-5 text-xs text-gray-400 border-b pb-2 mb-3">
+          <p>Judul Proposal</p>
+          <p>Kategori</p>
+          <p>Tenggat Waktu</p>
+          <p>Status</p>
+          <p>Aksi</p>
+        </div>
+
+        {/* ROW */}
+        {data.map((item) => (
+          <div key={item.id} className="grid grid-cols-5 items-center text-sm">
+
+            <p>{item.title}</p>
+            <p className="text-gray-500">{item.category}</p>
+            <p className="text-red-500">{item.deadline}</p>
+
+            <span className="bg-yellow-100 text-yellow-600 px-2 py-1 text-xs rounded-full w-fit">
+              {item.status}
+            </span>
+
+            <button
+              onClick={() =>
+                navigate(`/reviewer-dashboard/reviews/${item.id}`)
+              }
+              className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 w-fit"
+            >
+              Mulai Review
+            </button>
+
+          </div>
+        ))}
+
+      </div>
     </div>
   );
 }

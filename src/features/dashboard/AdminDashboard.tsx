@@ -12,6 +12,25 @@ import {
   Line,
 } from "recharts";
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg shadow-md px-3 py-2 text-xs">
+        <p className="font-medium text-gray-700 mb-1">
+          {label}
+        </p>
+        <p className="text-gray-500">
+          Jumlah:{" "}
+          <span className="font-semibold text-gray-800">
+            {payload[0].value}
+          </span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const statusData = [
   { name: "Draft", value: 1, fill: "#94a3b8" },
   { name: "Review", value: 1, fill: "#facc15" },
@@ -92,9 +111,17 @@ export default function AdminDashboard() {
 
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={statusData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
+              <XAxis dataKey="name" tick={{ fontSize: 13 }} />
+              <YAxis tick={{fontSize:13}} />
+              <Tooltip
+                cursor={false} 
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                }}
+                content={<CustomTooltip />}
+              />
               <Bar dataKey="value" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -106,8 +133,21 @@ export default function AdminDashboard() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={kategoriData} layout="vertical">
               <XAxis type="number" />
-              <YAxis dataKey="name" type="category" />
-              <Tooltip />
+              <YAxis
+                dataKey="name"
+                type="category"
+                width={73}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                cursor={false} 
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                }}
+                content={<CustomTooltip />}
+              />
               <Bar dataKey="value" fill="#e11d48" radius={[6, 6, 6, 6]} />
             </BarChart>
           </ResponsiveContainer>
@@ -136,4 +176,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-};
+}
