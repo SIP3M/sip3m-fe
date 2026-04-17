@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { AppRole } from "@/constant/roles";
+import NewtonCradleLoader from "./NewtonCradleLoader";
 
 interface Props {
   roles: AppRole[];
@@ -13,8 +14,9 @@ const ProtectedRoute = ({ roles, children }: Props) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Memuat sesi pengguna...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <NewtonCradleLoader />
+        <p className="text-sm text-gray-500">Memuat sesi pengguna...</p>
       </div>
     );
   }
