@@ -1,6 +1,7 @@
 import { AppRole } from "@/constant/roles";
 
 export type CreateUserRole = AppRole;
+export type UserStatusFilter = "active" | "inactive";
 
 export interface User {
   id: number;
@@ -81,13 +82,22 @@ export interface UpdateUserResponse {
   data: User;
 }
 
+export interface UpdateUserStatusPayload {
+  is_active: boolean;
+}
+
+export interface UpdateUserStatusResponse {
+  message: string;
+  data: User;
+}
+
 export interface DeleteUserResponse {
   message: string;
 }
 
 export interface GetUsersParams {
   page?: number;
-  status?: "pending" | "active";
+  status?: UserStatusFilter;
   roles?: AppRole;
   search?: string;
 }

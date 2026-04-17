@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import UsersTable from "./UsersTable";
-import { User } from "./users.types";
+import { User, UserStatusFilter } from "./users.types";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { deleteUser, getUsers } from "./Users.api";
+import { getUsers, updateUserStatus } from "./Users.api";
 import { AppRole, APP_ROLES } from "@/constant/roles";
 import Pagination from "@/components/common/Pagination";
 
@@ -24,9 +24,9 @@ export default function UsersPage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
-  const [selectedStatus, setSelectedStatus] = useState<
-    "" | "active" | "pending"
-  >("");
+  const [selectedStatus, setSelectedStatus] = useState<UserStatusFilter | "">(
+    "",
+  );
   const isInitialLoading = isLoading && users.length === 0;
   const latestRequestId = useRef(0);
 
@@ -47,12 +47,34 @@ export default function UsersPage() {
 
         if (requestId !== latestRequestId.current) return;
 
-        setUsers(response.data);
+        const statusFilteredData = response.data.filter((user) => {
+          if (!selectedStatus) return true;
+          if (selectedStatus === "active") return user.is_active;
+          return !user.is_active;
+        });
+
+        const backendStatusFilterApplied =
+          !selectedStatus || statusFilteredData.length === response.data.length;
+
+        setUsers(statusFilteredData);
+
         if (response.pagination) {
-          setCurrentPage(response.pagination.page);
-          setTotalPages(response.pagination.total_pages);
-          setTotalItems(response.pagination.total_items);
-          setPerPage(response.pagination.per_page);
+          if (backendStatusFilterApplied) {
+            setCurrentPage(response.pagination.page);
+            setTotalPages(response.pagination.total_pages);
+            setTotalItems(response.pagination.total_items);
+            setPerPage(response.pagination.per_page);
+          } else {
+            setCurrentPage(1);
+            setTotalPages(1);
+            setTotalItems(statusFilteredData.length);
+            setPerPage(ITEMS_PER_PAGE);
+          }
+        } else {
+          setCurrentPage(1);
+          setTotalPages(1);
+          setTotalItems(statusFilteredData.length);
+          setPerPage(ITEMS_PER_PAGE);
         }
       } catch (err: unknown) {
         if (requestId !== latestRequestId.current) return;
@@ -109,21 +131,26 @@ export default function UsersPage() {
   };
 
   const handleDeleteUser = async (user: User) => {
+    const nextStatus = !user.is_active;
+    const actionLabel = nextStatus ? "mengaktifkan" : "menonaktifkan";
+
     const confirmed = window.confirm(
-      `Hapus user ${user.name}? Tindakan ini tidak bisa dibatalkan.`,
+      `Yakin ingin ${actionLabel} user ${user.name}?`,
     );
 
     if (!confirmed) return;
 
     try {
-      await deleteUser(user.id);
+      await updateUserStatus(user.id, { is_active: nextStatus });
       await fetchUsers(currentPage);
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message || "Gagal menghapus user"
+        ? err.response?.data?.message ||
+          err.message ||
+          "Gagal memperbarui status user"
         : err instanceof Error
           ? err.message
-          : "Gagal menghapus user";
+          : "Gagal memperbarui status user";
       setError(message);
     }
   };
@@ -180,13 +207,13 @@ export default function UsersPage() {
           <select
             value={selectedStatus}
             onChange={(e) =>
-              setSelectedStatus(e.target.value as "" | "active" | "pending")
+              setSelectedStatus(e.target.value as UserStatusFilter | "")
             }
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">Semua Status</option>
             <option value="active">Active</option>
-            <option value="pending">Pending</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
       </div>

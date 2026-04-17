@@ -7,6 +7,8 @@ import {
   GetUsersResponse,
   GetUsersParams,
   UpdateUserPayload,
+  UpdateUserStatusPayload,
+  UpdateUserStatusResponse,
   UpdateUserResponse,
 } from "./users.types";
 
@@ -44,9 +46,16 @@ const sanitizeCreateUserPayload = (data: CreateUserPayload) => {
  * Generate cache key dari params
  */
 const getCacheKey = (params?: GetUsersParams): string => {
+  const isActive =
+    params?.status === "active"
+      ? true
+      : params?.status === "inactive"
+        ? false
+        : "";
+
   return JSON.stringify({
     page: params?.page || 1,
-    status: params?.status || "",
+    is_active: isActive,
     roles: params?.roles || "",
     search: params?.search || "",
   });
@@ -69,6 +78,12 @@ export const getUsers = async (
 
   try {
     const page = params?.page || 1;
+    const isActive =
+      params?.status === "active"
+        ? true
+        : params?.status === "inactive"
+          ? false
+          : undefined;
 
     const res = await api.get<GetUsersResponse>("/users", {
       params: {
@@ -76,6 +91,7 @@ export const getUsers = async (
         search: params?.search || undefined,
         roles: params?.roles || undefined,
         status: params?.status || undefined,
+        is_active: isActive,
       },
     });
 
@@ -173,6 +189,18 @@ export const updateUser = async (
 
 export const deleteUser = async (id: number): Promise<DeleteUserResponse> => {
   const res = await api.delete<DeleteUserResponse>(`/users/${id}`);
+  clearUsersCache();
+  return res.data;
+};
+
+export const updateUserStatus = async (
+  id: number,
+  payload: UpdateUserStatusPayload,
+): Promise<UpdateUserStatusResponse> => {
+  const res = await api.patch<UpdateUserStatusResponse>(
+    `/users/${id}/status`,
+    payload,
+  );
   clearUsersCache();
   return res.data;
 };
