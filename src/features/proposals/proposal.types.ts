@@ -23,6 +23,22 @@ export interface Proposal {
   status: ProposalStatus;
   proposal_file_path: string | null;
   rab_file_path: string | null;
+  file_info?: {
+    proposal_file?: {
+      previous_path?: string | null;
+      previous_name?: string | null;
+      current_path?: string | null;
+      current_name?: string | null;
+      replaced?: boolean;
+    };
+    rab_file?: {
+      previous_path?: string | null;
+      previous_name?: string | null;
+      current_path?: string | null;
+      current_name?: string | null;
+      replaced?: boolean;
+    };
+  };
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -59,6 +75,25 @@ export interface UpdateProposalStatusPayload {
 }
 
 export interface UpdateProposalStatusResponse {
+  message: string;
+  data: Proposal;
+}
+
+export interface UpsertProposalPayload {
+  title?: string;
+  faculty?: string;
+  skema?: string;
+  funding_request_amount?: number | string;
+  is_draft?: boolean;
+  proposal_file?: File;
+  rab_file?: File;
+}
+
+export interface DeleteProposalResponse {
+  message: string;
+}
+
+export interface SubmitProposalResponse {
   message: string;
   data: Proposal;
 }
