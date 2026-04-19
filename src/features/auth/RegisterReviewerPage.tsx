@@ -1,17 +1,47 @@
-import { useState } from "react";
+import { ChangeEvent, DragEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import { registerReviewer } from "./auth.api";
+import { RegisterReviewerPayload } from "./auth.types";
+import {
+  ApiErrorResponse,
+  FormInputProps,
+  FormTextareaProps,
+  PasswordInputProps,
+  RegisterReviewerForm,
+} from "./RegisterReviewerPage.types";
+import { Button } from "@/components/ui/button";
+
+const MAX_CV_SIZE_MB = 5;
+const MAX_CV_SIZE_BYTES = MAX_CV_SIZE_MB * 1024 * 1024;
+const ALLOWED_CV_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const ALLOWED_CV_EXTENSIONS = ["pdf", "doc", "docx"];
+
+const isValidCvFile = (file: File) => {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  const isMimeAllowed = ALLOWED_CV_MIME_TYPES.includes(file.type);
+  const isExtAllowed = ALLOWED_CV_EXTENSIONS.includes(extension);
+
+  return isMimeAllowed || isExtAllowed;
+};
 
 const RegisterReviewerPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterReviewerForm>({
     nama: "",
     email: "",
     nohp: "",
@@ -25,16 +55,53 @@ const RegisterReviewerPage = () => {
     agree: false,
   });
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const target = e.target;
+    const { name, value } = target;
+    const nextValue =
+      target instanceof HTMLInputElement && target.type === "checkbox"
+        ? target.checked
+        : value;
+
+    setError("");
     setForm({
       ...form,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: nextValue,
     });
   };
 
   const handleFile = (file: File) => {
+    setError("");
+
+    if (!isValidCvFile(file)) {
+      setError(
+        "Format file CV tidak didukung. Hanya PDF, DOC, atau DOCX yang diperbolehkan.",
+      );
+      return;
+    }
+
+    if (file.size > MAX_CV_SIZE_BYTES) {
+      setError(`Ukuran file CV maksimal ${MAX_CV_SIZE_MB} MB.`);
+      return;
+    }
+
     setForm({ ...form, file });
+  };
+
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    handleFile(selectedFile);
+  };
+
+  const handleDropFile = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+    const selectedFile = e.dataTransfer.files?.[0];
+    if (!selectedFile) return;
+    handleFile(selectedFile);
   };
 
   const next = () => setStep((s) => s + 1);
@@ -53,6 +120,54 @@ const RegisterReviewerPage = () => {
     form.password === form.confirm &&
     form.agree;
 
+  const handleSubmit = async () => {
+    if (!isStep3Valid || !form.file) return;
+
+    setLoading(true);
+    setError("");
+
+    const payload: RegisterReviewerPayload = {
+      name: form.nama.trim(),
+      email: form.email.trim(),
+      nomor_hp: form.nohp.trim(),
+      instansi: form.instansi.trim(),
+      bidang_keahlian: form.bidang.trim(),
+      pengalaman_review: form.pengalaman.trim(),
+      cv: form.file,
+      username: form.username.trim(),
+      password: form.password,
+      konfirmasi_password: form.confirm,
+    };
+
+    try {
+      await registerReviewer(payload);
+      setStep(4);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const responseData = err.response?.data as ApiErrorResponse | undefined;
+
+        if (responseData?.errors) {
+          const firstEntry = Object.values(responseData.errors)[0];
+          if (Array.isArray(firstEntry) && firstEntry.length > 0) {
+            setError(firstEntry[0]);
+          } else if (typeof firstEntry === "string") {
+            setError(firstEntry);
+          } else {
+            setError(responseData.message || err.message);
+          }
+        } else {
+          setError(responseData?.message || err.message);
+        }
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan saat registrasi reviewer.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const variants = {
     initial: { opacity: 0, x: 60 },
     animate: { opacity: 1, x: 0 },
@@ -69,6 +184,11 @@ const RegisterReviewerPage = () => {
       </p>
 
       <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* STEP */}
         {step <= 3 && (
@@ -87,8 +207,8 @@ const RegisterReviewerPage = () => {
                           step > num
                             ? "bg-[#e10600] border-[#e10600] text-white"
                             : step === num
-                            ? "border-[#e10600] text-[#e10600]"
-                            : "border-gray-300 text-gray-400"
+                              ? "border-[#e10600] text-[#e10600]"
+                              : "border-gray-300 text-gray-400"
                         }`}
                       >
                         {step > num ? "✓" : num}
@@ -111,20 +231,27 @@ const RegisterReviewerPage = () => {
                     )}
                   </div>
                 );
-              }
+              },
             )}
           </div>
         )}
 
         <AnimatePresence mode="wait">
-
           {/* STEP 1 */}
           {step === 1 && (
-            <motion.div key="step1" {...variants} transition={{ duration: 0.4 }}>
+            <motion.div
+              key="step1"
+              {...variants}
+              transition={{ duration: 0.4 }}
+            >
               <h2 className="text-[16px] font-semibold mb-4">Identitas</h2>
 
               <div className="space-y-4">
-                <Input name="nama" label="Nama Lengkap*" onChange={handleChange} />
+                <Input
+                  name="nama"
+                  label="Nama Lengkap*"
+                  onChange={handleChange}
+                />
                 <Input name="email" label="Email*" onChange={handleChange} />
                 <Input name="nohp" label="Nomor HP*" onChange={handleChange} />
               </div>
@@ -133,21 +260,34 @@ const RegisterReviewerPage = () => {
 
           {/* STEP 2 */}
           {step === 2 && (
-            <motion.div key="step2" {...variants} transition={{ duration: 0.4 }}>
+            <motion.div
+              key="step2"
+              {...variants}
+              transition={{ duration: 0.4 }}
+            >
               <h2 className="text-[16px] font-semibold mb-4">
                 Informasi Profesional
               </h2>
 
               <div className="space-y-4">
-                <Input name="instansi" label="Instansi*" onChange={handleChange} />
-                <Input name="bidang" label="Bidang Keahlian*" onChange={handleChange} />
-                <Textarea name="pengalaman" label="Pengalaman Review*" onChange={handleChange} />
+                <Input
+                  name="instansi"
+                  label="Instansi*"
+                  onChange={handleChange}
+                />
+                <Input
+                  name="bidang"
+                  label="Bidang Keahlian*"
+                  onChange={handleChange}
+                />
+                <Textarea
+                  name="pengalaman"
+                  label="Pengalaman Review*"
+                  onChange={handleChange}
+                />
 
                 {/* DRAG DROP */}
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  className="transition"
-                >
+                <motion.div whileHover={{ scale: 1.01 }} className="transition">
                   <label className="text-sm text-gray-600">Upload CV*</label>
 
                   <div
@@ -156,11 +296,7 @@ const RegisterReviewerPage = () => {
                       setDragging(true);
                     }}
                     onDragLeave={() => setDragging(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setDragging(false);
-                      handleFile(e.dataTransfer.files[0]);
-                    }}
+                    onDrop={handleDropFile}
                     className={`mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition
                     ${
                       dragging
@@ -176,7 +312,8 @@ const RegisterReviewerPage = () => {
 
                     <input
                       type="file"
-                      onChange={(e) => handleFile(e.target.files![0])}
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={handleFileInputChange}
                       className="hidden"
                       id="upload"
                     />
@@ -205,13 +342,19 @@ const RegisterReviewerPage = () => {
 
           {/* STEP 3 */}
           {step === 3 && (
-            <motion.div key="step3" {...variants} transition={{ duration: 0.4 }}>
-              <h2 className="text-[16px] font-semibold mb-4">
-                Informasi Akun
-              </h2>
+            <motion.div
+              key="step3"
+              {...variants}
+              transition={{ duration: 0.4 }}
+            >
+              <h2 className="text-[16px] font-semibold mb-4">Informasi Akun</h2>
 
               <div className="space-y-4">
-                <Input name="username" label="Username*" onChange={handleChange} />
+                <Input
+                  name="username"
+                  label="Username*"
+                  onChange={handleChange}
+                />
 
                 <PasswordInput
                   label="Password*"
@@ -241,35 +384,76 @@ const RegisterReviewerPage = () => {
         {/* BUTTON */}
         {step <= 3 && (
           <div className="flex gap-4 mt-8">
-            <motion.button
+            <motion.div
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={back}
-              className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl"
+              className="w-full"
             >
-              Kembali
-            </motion.button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={back}
+                className="w-full border-[#e10600] text-[#e10600] hover:bg-red-50"
+              >
+                Kembali
+              </Button>
+            </motion.div>
 
-            <motion.button
+            <motion.div
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => (step === 3 ? setStep(4) : next())}
-              disabled={
-                (step === 1 && !isStep1Valid) ||
-                (step === 2 && !isStep2Valid) ||
-                (step === 3 && !isStep3Valid)
-              }
-              className={`w-full py-2 rounded-xl text-white transition ${
-                (step === 1 && !isStep1Valid) ||
-                (step === 2 && !isStep2Valid) ||
-                (step === 3 && !isStep3Valid)
-                  ? "bg-gray-300"
-                  : "bg-[#e10600]"
-              }`}
+              className="w-full"
             >
-              {step === 3 ? "Daftar sebagai Reviewer" : "Lanjut"}
-            </motion.button>
+              <Button
+                type="button"
+                onClick={() => (step === 3 ? void handleSubmit() : next())}
+                disabled={
+                  loading ||
+                  (step === 1 && !isStep1Valid) ||
+                  (step === 2 && !isStep2Valid) ||
+                  (step === 3 && !isStep3Valid)
+                }
+                className={`w-full text-white transition ${
+                  (step === 1 && !isStep1Valid) ||
+                  (step === 2 && !isStep2Valid) ||
+                  (step === 3 && !isStep3Valid) ||
+                  loading
+                    ? "bg-gray-300"
+                    : "bg-[#e10600]"
+                }`}
+              >
+                {step === 3
+                  ? loading
+                    ? "Mendaftarkan..."
+                    : "Daftar sebagai Reviewer"
+                  : "Lanjut"}
+              </Button>
+            </motion.div>
           </div>
+        )}
+
+        {step === 4 && (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="py-6 text-center"
+          >
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-600">
+              ✓
+            </div>
+            <h2 className="mb-2 text-xl font-semibold">Registrasi Berhasil</h2>
+            <p className="mb-6 text-sm text-gray-500">
+              Registrasi Reviewer Eksternal berhasil. Akun Anda sedang menunggu
+              verifikasi oleh Admin LPPM.
+            </p>
+            <Button
+              type="button"
+              className="w-full bg-[#e10600] text-white"
+              onClick={() => navigate("/")}
+            >
+              Kembali ke Login
+            </Button>
+          </motion.div>
         )}
       </div>
     </div>
@@ -280,7 +464,7 @@ export default RegisterReviewerPage;
 
 /* COMPONENTS */
 
-const Input = ({ label, ...props }: any) => (
+const Input = ({ label, ...props }: FormInputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <input
@@ -292,7 +476,7 @@ const Input = ({ label, ...props }: any) => (
   </div>
 );
 
-const Textarea = ({ label, ...props }: any) => (
+const Textarea = ({ label, ...props }: FormTextareaProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <textarea
@@ -304,7 +488,12 @@ const Textarea = ({ label, ...props }: any) => (
   </div>
 );
 
-const PasswordInput = ({ label, show, toggle, ...props }: any) => (
+const PasswordInput = ({
+  label,
+  show,
+  toggle,
+  ...props
+}: PasswordInputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <div className="relative">

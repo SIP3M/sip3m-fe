@@ -54,6 +54,19 @@ export interface RegisterDosenPayload {
   konfirmasi_password: string;
 }
 
+export interface RegisterReviewerPayload {
+  name: string;
+  email: string;
+  nomor_hp: string;
+  instansi: string;
+  bidang_keahlian: string;
+  pengalaman_review: string;
+  cv: File;
+  username: string;
+  password: string;
+  konfirmasi_password: string;
+}
+
 export interface RegisterResponse {
   message: string;
   data: User & { is_active: boolean }; // Mengambil struktur User ditambah field is_active
