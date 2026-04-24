@@ -76,8 +76,8 @@ export default function ProjectDetail() {
       } catch (err: unknown) {
         const message = axios.isAxiosError(err)
           ? err.response?.data?.message ||
-            err.message ||
-            "Gagal memuat detail monitoring proyek."
+          err.message ||
+          "Gagal memuat detail monitoring proyek."
           : err instanceof Error
             ? err.message
             : "Gagal memuat detail monitoring proyek.";

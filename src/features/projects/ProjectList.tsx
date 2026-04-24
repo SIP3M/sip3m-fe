@@ -74,8 +74,8 @@ export default function ProjectList() {
 
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message ||
-          err.message ||
-          "Gagal mengambil data monitoring proyek."
+        err.message ||
+        "Gagal mengambil data monitoring proyek."
         : err instanceof Error
           ? err.message
           : "Gagal mengambil data monitoring proyek.";

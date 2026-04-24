@@ -84,8 +84,8 @@ export default function EditUserPage() {
         if (axios.isAxiosError(err)) {
           setError(
             err.response?.data?.message ||
-              err.message ||
-              "Gagal mengambil detail user.",
+            err.message ||
+            "Gagal mengambil detail user.",
           );
         } else if (err instanceof Error) {
           setError(err.message);
@@ -152,10 +152,10 @@ export default function EditUserPage() {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data as
           | {
-              message?: string;
-              errors?: Array<{ field?: string; message?: string }>;
-              error?: { field?: string };
-            }
+            message?: string;
+            errors?: Array<{ field?: string; message?: string }>;
+            error?: { field?: string };
+          }
           | undefined;
         const message = responseData?.message || err.message;
         if (responseData?.errors?.length) {

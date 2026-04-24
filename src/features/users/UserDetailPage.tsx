@@ -37,8 +37,8 @@ export default function UserDetailPage() {
         if (axios.isAxiosError(err)) {
           setError(
             err.response?.data?.message ||
-              err.message ||
-              "Gagal mengambil detail user.",
+            err.message ||
+            "Gagal mengambil detail user.",
           );
         } else if (err instanceof Error) {
           setError(err.message);
