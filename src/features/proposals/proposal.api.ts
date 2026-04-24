@@ -3,6 +3,7 @@ import {
   DeleteProposalResponse,
   GetAllProposalsResponse,
   GetProposalByIdResponse,
+  ProposalStatus,
   SubmitProposalResponse,
   UpsertProposalPayload,
   UpdateProposalStatusPayload,
@@ -12,15 +13,19 @@ import {
 interface GetAllProposalsParams {
   page?: number;
   search?: string;
+  status?: ProposalStatus;
 }
+
+const PROPOSALS_ENDPOINT = "/proposals";
 
 export const getAllProposals = async (
   params?: GetAllProposalsParams,
 ): Promise<GetAllProposalsResponse> => {
-  const res = await api.get<GetAllProposalsResponse>("/getAllProposals", {
+  const res = await api.get<GetAllProposalsResponse>(PROPOSALS_ENDPOINT, {
     params: {
       page: params?.page ?? 1,
       search: params?.search?.trim() || undefined,
+      status: params?.status?.trim() || undefined,
     },
   });
 
@@ -34,6 +39,7 @@ export const getMyProposals = async (
     params: {
       page: params?.page ?? 1,
       search: params?.search?.trim() || undefined,
+      status: params?.status?.trim() || undefined,
     },
   });
 
@@ -103,9 +109,9 @@ export const createProposal = async (
     buildProposalFormData(payload),
     {
       headers: {
-        "Content-Type": "multipart/form-data", 
+        "Content-Type": "multipart/form-data",
       },
-    }
+    },
   );
 
   return res.data;
@@ -120,9 +126,9 @@ export const updateProposal = async (
     buildProposalFormData(payload),
     {
       headers: {
-        "Content-Type": "multipart/form-data", 
+        "Content-Type": "multipart/form-data",
       },
-    }
+    },
   );
 
   return res.data;
