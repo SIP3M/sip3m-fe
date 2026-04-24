@@ -259,6 +259,10 @@ export const router = createBrowserRouter([
         path: "reviews",
         element: <ReviewListEksternal />,
       },
+      {
+        path: "reviews/:id",
+        element: <ReviewDetailPage />,
+      },
     ],
   },
 
