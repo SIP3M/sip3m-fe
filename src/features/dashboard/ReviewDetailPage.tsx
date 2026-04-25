@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuthStore } from "@/features/auth/auth.store";
 import {
   ArrowLeft,
   FileText,
@@ -10,11 +11,16 @@ import {
   AlertCircle,
   ChevronDown,
 } from "lucide-react";
-import { evaluateProposal, getAssignedProposals } from "@/features/reviews/review.api";
+import {
+  evaluateProposal,
+  getAssignedProposals,
+  getProposalReviews,
+} from "@/features/reviews/review.api";
 import type {
   AssignedProposal,
   EvaluatePayloadDraft,
   EvaluatePayloadFinal,
+  ReviewHistoryItem,
   ReviewDecision,
 } from "@/features/reviews/review.types";
 
@@ -63,6 +69,33 @@ const EMPTY_SCORES: Scores = {
   score_luaran: 0,
 };
 
+const hasStoredReviewData = (review: ReviewHistoryItem) =>
+  Boolean(
+    review.score_perumusan !== null ||
+    review.score_tinjauan !== null ||
+    review.score_metode !== null ||
+    review.score_anggaran !== null ||
+    review.score_luaran !== null ||
+    review.kekuatan_proposal ||
+    review.kelemahan_proposal ||
+    review.rekomendasi_akhir ||
+    review.notes,
+  );
+
+const mapReviewToForm = (review: ReviewHistoryItem) => ({
+  scores: {
+    score_perumusan: review.score_perumusan ?? 0,
+    score_tinjauan: review.score_tinjauan ?? 0,
+    score_metode: review.score_metode ?? 0,
+    score_anggaran: review.score_anggaran ?? 0,
+    score_luaran: review.score_luaran ?? 0,
+  },
+  kekuatan: review.kekuatan_proposal ?? "",
+  kelemahan: review.kelemahan_proposal ?? "",
+  rekomendasi: review.rekomendasi_akhir ?? "",
+  notes: review.notes ?? "",
+});
+
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -104,7 +137,14 @@ function ScoreInput({
   disabled?: boolean;
 }) {
   // Build a CSS gradient that fills the track up to the thumb position
-  const fillColor = value >= 85 ? "#22c55e" : value >= 70 ? "#eab308" : value > 0 ? "#ef4444" : "#d1d5db";
+  const fillColor =
+    value >= 85
+      ? "#22c55e"
+      : value >= 70
+        ? "#eab308"
+        : value > 0
+          ? "#ef4444"
+          : "#d1d5db";
   const sliderBackground = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${value}%, #e5e7eb ${value}%, #e5e7eb 100%)`;
 
   return (
@@ -114,7 +154,9 @@ function ScoreInput({
           <span className="text-sm font-medium text-gray-700">{label}</span>
           <span className="ml-2 text-xs text-gray-400">({weight})</span>
         </div>
-        <span className={`text-lg font-bold ${scoreColor(value)}`}>{value}</span>
+        <span className={`text-lg font-bold ${scoreColor(value)}`}>
+          {value}
+        </span>
       </div>
       <p className="text-xs text-gray-400">{desc}</p>
       <input
@@ -142,6 +184,7 @@ function ScoreInput({
 export default function ReviewDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
   const proposalId = id ? parseInt(id, 10) : NaN;
 
   // ── Proposal data ─────────────────────────────────────────────────────────
@@ -164,6 +207,7 @@ export default function ReviewDetailPage() {
   const [draftSaved, setDraftSaved] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   // ── Computed ──────────────────────────────────────────────────────────────
   const avgScore =
@@ -185,11 +229,21 @@ export default function ReviewDetailPage() {
       try {
         const payload: EvaluatePayloadDraft = {
           is_draft: true,
-          ...(scores.score_perumusan > 0 ? { score_perumusan: scores.score_perumusan } : {}),
-          ...(scores.score_tinjauan > 0 ? { score_tinjauan: scores.score_tinjauan } : {}),
-          ...(scores.score_metode > 0 ? { score_metode: scores.score_metode } : {}),
-          ...(scores.score_anggaran > 0 ? { score_anggaran: scores.score_anggaran } : {}),
-          ...(scores.score_luaran > 0 ? { score_luaran: scores.score_luaran } : {}),
+          ...(scores.score_perumusan > 0
+            ? { score_perumusan: scores.score_perumusan }
+            : {}),
+          ...(scores.score_tinjauan > 0
+            ? { score_tinjauan: scores.score_tinjauan }
+            : {}),
+          ...(scores.score_metode > 0
+            ? { score_metode: scores.score_metode }
+            : {}),
+          ...(scores.score_anggaran > 0
+            ? { score_anggaran: scores.score_anggaran }
+            : {}),
+          ...(scores.score_luaran > 0
+            ? { score_luaran: scores.score_luaran }
+            : {}),
           ...(kekuatan.trim() ? { kekuatan_proposal: kekuatan } : {}),
           ...(kelemahan.trim() ? { kelemahan_proposal: kelemahan } : {}),
           ...(rekomendasi.trim() ? { rekomendasi_akhir: rekomendasi } : {}),
@@ -238,7 +292,8 @@ export default function ReviewDetailPage() {
         }
 
         setProposal(found);
-        if (!found) setProposalError("Proposal tidak ditemukan dalam tugas Anda.");
+        if (!found)
+          setProposalError("Proposal tidak ditemukan dalam tugas Anda.");
       } catch {
         setProposalError("Gagal memuat data proposal.");
       } finally {
@@ -248,6 +303,37 @@ export default function ReviewDetailPage() {
 
     load();
   }, [proposalId]);
+
+  useEffect(() => {
+    if (isNaN(proposalId) || !currentUser?.id) return;
+
+    const loadDraft = async () => {
+      try {
+        const res = await getProposalReviews(proposalId);
+        const myLatestReview = [...res.data]
+          .filter((item) => item.reviewer.id === currentUser.id)
+          .sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          )[0];
+
+        if (!myLatestReview || !hasStoredReviewData(myLatestReview)) return;
+
+        const mapped = mapReviewToForm(myLatestReview);
+        setScores(mapped.scores);
+        setKekuatan(mapped.kekuatan);
+        setKelemahan(mapped.kelemahan);
+        setRekomendasi(mapped.rekomendasi);
+        setNotes(mapped.notes);
+        setDraftLoaded(true);
+      } catch {
+        // Tidak menghalangi halaman jika histori draft belum tersedia.
+      }
+    };
+
+    void loadDraft();
+  }, [proposalId, currentUser?.id]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const setScore = (key: ScoreKey, val: number) =>
@@ -269,6 +355,7 @@ export default function ReviewDetailPage() {
       };
       await evaluateProposal(proposalId, payload);
       setDraftSaved(true);
+      setDraftLoaded(true);
       setTimeout(() => setDraftSaved(false), 2500);
     } catch (err: unknown) {
       setApiError(
@@ -299,6 +386,7 @@ export default function ReviewDetailPage() {
       };
       await evaluateProposal(proposalId, payload);
       setSubmitSuccess(true);
+      setDraftLoaded(false);
       setTimeout(() => navigate(-1), 1800);
     } catch (err: unknown) {
       setApiError(
@@ -310,10 +398,26 @@ export default function ReviewDetailPage() {
   };
 
   // ── Decision config ───────────────────────────────────────────────────────
-  const DECISION_OPTIONS: { value: ReviewDecision; label: string; color: string }[] = [
-    { value: "ACCEPTED", label: "Diterima", color: "text-green-600 bg-green-50 border-green-200" },
-    { value: "REVISION", label: "Revisi", color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
-    { value: "REJECTED", label: "Ditolak", color: "text-red-600 bg-red-50 border-red-200" },
+  const DECISION_OPTIONS: {
+    value: ReviewDecision;
+    label: string;
+    color: string;
+  }[] = [
+    {
+      value: "ACCEPTED",
+      label: "Diterima",
+      color: "text-green-600 bg-green-50 border-green-200",
+    },
+    {
+      value: "REVISION",
+      label: "Revisi",
+      color: "text-yellow-600 bg-yellow-50 border-yellow-200",
+    },
+    {
+      value: "REJECTED",
+      label: "Ditolak",
+      color: "text-red-600 bg-red-50 border-red-200",
+    },
   ];
 
   const selectedDecision = DECISION_OPTIONS.find((d) => d.value === decision)!;
@@ -344,7 +448,6 @@ export default function ReviewDetailPage() {
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-
       {/* ── HEADER ── */}
       <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
         <div>
@@ -358,8 +461,7 @@ export default function ReviewDetailPage() {
             Form Penilaian Proposal
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            #{proposalId} &bull;{" "}
-            {proposal?.title ?? "Memuat..."}
+            #{proposalId} &bull; {proposal?.title ?? "Memuat..."}
           </p>
         </div>
 
@@ -369,6 +471,12 @@ export default function ReviewDetailPage() {
           {draftSaved && (
             <span className="flex items-center gap-1 text-xs text-green-600">
               <CheckCircle2 size={14} /> Draft tersimpan
+            </span>
+          )}
+
+          {draftLoaded && !draftSaved && !submitSuccess && (
+            <span className="flex items-center gap-1 text-xs text-blue-600">
+              <CheckCircle2 size={14} /> Draft dimuat
             </span>
           )}
 
@@ -416,10 +524,8 @@ export default function ReviewDetailPage() {
 
       {/* ── CONTENT GRID ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
         {/* ── LEFT: Proposal Info + Text Fields ── */}
         <div className="lg:col-span-2 space-y-5">
-
           {/* Proposal Card */}
           {proposal && (
             <div className="bg-white p-5 rounded-xl shadow-sm">
@@ -435,12 +541,18 @@ export default function ReviewDetailPage() {
               <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4 text-sm">
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Ketua Peneliti</p>
-                  <p className="font-medium text-gray-700">{proposal.user.name}</p>
-                  <p className="text-xs text-gray-400">{proposal.user.nidn_nip}</p>
+                  <p className="font-medium text-gray-700">
+                    {proposal.user.name}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {proposal.user.nidn_nip}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Fakultas</p>
-                  <p className="font-medium text-gray-700">{proposal.faculty}</p>
+                  <p className="font-medium text-gray-700">
+                    {proposal.faculty}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-0.5">Anggaran</p>
@@ -516,7 +628,8 @@ export default function ReviewDetailPage() {
               {
                 id: "notes",
                 label: "Catatan Tambahan (Opsional)",
-                placeholder: "Catatan internal reviewer (tidak tampil ke peneliti)...",
+                placeholder:
+                  "Catatan internal reviewer (tidak tampil ke peneliti)...",
                 value: notes,
                 onChange: setNotes,
                 required: false,
@@ -584,10 +697,10 @@ export default function ReviewDetailPage() {
                 {avgScore >= 85
                   ? "Sangat Baik"
                   : avgScore >= 70
-                  ? "Baik / Perlu Revisi"
-                  : avgScore > 0
-                  ? "Kurang"
-                  : "Belum dinilai"}
+                    ? "Baik / Perlu Revisi"
+                    : avgScore > 0
+                      ? "Kurang"
+                      : "Belum dinilai"}
               </p>
             </div>
           </div>
