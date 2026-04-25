@@ -203,13 +203,12 @@ const RegisterReviewerPage = () => {
                       <motion.div
                         whileHover={{ scale: 1.1 }}
                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition
-                        ${
-                          step > num
+                        ${step > num
                             ? "bg-[#e10600] border-[#e10600] text-white"
                             : step === num
                               ? "border-[#e10600] text-[#e10600]"
                               : "border-gray-300 text-gray-400"
-                        }`}
+                          }`}
                       >
                         {step > num ? "✓" : num}
                       </motion.div>
@@ -298,11 +297,10 @@ const RegisterReviewerPage = () => {
                     onDragLeave={() => setDragging(false)}
                     onDrop={handleDropFile}
                     className={`mt-2 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition
-                    ${
-                      dragging
+                    ${dragging
                         ? "border-[#e10600] bg-red-50 scale-[1.01]"
                         : "border-gray-300 bg-[#fafafa]"
-                    }`}
+                      }`}
                   >
                     <UploadCloud className="mx-auto mb-2 text-gray-400" />
 
@@ -413,14 +411,13 @@ const RegisterReviewerPage = () => {
                   (step === 2 && !isStep2Valid) ||
                   (step === 3 && !isStep3Valid)
                 }
-                className={`w-full text-white transition ${
-                  (step === 1 && !isStep1Valid) ||
+                className={`w-full text-white transition ${(step === 1 && !isStep1Valid) ||
                   (step === 2 && !isStep2Valid) ||
                   (step === 3 && !isStep3Valid) ||
                   loading
-                    ? "bg-gray-300"
-                    : "bg-[#e10600]"
-                }`}
+                  ? "bg-gray-300"
+                  : "bg-[#e10600]"
+                  }`}
               >
                 {step === 3
                   ? loading

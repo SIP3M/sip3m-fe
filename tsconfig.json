@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,9 +18,16 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src"],
-  "exclude": ["src/components/ui/Button.tsx", "src/components/ui/Input.tsx"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/components/ui/Button.tsx",
+    "src/components/ui/Input.tsx"
+  ]
 }

@@ -42,8 +42,8 @@ export default function ProposalList() {
 
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message ||
-          err.message ||
-          "Gagal mengambil data proposal"
+        err.message ||
+        "Gagal mengambil data proposal"
         : err instanceof Error
           ? err.message
           : "Gagal mengambil data proposal";

@@ -68,9 +68,8 @@ export default function Pagination({
               }
             }}
             aria-disabled={page === 1 || isLoading}
-            className={`size-8 p-0 rounded-lg border border-gray-300 hover:bg-gray-50 ${
-              page === 1 || isLoading ? "pointer-events-none opacity-50" : ""
-            }`}
+            className={`size-8 p-0 rounded-lg border border-gray-300 hover:bg-gray-50 ${page === 1 || isLoading ? "pointer-events-none opacity-50" : ""
+              }`}
           />
         </PaginationItem>
 
@@ -112,11 +111,10 @@ export default function Pagination({
               }
             }}
             aria-disabled={page === totalPages || isLoading}
-            className={`size-8 p-0 rounded-lg border border-gray-300 hover:bg-gray-50 ${
-              page === totalPages || isLoading
-                ? "pointer-events-none opacity-50"
-                : ""
-            }`}
+            className={`size-8 p-0 rounded-lg border border-gray-300 hover:bg-gray-50 ${page === totalPages || isLoading
+              ? "pointer-events-none opacity-50"
+              : ""
+              }`}
           />
         </PaginationItem>
       </PaginationContent>
