@@ -30,7 +30,7 @@ import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
 import ProjectDetail from "@/features/projects/ProjectDetail";
 import FinancePage from "@/features/finance/FinancePage";
-
+import LandingPage from "@/features/dashboard/LandingPage";
 import ProposalStaff from "@/features/proposals/ProposalStaff";
 import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
 import ReviewListStaff from "@/features/reviews/ReviewListStaff";
@@ -49,6 +49,10 @@ import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <LandingPage/>,
+  },
+  {
+    path: "/login",
     element: <LoginPage />,
   },
   {
