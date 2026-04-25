@@ -294,22 +294,23 @@ export default function ReviewList() {
       return;
     }
 
-    if (!reviewerA || !reviewerB) {
-      setError("Harus memilih tepat 2 reviewer.");
+    if (!reviewerA) {
+      setError("Harus memilih minimal 1 reviewer.");
       return;
     }
 
-    if (reviewerA === reviewerB) {
+    if (reviewerB && reviewerA === reviewerB) {
       setError("ID reviewer tidak boleh sama.");
       return;
     }
 
+    const reviewerIds = [reviewerA, reviewerB]
+      .filter((id): id is string => Boolean(id))
+      .map((id) => Number(id));
+
     setIsAssigning(true);
     try {
-      const res = await assignReviewers(selectedProposal.id, [
-        Number(reviewerA),
-        Number(reviewerB),
-      ]);
+      const res = await assignReviewers(selectedProposal.id, reviewerIds);
 
       setSuccessMessage(res.message);
 

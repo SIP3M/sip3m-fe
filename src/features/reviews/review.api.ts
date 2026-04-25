@@ -16,10 +16,12 @@ export const assignReviewers = async (
   if (!Number.isInteger(proposalId) || proposalId <= 0) {
     throw new Error("ID proposal tidak valid.");
   }
-  if (reviewerIds.length !== 2) {
-    throw new Error("Harus memilih tepat 2 reviewer.");
+
+  if (reviewerIds.length < 1 || reviewerIds.length > 2) {
+    throw new Error("Harus memilih minimal 1 dan maksimal 2 reviewer.");
   }
-  if (reviewerIds[0] === reviewerIds[1]) {
+
+  if (new Set(reviewerIds).size !== reviewerIds.length) {
     throw new Error("ID reviewer tidak boleh sama.");
   }
 

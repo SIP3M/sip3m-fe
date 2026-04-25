@@ -1,7 +1,21 @@
-import { Search, Eye, FileText, Loader2, AlertCircle, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import {
+  Search,
+  Eye,
+  FileText,
+  Loader2,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  ChevronDown,
+} from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { getAssignedProposals, getProposalReviews } from "./review.api";
-import type { AssignedProposal, ReviewHistoryItem, ProposalStatus } from "./review.types";
+import type {
+  AssignedProposal,
+  ReviewHistoryItem,
+  ProposalStatus,
+} from "./review.types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (iso: string) =>
@@ -11,17 +25,84 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
-const STATUS_LABELS: Record<string, { label: string; bg: string; text: string }> = {
-  ACCEPTED:    { label: "Diterima",  bg: "bg-green-100",  text: "text-green-700" },
-  REJECTED:    { label: "Ditolak",   bg: "bg-red-100",    text: "text-red-700" },
-  REVISION:    { label: "Revisi",    bg: "bg-yellow-100", text: "text-yellow-700" },
-  UNDER_REVIEW:{ label: "Under Review", bg: "bg-blue-100",  text: "text-blue-700" },
+const STATUS_LABELS: Record<
+  string,
+  { label: string; bg: string; text: string }
+> = {
+  DRAFT: { label: "Draft", bg: "bg-gray-100", text: "text-gray-600" },
+  SUBMITTED: {
+    label: "Submitted",
+    bg: "bg-yellow-100",
+    text: "text-yellow-700",
+  },
+  ADMIN_VERIFIED: {
+    label: "Terverifikasi",
+    bg: "bg-indigo-100",
+    text: "text-indigo-700",
+  },
+  ACCEPTED: { label: "Accepted", bg: "bg-green-100", text: "text-green-700" },
+  REJECTED: { label: "Rejected", bg: "bg-red-100", text: "text-red-700" },
+  REVISION: { label: "Revision", bg: "bg-yellow-100", text: "text-yellow-700" },
+  UNDER_REVIEW: {
+    label: "Under Review",
+    bg: "bg-blue-100",
+    text: "text-blue-700",
+  },
+};
+
+const ALL_ASSIGNED_STATUSES: ProposalStatus[] = [
+  "ADMIN_VERIFIED",
+  "REVISION",
+  "ACCEPTED",
+  "REJECTED",
+];
+
+const FILTER_OPTIONS: { label: string; value: ProposalStatus | "ALL" }[] = [
+  { label: "Semua Status", value: "ALL" },
+  { label: "Under Review", value: "UNDER_REVIEW" },
+  { label: "Revision", value: "REVISION" },
+  { label: "Accepted", value: "ACCEPTED" },
+  { label: "Rejected", value: "REJECTED" },
+];
+
+const LOCAL_PAGE_SIZE = 5;
+
+const sortByAssignedAtDesc = (items: AssignedProposal[]) =>
+  [...items].sort(
+    (a, b) =>
+      new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime(),
+  );
+
+const fetchAllAssignedByStatus = async (
+  status: ProposalStatus,
+  search?: string,
+) => {
+  const first = await getAssignedProposals({ page: 1, search, status });
+  const all = [...first.data];
+
+  if (first.meta.totalPages > 1) {
+    const requests: ReturnType<typeof getAssignedProposals>[] = [];
+    for (let p = 2; p <= first.meta.totalPages; p++) {
+      requests.push(getAssignedProposals({ page: p, search, status }));
+    }
+
+    const rest = await Promise.all(requests);
+    rest.forEach((res) => all.push(...res.data));
+  }
+
+  return all;
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_LABELS[status] ?? { label: status, bg: "bg-gray-100", text: "text-gray-600" };
+  const cfg = STATUS_LABELS[status] ?? {
+    label: status,
+    bg: "bg-gray-100",
+    text: "text-gray-600",
+  };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}
+    >
       {cfg.label}
     </span>
   );
@@ -80,17 +161,16 @@ function ReviewDetailModal({
           ) : (
             <div className="space-y-4">
               {reviews.map((rv) => (
-                <div
-                  key={rv.id}
-                  className="border rounded-xl p-4 space-y-3"
-                >
+                <div key={rv.id} className="border rounded-xl p-4 space-y-3">
                   {/* Review Header */}
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm font-medium text-gray-700">
                         {rv.reviewer.name}
                       </p>
-                      <p className="text-xs text-gray-400">{rv.reviewer.email}</p>
+                      <p className="text-xs text-gray-400">
+                        {rv.reviewer.email}
+                      </p>
                     </div>
                     <div className="text-right">
                       <StatusBadge status={rv.status} />
@@ -113,7 +193,9 @@ function ReviewDetailModal({
                       ].map(([lbl, val]) => (
                         <div key={lbl as string} className="text-center">
                           <p className="text-gray-400">{lbl}</p>
-                          <p className={`font-bold text-base ${lbl === "Total" ? "text-red-600" : "text-gray-700"}`}>
+                          <p
+                            className={`font-bold text-base ${lbl === "Total" ? "text-red-600" : "text-gray-700"}`}
+                          >
                             {val ?? "—"}
                           </p>
                         </div>
@@ -124,25 +206,39 @@ function ReviewDetailModal({
                   {/* Text fields */}
                   {rv.kekuatan_proposal && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-0.5">Kekuatan</p>
-                      <p className="text-sm text-gray-700">{rv.kekuatan_proposal}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        Kekuatan
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {rv.kekuatan_proposal}
+                      </p>
                     </div>
                   )}
                   {rv.kelemahan_proposal && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-0.5">Kelemahan</p>
-                      <p className="text-sm text-gray-700">{rv.kelemahan_proposal}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        Kelemahan
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {rv.kelemahan_proposal}
+                      </p>
                     </div>
                   )}
                   {rv.rekomendasi_akhir && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-0.5">Rekomendasi</p>
-                      <p className="text-sm text-gray-700">{rv.rekomendasi_akhir}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        Rekomendasi
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {rv.rekomendasi_akhir}
+                      </p>
                     </div>
                   )}
                   {rv.notes && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-0.5">Catatan</p>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        Catatan
+                      </p>
                       <p className="text-sm text-gray-500 italic">{rv.notes}</p>
                     </div>
                   )}
@@ -157,21 +253,27 @@ function ReviewDetailModal({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const DONE_STATUSES: ProposalStatus[] = ["ACCEPTED", "REJECTED", "REVISION"];
-
 export default function HistoryReview() {
   const [proposals, setProposals] = useState<AssignedProposal[]>([]);
-  const [meta, setMeta] = useState({ totalData: 0, totalPages: 1, currentPage: 1, limit: 5 });
+  const [meta, setMeta] = useState({
+    totalData: 0,
+    totalPages: 1,
+    currentPage: 1,
+    limit: 5,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProposalStatus | "DONE">("DONE");
+  const [statusFilter, setStatusFilter] = useState<ProposalStatus | "ALL">(
+    "ALL",
+  );
   const [page, setPage] = useState(1);
 
   // Modal
-  const [selectedProposal, setSelectedProposal] = useState<AssignedProposal | null>(null);
+  const [selectedProposal, setSelectedProposal] =
+    useState<AssignedProposal | null>(null);
   const [reviews, setReviews] = useState<ReviewHistoryItem[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
@@ -189,25 +291,36 @@ export default function HistoryReview() {
     setIsLoading(true);
     setError(null);
     try {
-      // For history, we fetch all done statuses in parallel and merge
-      if (statusFilter === "DONE") {
+      const searchParam = debouncedSearch || undefined;
+
+      // Untuk "Semua Status", gabungkan semua proposal yang ditugaskan
+      if (statusFilter === "ALL") {
         const results = await Promise.all(
-          DONE_STATUSES.map((s) =>
-            getAssignedProposals({ page: 1, search: debouncedSearch || undefined, status: s }),
+          ALL_ASSIGNED_STATUSES.map((s) =>
+            fetchAllAssignedByStatus(s, searchParam),
           ),
         );
-        const merged = results.flatMap((r) => r.data);
-        // Sort by assigned_at desc
-        merged.sort(
-          (a, b) => new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime(),
+        const merged = sortByAssignedAtDesc(results.flat());
+        const totalData = merged.length;
+        const totalPages = Math.max(1, Math.ceil(totalData / LOCAL_PAGE_SIZE));
+        const safePage = Math.min(page, totalPages);
+        const startIndex = (safePage - 1) * LOCAL_PAGE_SIZE;
+        const pagedItems = merged.slice(
+          startIndex,
+          startIndex + LOCAL_PAGE_SIZE,
         );
-        const totalData = results.reduce((sum, r) => sum + r.meta.totalData, 0);
-        setProposals(merged);
-        setMeta({ totalData, totalPages: 1, currentPage: 1, limit: merged.length });
+
+        setProposals(pagedItems);
+        setMeta({
+          totalData,
+          totalPages,
+          currentPage: safePage,
+          limit: LOCAL_PAGE_SIZE,
+        });
       } else {
         const res = await getAssignedProposals({
           page,
-          search: debouncedSearch || undefined,
+          search: searchParam,
           status: statusFilter as ProposalStatus,
         });
         setProposals(res.data);
@@ -239,20 +352,14 @@ export default function HistoryReview() {
     }
   };
 
-  const FILTER_OPTIONS = [
-    { label: "Semua Selesai", value: "DONE" },
-    { label: "Diterima", value: "ACCEPTED" },
-    { label: "Revisi", value: "REVISION" },
-    { label: "Ditolak", value: "REJECTED" },
-  ];
-
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-
       {/* HEADER */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">Riwayat Review</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Riwayat Review
+          </h1>
           <p className="text-gray-500 text-sm mt-0.5">
             Daftar proposal yang telah selesai Anda nilai.
           </p>
@@ -269,9 +376,8 @@ export default function HistoryReview() {
 
       {/* CARD */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-
         {/* SEARCH + FILTER */}
-        <div className="flex flex-wrap gap-4 mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-2 border rounded-lg px-3 py-2 flex-1 min-w-[200px]">
             <Search size={16} className="text-gray-400 shrink-0" />
             <input
@@ -284,23 +390,26 @@ export default function HistoryReview() {
             />
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {FILTER_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => {
-                  setStatusFilter(opt.value as ProposalStatus | "DONE");
-                  setPage(1);
-                }}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  statusFilter === opt.value
-                    ? "bg-red-600 text-white border-red-600"
-                    : "text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="relative">
+            <select
+              id="filter-status-reviewer-history"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as ProposalStatus | "ALL");
+                setPage(1);
+              }}
+              className="appearance-none text-sm border border-gray-200 rounded-lg px-3 py-2 pr-8 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-transparent cursor-pointer hover:border-gray-300 transition-colors"
+            >
+              {FILTER_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
           </div>
         </div>
 
@@ -314,7 +423,10 @@ export default function HistoryReview() {
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <AlertCircle size={28} className="text-red-400" />
             <p className="text-sm text-red-600">{error}</p>
-            <button onClick={fetchData} className="text-xs text-gray-500 underline">
+            <button
+              onClick={fetchData}
+              className="text-xs text-gray-500 underline"
+            >
               Coba lagi
             </button>
           </div>
@@ -328,34 +440,58 @@ export default function HistoryReview() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">#</th>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">Judul Proposal</th>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">Peneliti</th>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">Skema</th>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">Ditugaskan</th>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">Status</th>
-                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-center">Aksi</th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    #
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    Judul Proposal
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    Peneliti
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    Skema
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    Ditugaskan
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-center">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {proposals.map((item, i) => (
-                  <tr key={item.id} className="border-t hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={item.id}
+                    className="border-t hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-5 py-4 text-xs text-gray-400">
                       {(meta.currentPage - 1) * meta.limit + i + 1}
                     </td>
 
                     <td className="px-5 py-4">
-                      <p className="font-medium text-gray-700 max-w-xs truncate" title={item.title}>
+                      <p
+                        className="font-medium text-gray-700 max-w-xs truncate"
+                        title={item.title}
+                      >
                         {item.title}
                       </p>
                     </td>
 
                     <td className="px-5 py-4">
                       <p className="text-gray-600">{item.user.name}</p>
-                      <p className="text-xs text-gray-400">{item.user.nidn_nip}</p>
+                      <p className="text-xs text-gray-400">
+                        {item.user.nidn_nip}
+                      </p>
                     </td>
 
-                    <td className="px-5 py-4 text-gray-500 text-xs">{item.skema}</td>
+                    <td className="px-5 py-4 text-gray-500 text-xs">
+                      {item.skema}
+                    </td>
 
                     <td className="px-5 py-4 text-gray-400 text-xs">
                       {formatDate(item.assigned_at)}
@@ -400,8 +536,8 @@ export default function HistoryReview() {
         {!isLoading && !error && meta.totalPages > 1 && (
           <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
             <p>
-              Menampilkan halaman {meta.currentPage} dari {meta.totalPages} &bull;{" "}
-              {meta.totalData} total
+              Menampilkan halaman {meta.currentPage} dari {meta.totalPages}{" "}
+              &bull; {meta.totalData} total
             </p>
             <div className="flex gap-2">
               <button
