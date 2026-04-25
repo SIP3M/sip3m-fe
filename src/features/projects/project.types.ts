@@ -100,3 +100,64 @@ export interface GetMonitoringProjectDetailResponse {
   message: string;
   data: MonitoringProjectDetail;
 }
+
+// ─── Pengabdian (Dosen) Types ─────────────────────────────────────────────────
+
+export type MilestoneStatus = "COMPLETED" | "ONGOING" | "PENDING";
+
+export interface PengabdianMilestone {
+  id: number;
+  sequence: number;
+  title: string;
+  target_percentage: number;
+  status: MilestoneStatus;
+}
+
+export interface PengabdianProject {
+  id: number;
+  proposal_id: number;
+  project_code: string;
+  title: string;
+  status: string;
+  overall_progress: number;
+  is_archived: boolean;
+  realized_amount: number | null;
+  created_at: string;
+  proposal: { id: number; lead_researcher_id: number };
+  milestones: PengabdianMilestone[];
+}
+
+export interface PengabdianMeta {
+  totalData: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+}
+
+export interface GetPengabdianProjectsResponse {
+  data: PengabdianProject[];
+  meta: PengabdianMeta;
+}
+
+export interface UploadMilestoneDocumentsResponse {
+  message: string;
+  data: {
+    id: number;
+    project_id: number;
+    milestone_id: number;
+    document_type: string;
+    title: string;
+    file_path: string;
+    file_size: number;
+    mime_type: string;
+    verification_status: string;
+    uploaded_by: number;
+    public_url: string;
+    upload_field: string;
+  }[];
+  milestone_update: {
+    id: number;
+    status: string;
+    project_overall_progress: number;
+  };
+}
