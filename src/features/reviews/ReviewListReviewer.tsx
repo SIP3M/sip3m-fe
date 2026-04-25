@@ -43,10 +43,9 @@ const STATUS_CONFIG: Record<
     bg: "bg-indigo-100",
     text: "text-indigo-700",
   },
-  REVISION: { label: "Revisi", bg: "bg-orange-100", text: "text-orange-700" },
-  ACCEPTED: { label: "Diterima", bg: "bg-green-100", text: "text-green-700" },
-  REJECTED: { label: "Ditolak", bg: "bg-red-100", text: "text-red-700" },
-  DRAFT: { label: "Draft", bg: "bg-gray-100", text: "text-gray-600" },
+  REVISION: { label: "Revision", bg: "bg-orange-100", text: "text-orange-700" },
+  ACCEPTED: { label: "Accepted", bg: "bg-green-100", text: "text-green-700" },
+  REJECTED: { label: "Rejected", bg: "bg-red-100", text: "text-red-700" },
 };
 
 const formatCurrency = (amount: number) =>
@@ -82,24 +81,68 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const FILTER_OPTIONS: { label: string; value: ProposalStatus | "ALL" }[] = [
   { label: "Semua Status", value: "ALL" },
-  { label: "Sedang Direview", value: "UNDER_REVIEW" },
-  { label: "Revisi", value: "REVISION" },
-  { label: "Diterima", value: "ACCEPTED" },
-  { label: "Ditolak", value: "REJECTED" },
+  { label: "Under Review", value: "UNDER_REVIEW" },
+  { label: "Revision", value: "REVISION" },
+  { label: "Accepted", value: "ACCEPTED" },
+  { label: "Rejected", value: "REJECTED" },
 ];
+
+const ALL_ASSIGNED_STATUSES: ProposalStatus[] = [
+
+  "UNDER_REVIEW",
+  "REVISION",
+  "ACCEPTED",
+  "REJECTED",
+];
+
+const LOCAL_PAGE_SIZE = 5;
+
+const sortByAssignedAtDesc = (items: AssignedProposal[]) =>
+  [...items].sort(
+    (a, b) =>
+      new Date(b.assigned_at).getTime() - new Date(a.assigned_at).getTime(),
+  );
+
+const fetchAssignedProposalsByStatus = async (
+  status: ProposalStatus,
+  search?: string,
+) => {
+  const first = await getAssignedProposals({ page: 1, search, status });
+  const all = [...first.data];
+
+  if (first.meta.totalPages > 1) {
+    const requests: Promise<ReturnType<typeof getAssignedProposals>>[] = [];
+
+    for (let p = 2; p <= first.meta.totalPages; p++) {
+      requests.push(getAssignedProposals({ page: p, search, status }));
+    }
+
+    const rest = await Promise.all(requests);
+    rest.forEach((res) => all.push(...res.data));
+  }
+
+  return all;
+};
 
 export default function ReviewListReviewer() {
   const navigate = useNavigate();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [proposals, setProposals] = useState<AssignedProposal[]>([]);
-  const [meta, setMeta] = useState({ totalData: 0, totalPages: 1, currentPage: 1, limit: 5 });
+  const [meta, setMeta] = useState({
+    totalData: 0,
+    totalPages: 1,
+    currentPage: 1,
+    limit: 5,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProposalStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<ProposalStatus | "ALL">(
+    "ALL",
+  );
   const [page, setPage] = useState(1);
 
   // ── Debounce search ────────────────────────────────────────────────────────
@@ -116,13 +159,38 @@ export default function ReviewListReviewer() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await getAssignedProposals({
-        page,
-        search: debouncedSearch || undefined,
-        status: statusFilter !== "ALL" ? statusFilter : undefined,
-      });
-      setProposals(res.data);
-      setMeta(res.meta);
+      const searchParam = debouncedSearch || undefined;
+
+      if (statusFilter === "ALL") {
+        const results = await Promise.all(
+          ALL_ASSIGNED_STATUSES.map((status) =>
+            fetchAssignedProposalsByStatus(status, searchParam),
+          ),
+        );
+
+        const merged = sortByAssignedAtDesc(results.flat());
+        const totalData = merged.length;
+        const totalPages = Math.max(1, Math.ceil(totalData / LOCAL_PAGE_SIZE));
+        const safePage = Math.min(page, totalPages);
+        const start = (safePage - 1) * LOCAL_PAGE_SIZE;
+        const paged = merged.slice(start, start + LOCAL_PAGE_SIZE);
+
+        setProposals(paged);
+        setMeta({
+          totalData,
+          totalPages,
+          currentPage: safePage,
+          limit: LOCAL_PAGE_SIZE,
+        });
+      } else {
+        const res = await getAssignedProposals({
+          page,
+          search: searchParam,
+          status: statusFilter,
+        });
+        setProposals(res.data);
+        setMeta(res.meta);
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -139,12 +207,13 @@ export default function ReviewListReviewer() {
   }, [fetchData]);
 
   // ── Stats from current page ────────────────────────────────────────────────
-  const underReview = proposals.filter((p) => p.status === "UNDER_REVIEW").length;
+  const underReview = proposals.filter(
+    (p) => p.status === "UNDER_REVIEW",
+  ).length;
   const revision = proposals.filter((p) => p.status === "REVISION").length;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-
       {/* ── HEADER ── */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -169,7 +238,9 @@ export default function ReviewListReviewer() {
         <div className="bg-white border border-orange-200 rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500">Perlu Direview</p>
-            <p className="text-2xl font-bold text-gray-800">{isLoading ? "—" : underReview}</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {isLoading ? "—" : underReview}
+            </p>
             <p className="text-xs text-gray-400">Halaman ini</p>
           </div>
           <div className="bg-orange-100 p-2.5 rounded-lg">
@@ -180,7 +251,9 @@ export default function ReviewListReviewer() {
         <div className="bg-white border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500">Perlu Revisi</p>
-            <p className="text-2xl font-bold text-gray-800">{isLoading ? "—" : revision}</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {isLoading ? "—" : revision}
+            </p>
             <p className="text-xs text-gray-400">Halaman ini</p>
           </div>
           <div className="bg-yellow-100 p-2.5 rounded-lg">
@@ -191,7 +264,9 @@ export default function ReviewListReviewer() {
         <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500">Total Tugas</p>
-            <p className="text-2xl font-bold text-gray-800">{isLoading ? "—" : meta.totalData}</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {isLoading ? "—" : meta.totalData}
+            </p>
             <p className="text-xs text-gray-400">Semua halaman</p>
           </div>
           <div className="bg-gray-100 p-2.5 rounded-lg">
@@ -293,11 +368,16 @@ export default function ReviewListReviewer() {
                 return (
                   <TableRow key={item.id}>
                     {/* No */}
-                    <TableCell className="text-gray-400 text-xs">{rowNum}</TableCell>
+                    <TableCell className="text-gray-400 text-xs">
+                      {rowNum}
+                    </TableCell>
 
                     {/* Title */}
                     <TableCell>
-                      <p className="font-medium text-gray-800 max-w-[220px] truncate" title={item.title}>
+                      <p
+                        className="font-medium text-gray-800 max-w-[220px] truncate"
+                        title={item.title}
+                      >
                         {item.title}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
@@ -307,14 +387,22 @@ export default function ReviewListReviewer() {
 
                     {/* Researcher */}
                     <TableCell>
-                      <p className="text-gray-700 max-w-[140px] truncate">{item.user.name}</p>
-                      <p className="text-xs text-gray-400">{item.user.nidn_nip}</p>
+                      <p className="text-gray-700 max-w-[140px] truncate">
+                        {item.user.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {item.user.nidn_nip}
+                      </p>
                     </TableCell>
 
                     {/* Skema / Fakultas */}
                     <TableCell>
-                      <p className="text-xs text-gray-700 max-w-[140px] truncate">{item.skema}</p>
-                      <p className="text-xs text-gray-400 max-w-[140px] truncate">{item.faculty}</p>
+                      <p className="text-xs text-gray-700 max-w-[140px] truncate">
+                        {item.skema}
+                      </p>
+                      <p className="text-xs text-gray-400 max-w-[140px] truncate">
+                        {item.faculty}
+                      </p>
                     </TableCell>
 
                     {/* Ditugaskan */}
@@ -342,16 +430,18 @@ export default function ReviewListReviewer() {
                           </a>
                         )}
 
-                        <button
-                          id={`btn-review-${item.id}`}
-                          onClick={() =>
-                            navigate(`/reviewer-dashboard/reviews/${item.id}`)
-                          }
-                          className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-lg transition-colors"
-                        >
-                          <ExternalLink size={12} />
-                          Review
-                        </button>
+                        {item.status !== "ACCEPTED" && (
+                          <button
+                            id={`btn-review-${item.id}`}
+                            onClick={() =>
+                              navigate(`/reviewer-dashboard/reviews/${item.id}`)
+                            }
+                            className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 border border-red-200 hover:border-red-400 px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            <ExternalLink size={12} />
+                            Review
+                          </button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
