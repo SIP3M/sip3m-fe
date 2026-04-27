@@ -80,15 +80,13 @@ export default function ProjectDosen() {
     setIsUploading(true);
     try {
       const formData = new FormData();
-      formData.append("projectId", String(selectedProject.id));
-      formData.append("milestoneId", String(selectedMilestone.id));
-      formData.append("isDraft", String(isDraft));
+      formData.append("is_draft", String(isDraft));
 
       formData.append("laporan", laporanFile);
       if (logbookFile) formData.append("logbook", logbookFile);
       if (anggaranFile) formData.append("anggaran", anggaranFile);
 
-      await uploadMilestoneDocuments(formData);
+      await uploadMilestoneDocuments(selectedProject.id, selectedMilestone.id, formData);
 
       setIsModalOpen(false);
       alert(isDraft ? "Draft berhasil disimpan!" : "Dokumen final berhasil dikirim!");
@@ -173,11 +171,14 @@ export default function ProjectDosen() {
           </div>
         )}
 
-        {projects.map((project) => {
+        {(projects || []).map((project) => {
           // Sort milestones by sequence
-          const sortedMilestones = [...project.milestones].sort((a, b) => a.sequence - b.sequence);
-          // Find the active ongoing milestone (first that is NOT COMPLETED), ignoring sequence 1
-          const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED" && m.sequence > 1);
+          const sortedMilestones = [...(project.milestones || [])].sort((a, b) => a.sequence - b.sequence);
+          // Find the active ongoing milestone (first that is NOT COMPLETED or SELESAI)
+          const ongoingMilestone = sortedMilestones.find((m) => {
+            const s = (m.status || "").toUpperCase();
+            return s === "ONGOING"; // Harus benar-benar ONGOING
+          });
 
           return (
             <div key={project.id} className="bg-white rounded-[1.25rem] shadow-sm p-6 lg:p-8 border border-gray-200/70">
@@ -226,14 +227,14 @@ export default function ProjectDosen() {
 
                 <div className="relative z-10 flex justify-between">
                   {sortedMilestones.map((milestone) => {
-                    // Force sequence 1 to be visually completed if it's not the only one, or just trust the logic
-                    const isSequence1 = milestone.sequence === 1;
-                    const isVisuallyCompleted = milestone.status === "COMPLETED" || isSequence1;
+                    // Trust the backend status completely
+                    const statusStr = (milestone.status || "").toUpperCase();
+                    const isVisuallyCompleted = ["COMPLETED", "SELESAI"].includes(statusStr);
                     const isVisuallyOngoing = ongoingMilestone?.id === milestone.id;
                     const isVisuallyPending = !isVisuallyCompleted && !isVisuallyOngoing;
 
                     return (
-                      <div key={milestone.id} className="flex flex-col items-center text-center w-1/4">
+                      <div key={milestone.id} className="flex flex-col items-center text-center flex-1">
                         <div className="h-8 flex items-center justify-center mb-3">
                           {isVisuallyCompleted && (
                             <div className="w-[30px] h-[30px] rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm ring-4 ring-white">
@@ -265,8 +266,15 @@ export default function ProjectDosen() {
                 </div>
               </div>
 
-              {/* ACTION AREA (ONLY SHOWS IF ONGOING MILESTONE EXISTS) */}
-              {ongoingMilestone && (
+{/* ACTION AREA */}
+              {project.status === "PENDING" ? (
+                <div className="border border-blue-200 bg-blue-50 rounded-2xl p-5 mt-10 flex flex-col items-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <AlertCircle size={24} className="text-blue-500" />
+                  <p className="text-sm font-semibold text-blue-700">
+                    Proyek ini sedang menunggu persetujuan / SK dari Admin LPPM untuk dapat dimulai.
+                  </p>
+                </div>
+              ) : ongoingMilestone ? (
                 <div className="border border-gray-200 bg-white rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-between items-center gap-5 shadow-sm max-w-4xl mx-auto">
                   <div className="flex items-center gap-4 w-full md:w-auto">
                     <div className="border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
@@ -277,7 +285,7 @@ export default function ProjectDosen() {
                         Upload {ongoingMilestone.title} {ongoingMilestone.target_percentage > 0 && `(${ongoingMilestone.target_percentage}%)`}
                       </p>
                       <p className="text-xs text-gray-500 mt-1 font-medium">
-                        Tenggat waktu: 10 November 2023
+                        Tenggat waktu: Segera lengkapi
                       </p>
                     </div>
                   </div>
@@ -293,6 +301,16 @@ export default function ProjectDosen() {
                       Upload Dokumen
                     </button>
                   </div>
+                </div>
+              ) : sortedMilestones.length > 0 ? (
+                <div className="border border-gray-200 bg-gray-50 rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-center items-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <Check size={24} className="text-green-500" />
+                  <p className="text-sm font-semibold text-gray-600">Semua tahapan dokumen telah selesai atau belum ada tahapan aktif.</p>
+                </div>
+              ) : (
+                <div className="border border-orange-200 bg-orange-50 rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-center items-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <AlertCircle size={24} className="text-orange-500" />
+                  <p className="text-sm font-semibold text-orange-700">Data milestone belum tersedia dari sistem.</p>
                 </div>
               )}
             </div>
