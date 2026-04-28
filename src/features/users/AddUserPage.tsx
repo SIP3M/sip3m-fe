@@ -10,8 +10,8 @@ import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,

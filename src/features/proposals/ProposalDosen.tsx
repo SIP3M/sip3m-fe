@@ -15,8 +15,8 @@ import {
   ProposalFormMode,
   ProposalFormValues,
 } from "./ProposalDosen.types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PAGE_SIZE = 5;
