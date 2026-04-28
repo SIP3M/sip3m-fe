@@ -158,7 +158,7 @@ export default function DosenDashboard() {
 
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <p>Pengembangan Algoritma AI untuk Deteksi Hama Padi</p>
+              <p>Pengembangan Algoritma AI untuk Deteksi Hama</p>
               <span className="bg-yellow-100 text-yellow-600 px-2 rounded">
                 REVIEW
               </span>

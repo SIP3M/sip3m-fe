@@ -121,7 +121,7 @@ export default function ProjectDosen() {
         <button
           onClick={fetchProjects}
           disabled={isLoading}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white rounded-xl px-4 py-2 transition-all shadow-sm hover:shadow active:scale-95"
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white rounded-xl px-4 py-2 cursor-pointer transition-all shadow-sm hover:shadow active:scale-95"
         >
           <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           Refresh
@@ -277,8 +277,8 @@ export default function ProjectDosen() {
               ) : ongoingMilestone ? (
                 <div className="border border-gray-200 bg-white rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-between items-center gap-5 shadow-sm max-w-4xl mx-auto">
                   <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
-                      <Upload size={22} strokeWidth={2.5} />
+                    <div className="hover:bg-gray-50 cursor-pointer border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
+                      <Upload size={22} strokeWidth={2.5} className="cursor-pointer " />
                     </div>
                     <div>
                       <p className="text-[15px] font-bold text-gray-900">
@@ -291,12 +291,12 @@ export default function ProjectDosen() {
                   </div>
 
                   <div className="flex gap-3 w-full md:w-auto justify-end">
-                    <button className="px-5 py-2.5 text-[13px] font-bold border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none">
+                    <button className="cursor-pointer px-5 py-2.5 text-[13px] font-bold border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none">
                       Lihat Panduan
                     </button>
                     <button
                       onClick={() => handleUploadClick(project, ongoingMilestone)}
-                      className="px-5 py-2.5 text-[13px] font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm shadow-red-600/30 whitespace-nowrap focus:ring-2 focus:ring-red-600 focus:ring-offset-2 outline-none"
+                      className="cursor-pointer px-5 py-2.5 text-[13px] font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm shadow-red-600/30 whitespace-nowrap focus:ring-2 focus:ring-red-600 focus:ring-offset-2 outline-none"
                     >
                       Upload Dokumen
                     </button>

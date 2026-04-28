@@ -171,7 +171,7 @@ export default function UsersPage() {
 
         <button
           onClick={() => navigate("/users/add")}
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow transition"
+          className="cursor-pointer bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow transition"
         >
           + Tambah Pengguna
         </button>
@@ -195,7 +195,7 @@ export default function UsersPage() {
             onChange={(e) => setSelectedRole((e.target.value as AppRole) || "")}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
-            <option value="">Semua Role</option>
+            <option value="" >Semua Role</option>
             {Object.entries(APP_ROLES).map(([, value]) => (
               <option key={value} value={value}>
                 {value}
