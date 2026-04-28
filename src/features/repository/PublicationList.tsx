@@ -87,7 +87,7 @@ export default function PublicationList() {
             className="flex-1 outline-none text-sm"
           />
 
-          <button className="bg-red-600 text-white text-sm px-5 py-1.5 rounded-full">
+          <button className="bg-red-600 text-white text-sm px-5 py-1.5 rounded-full cursor-pointer">
             Cari
           </button>
         </div>
@@ -162,7 +162,7 @@ export default function PublicationList() {
           ))
         ) : (
           <div className="text-center text-gray-400 mt-10">
-            Data tidak ditemukan 😢
+            Data tidak ditemukan 
           </div>
         )}
       </div>
