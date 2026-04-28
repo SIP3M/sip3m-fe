@@ -9,7 +9,7 @@ import {
 import axios from "axios";
 import { getMonitoringProjectById } from "./project.api";
 import { MonitoringProjectDetail } from "./project.types";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const getStatusClassName = (status: string) => {

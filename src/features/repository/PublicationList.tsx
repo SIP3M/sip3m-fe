@@ -87,7 +87,7 @@ export default function PublicationList() {
             className="flex-1 outline-none text-sm"
           />
 
-          <button className="bg-red-600 text-white text-sm px-5 py-1.5 rounded-full cursor-pointer">
+          <button className="bg-red-600 text-white text-sm px-5 py-1.5 rounded-full cursor-pointer hover:bg-red-700">
             Cari
           </button>
         </div>
@@ -150,7 +150,7 @@ export default function PublicationList() {
                 {/* RIGHT */}
                 <button
                   onClick={() => handleDownload(item.pdfUrl, item.title)}
-                  className="flex items-center gap-1 text-xs border px-3 py-1.5 rounded-md hover:bg-gray-100"
+                  className="cursor-pointer flex items-center gap-1 text-xs border px-3 py-1.5 rounded-md hover:bg-gray-100"
                 >
                   <FileText size={14} />
                   PDF
