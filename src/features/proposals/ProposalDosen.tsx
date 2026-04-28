@@ -410,9 +410,14 @@ export default function ProposalDosen() {
           </p>
         </div>
 
-        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Buat Proposal Baru
-        </button>
+        <Button
+  type="button"
+  onClick={openCreateForm}
+  className="bg-red-600 hover:bg-red-700 text-sm text-white px-3 py-5 rounded-lg flex items-center gap-2 cursor-pointer"
+>
+  <Plus className="w-2 h-3" />
+  Buat Proposal Baru
+</Button>
       </div>
 
       {error && (
