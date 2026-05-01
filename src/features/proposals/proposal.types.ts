@@ -19,6 +19,8 @@ export interface Proposal {
   } | null;
   faculty: string;
   skema: string;
+  sumber_data_penelitian?: string | null;
+  instansi?: string | null;
   funding_request_amount: number;
   status: ProposalStatus;
   proposal_file_path: string | null;
@@ -83,6 +85,8 @@ export interface UpsertProposalPayload {
   title?: string;
   faculty?: string;
   skema?: string;
+  sumber_data_penelitian?: string;
+  instansi?: string;
   funding_request_amount?: number | string;
   is_draft?: boolean;
   proposal_file?: File;

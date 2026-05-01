@@ -79,6 +79,14 @@ const buildProposalFormData = (payload: UpsertProposalPayload) => {
     formData.append("skema", payload.skema);
   }
 
+  if (payload.sumber_data_penelitian !== undefined) {
+    formData.append("sumber_data_penelitian", payload.sumber_data_penelitian);
+  }
+
+  if (payload.instansi !== undefined) {
+    formData.append("instansi", payload.instansi);
+  }
+
   if (payload.funding_request_amount !== undefined) {
     formData.append(
       "funding_request_amount",

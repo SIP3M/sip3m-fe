@@ -4,6 +4,8 @@ import { ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getProposalById, updateProposalStatus } from "./proposal.api";
 import { Proposal } from "./proposal.types";
+import { useAuthStore } from "@/features/auth/auth.store";
+import { APP_ROLES } from "@/constant/roles";
 
 type FeedbackState = {
   type: "success" | "error";
@@ -62,10 +64,22 @@ const getStatusLabel = (status: string) => {
   return statusLabel[key] || status;
 };
 
+const formatSkemaLabel = (value?: string | null) => {
+  if (!value) return "-";
+  return value
+    .toLowerCase()
+    .split(/[_-]+/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 export default function ProposalDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const proposalId = Number(id);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.roles?.roles === APP_ROLES.ADMIN_LPPM;
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -113,6 +127,7 @@ export default function ProposalDetail() {
   const isSubmitted = statusKey === "SUBMITTED";
 
   const handleVerifySubmit = async () => {
+    if (!isAdmin) return;
     if (!proposal) return;
 
     setIsVerifying(true);
@@ -141,6 +156,7 @@ export default function ProposalDetail() {
   };
 
   const handleRejectSubmit = async () => {
+    if (!isAdmin) return;
     if (!proposal) return;
     const notes = rejectionNotes.trim();
 
@@ -248,11 +264,16 @@ export default function ProposalDetail() {
           <h2 className="text-lg font-semibold text-gray-800">
             {proposal.title}
           </h2>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"}`}
-          >
-            {getStatusLabel(proposal.status)}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+              ID: PROP-{proposal.id}
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"}`}
+            >
+              {getStatusLabel(proposal.status)}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -270,7 +291,23 @@ export default function ProposalDetail() {
           <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
             <p className="text-xs uppercase text-gray-400">Fakultas & Skema</p>
             <p className="mt-1 font-medium text-gray-800">
-              {proposal.faculty || "-"} • {proposal.skema || "-"}
+              {proposal.faculty || "-"} • {formatSkemaLabel(proposal.skema)}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+            <p className="text-xs uppercase text-gray-400">
+              Sumber Data Penelitian
+            </p>
+            <p className="mt-1 font-medium text-gray-800">
+              {proposal.sumber_data_penelitian || "-"}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+            <p className="text-xs uppercase text-gray-400">Instansi</p>
+            <p className="mt-1 font-medium text-gray-800">
+              {proposal.instansi || "-"}
             </p>
           </div>
 
@@ -322,43 +359,47 @@ export default function ProposalDetail() {
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-end gap-3">
-        <button
-          type="button"
-          onClick={() => setIsRejectModalOpen(true)}
-          disabled={isRejecting || isVerifying || !isSubmitted}
-          className={`rounded-lg px-4 py-2 text-sm font-medium ${
-            isRejecting || isVerifying || !isSubmitted
-              ? "cursor-not-allowed bg-red-200 text-white"
-              : "bg-red-500 text-white hover:bg-red-600"
-          }`}
-        >
-          Tolak Proposal
-        </button>
+      {isAdmin && (
+        <>
+          <div className="flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsRejectModalOpen(true)}
+              disabled={isRejecting || isVerifying || !isSubmitted}
+              className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                isRejecting || isVerifying || !isSubmitted
+                  ? "cursor-not-allowed bg-red-200 text-white"
+                  : "bg-red-500 text-white hover:bg-red-600"
+              }`}
+            >
+              Tolak Proposal
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setIsVerifyModalOpen(true)}
-          disabled={isVerifying || isRejecting || !isSubmitted}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-            isVerifying || isRejecting || !isSubmitted
-              ? "cursor-not-allowed bg-blue-200 text-white"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
-        >
-          {isVerifying && <Loader2 size={14} className="animate-spin" />}
-          {isVerifying ? "Memverifikasi..." : "Verifikasi Proposal"}
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsVerifyModalOpen(true)}
+              disabled={isVerifying || isRejecting || !isSubmitted}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
+                isVerifying || isRejecting || !isSubmitted
+                  ? "cursor-not-allowed bg-blue-200 text-white"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {isVerifying && <Loader2 size={14} className="animate-spin" />}
+              {isVerifying ? "Memverifikasi..." : "Verifikasi Proposal"}
+            </button>
+          </div>
 
-      {!isSubmitted && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          Aksi verifikasi/penolakan hanya tersedia untuk proposal berstatus
-          Submitted.
-        </p>
+          {!isSubmitted && (
+            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              Aksi verifikasi/penolakan hanya tersedia untuk proposal berstatus
+              Submitted.
+            </p>
+          )}
+        </>
       )}
 
-      {isVerifyModalOpen && (
+      {isAdmin && isVerifyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-800">
@@ -403,7 +444,7 @@ export default function ProposalDetail() {
         </div>
       )}
 
-      {isRejectModalOpen && (
+      {isAdmin && isRejectModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-800">

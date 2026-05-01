@@ -41,6 +41,16 @@ const getStatusLabel = (status: string) => {
   return statusLabel[key] || status;
 };
 
+const formatSkemaLabel = (value?: string | null) => {
+  if (!value) return "-";
+  return value
+    .toLowerCase()
+    .split(/[_-]+/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 interface Props {
   proposal: Proposal;
   rowNumber: number;
@@ -66,7 +76,7 @@ export default function ProposalRow({ proposal, rowNumber }: Props) {
         <p className="text-xs text-gray-400">NIDN/NIP: {researcherNidn}</p>
       </td>
 
-      <td className="px-6 py-4">{proposal.skema}</td>
+      <td className="px-6 py-4">{formatSkemaLabel(proposal.skema)}</td>
 
       <td className="px-6 py-4">{submittedYear}</td>
 

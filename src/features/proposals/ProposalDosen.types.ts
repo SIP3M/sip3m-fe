@@ -6,6 +6,8 @@ export type ProposalFormValues = {
   title: string;
   faculty: string;
   skema: string;
+  sumber_data_penelitian: string;
+  instansi: string;
   funding_request_amount: string;
   proposal_file: File | null;
   rab_file: File | null;
