@@ -1,10 +1,15 @@
 import { api } from "@/services/api";
+import { AxiosProgressEvent } from "axios";
 import {
   GetMonitoringProjectDetailResponse,
   GetMonitoringProjectsResponse,
   MonitoringStatusFilter,
   GetPengabdianProjectsResponse,
   UploadMilestoneDocumentsResponse,
+  UpdatePengabdianProjectStatusPayload,
+  UpdatePengabdianProjectStatusResponse,
+  VerifyPengabdianDocumentPayload,
+  VerifyPengabdianDocumentResponse,
 } from "./project.types";
 
 export interface GetMonitoringProjectsParams {
@@ -40,6 +45,30 @@ export const getMonitoringProjectById = async (
   return res.data;
 };
 
+export const updatePengabdianProjectStatus = async (
+  projectId: number,
+  payload: UpdatePengabdianProjectStatusPayload,
+): Promise<UpdatePengabdianProjectStatusResponse> => {
+  const res = await api.patch<UpdatePengabdianProjectStatusResponse>(
+    `/pengabdian/projects/${projectId}/status`,
+    payload,
+  );
+
+  return res.data;
+};
+
+export const verifyPengabdianDocument = async (
+  documentId: number,
+  payload: VerifyPengabdianDocumentPayload,
+): Promise<VerifyPengabdianDocumentResponse> => {
+  const res = await api.patch<VerifyPengabdianDocumentResponse>(
+    `/pengabdian-documents/${documentId}/verify`,
+    payload,
+  );
+
+  return res.data;
+};
+
 // ─── Pengabdian (Dosen) ────────────────────────────────────────────────────────────────────────────
 
 export interface GetPengabdianProjectsParams {
@@ -68,7 +97,7 @@ export const getPengabdianProjects = async (
 
 export const uploadMilestoneDocuments = async (
   formData: FormData,
-  onUploadProgress?: (progressEvent: any) => void
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
 ): Promise<UploadMilestoneDocumentsResponse> => {
   const res = await api.post<UploadMilestoneDocumentsResponse>(
     `/pengabdian-documents/upload`,

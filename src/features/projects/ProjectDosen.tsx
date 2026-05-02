@@ -177,7 +177,8 @@ export default function ProjectDosen() {
           // Sort milestones by sequence
           const sortedMilestones = [...project.milestones].sort((a, b) => a.sequence - b.sequence);
           // Find the active ongoing milestone (first that is NOT COMPLETED), ignoring sequence 1
-          const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED" && m.sequence > 1);
+          // Cari milestone pertama yang belum COMPLETED
+const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
 
           return (
             <div key={project.id} className="bg-white rounded-[1.25rem] shadow-sm p-6 lg:p-8 border border-gray-200/70">
@@ -227,8 +228,7 @@ export default function ProjectDosen() {
                 <div className="relative z-10 flex justify-between">
                   {sortedMilestones.map((milestone) => {
                     // Force sequence 1 to be visually completed if it's not the only one, or just trust the logic
-                    const isSequence1 = milestone.sequence === 1;
-                    const isVisuallyCompleted = milestone.status === "COMPLETED" || isSequence1;
+                    const isVisuallyCompleted = milestone.status === "COMPLETED"
                     const isVisuallyOngoing = ongoingMilestone?.id === milestone.id;
                     const isVisuallyPending = !isVisuallyCompleted && !isVisuallyOngoing;
 
@@ -266,7 +266,19 @@ export default function ProjectDosen() {
               </div>
 
               {/* ACTION AREA (ONLY SHOWS IF ONGOING MILESTONE EXISTS) */}
-              {ongoingMilestone && (
+{/* ACTION AREA (TERGANTUNG STATUS PROYEK) */}
+              {project.status === "PENDING" || project.status === "MENUNGGU_PERSETUJUAN" ? (
+                // JIKA PROYEK MASIH PENDING: Tampilkan kotak biru, sembunyikan semua tombol upload
+                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mt-10 flex flex-col items-center justify-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <div className="bg-white p-2 rounded-full shadow-sm">
+                    <AlertCircle size={24} className="text-blue-500" />
+                  </div>
+                  <p className="text-[14px] font-semibold text-blue-800">
+                    Proyek ini sedang menunggu persetujuan / SK dari Admin LPPM untuk dapat dimulai.
+                  </p>
+                </div>
+              ) : ongoingMilestone ? (
+                // JIKA PROYEK SUDAH ONGOING: Baru tampilkan tombol upload untuk milestone yang aktif
                 <div className="border border-gray-200 bg-white rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-between items-center gap-5 shadow-sm max-w-4xl mx-auto">
                   <div className="flex items-center gap-4 w-full md:w-auto">
                     <div className="border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
@@ -294,7 +306,7 @@ export default function ProjectDosen() {
                     </button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           );
         })}
