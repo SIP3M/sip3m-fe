@@ -1,16 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarDays,
   CircleDollarSign,
+  CheckCircle2,
+  XCircle,
+  Loader2,
   UserRound,
 } from "lucide-react";
 import axios from "axios";
-import { getMonitoringProjectById } from "./project.api";
+import {
+  getMonitoringProjectById,
+  updatePengabdianProjectStatus,
+  verifyPengabdianDocument,
+} from "./project.api";
 import { MonitoringProjectDetail } from "./project.types";
 import Button from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthStore } from "@/features/auth/auth.store";
+import { APP_ROLES } from "@/constant/roles";
 
 const getStatusClassName = (status: string) => {
   const key = status
@@ -54,10 +63,42 @@ export default function ProjectDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const projectId = Number(id);
+  const user = useAuthStore((state) => state.user);
+  const isAdminOrStaff =
+    user?.roles?.roles === APP_ROLES.ADMIN_LPPM ||
+    user?.roles?.roles === APP_ROLES.STAFF_LPPM;
 
   const [project, setProject] = useState<MonitoringProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isStartModalOpen, setIsStartModalOpen] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isVerifyingDocId, setIsVerifyingDocId] = useState<number | null>(null);
+  const [rejectDocId, setRejectDocId] = useState<number | null>(null);
+  const [rejectNotes, setRejectNotes] = useState("");
+
+  const loadDetail = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await getMonitoringProjectById(projectId);
+      setProject(res.data);
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message ||
+          err.message ||
+          "Gagal memuat detail monitoring proyek."
+        : err instanceof Error
+          ? err.message
+          : "Gagal memuat detail monitoring proyek.";
+
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     if (!Number.isInteger(projectId) || projectId <= 0) {
@@ -66,30 +107,88 @@ export default function ProjectDetail() {
       return;
     }
 
-    const loadDetail = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const res = await getMonitoringProjectById(projectId);
-        setProject(res.data);
-      } catch (err: unknown) {
-        const message = axios.isAxiosError(err)
-          ? err.response?.data?.message ||
-          err.message ||
-          "Gagal memuat detail monitoring proyek."
-          : err instanceof Error
-            ? err.message
-            : "Gagal memuat detail monitoring proyek.";
-
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     void loadDetail();
-  }, [projectId]);
+  }, [projectId, loadDetail]);
+
+  const normalizedStatus = useMemo(
+    () =>
+      project?.status
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "_") || "",
+    [project?.status],
+  );
+
+  const isPendingStatus =
+    normalizedStatus === "PENDING" ||
+    normalizedStatus === "MENUNGGU_PERSETUJUAN";
+
+  const handleStartProject = async () => {
+    if (!project || !isAdminOrStaff) return;
+
+    setIsStarting(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await updatePengabdianProjectStatus(project.id, {
+        status: "SEDANG_BERJALAN",
+      });
+
+      setSuccessMessage(response.message || "Proyek berhasil dimulai.");
+      setIsStartModalOpen(false);
+      await loadDetail();
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message || "Gagal memulai proyek."
+        : err instanceof Error
+          ? err.message
+          : "Gagal memulai proyek.";
+
+      setError(message);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleVerifyDocument = async (
+    documentId: number,
+    status: "APPROVED" | "REJECTED",
+    notes?: string,
+  ) => {
+    if (!isAdminOrStaff) return;
+
+    setIsVerifyingDocId(documentId);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await verifyPengabdianDocument(documentId, {
+        status,
+        notes: notes?.trim() || undefined,
+      });
+
+      setSuccessMessage(response.message || "Dokumen berhasil diverifikasi.");
+      await loadDetail();
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message ||
+          err.message ||
+          "Gagal memverifikasi dokumen."
+        : err instanceof Error
+          ? err.message
+          : "Gagal memverifikasi dokumen.";
+
+      setError(message);
+    } finally {
+      setIsVerifyingDocId(null);
+    }
+  };
+
+  const openRejectModal = (documentId: number) => {
+    setRejectDocId(documentId);
+    setRejectNotes("");
+  };
 
   const progress = useMemo(
     () => Math.max(0, Math.min(100, project?.progress_percentage || 0)),
@@ -140,6 +239,18 @@ export default function ProjectDetail() {
           {project.calculated_status}
         </span>
       </div>
+
+      {successMessage && (
+        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          {successMessage}
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {project.summary && (
         <Card className="bg-white shadow-sm ring-gray-200/70">
@@ -291,14 +402,47 @@ export default function ProjectDetail() {
                     {doc.verification_status}
                   </td>
                   <td className="px-6 py-3">
-                    <a
-                      href={toFileUrl(doc.file_path)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-medium text-blue-600 hover:underline"
-                    >
-                      Lihat
-                    </a>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <a
+                        href={toFileUrl(doc.file_path)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                      >
+                        Lihat
+                      </a>
+
+                      {isAdminOrStaff &&
+                        doc.verification_status === "PENDING" && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleVerifyDocument(doc.id, "APPROVED")
+                              }
+                              disabled={isVerifyingDocId === doc.id}
+                              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {isVerifyingDocId === doc.id ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={12} />
+                              )}
+                              Setujui
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openRejectModal(doc.id)}
+                              disabled={isVerifyingDocId === doc.id}
+                              className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                              <XCircle size={12} />
+                              Tolak
+                            </button>
+                          </>
+                        )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -306,6 +450,102 @@ export default function ProjectDetail() {
           </table>
         </CardContent>
       </Card>
+
+      {isAdminOrStaff && isPendingStatus && (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            className="bg-red-600 text-white hover:bg-red-700"
+            onClick={() => setIsStartModalOpen(true)}
+          >
+            Setujui & Mulai Proyek
+          </Button>
+        </div>
+      )}
+
+      {isAdminOrStaff && isStartModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800">
+              Mulai Proyek
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Apakah Anda yakin ingin memulai proyek ini? Pastikan kontrak fisik
+              telah ditandatangani.
+            </p>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (isStarting) return;
+                  setIsStartModalOpen(false);
+                }}
+              >
+                Batal
+              </Button>
+
+              <Button
+                type="button"
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => void handleStartProject()}
+                disabled={isStarting}
+              >
+                {isStarting ? "Memproses..." : "Ya, Mulai Proyek"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAdminOrStaff && rejectDocId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800">
+              Tolak Dokumen
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Tambahkan catatan penolakan agar pengunggah dapat memperbaiki.
+            </p>
+
+            <textarea
+              value={rejectNotes}
+              onChange={(e) => setRejectNotes(e.target.value)}
+              placeholder="Tulis catatan penolakan (opsional)..."
+              className="mt-4 h-28 w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-red-400"
+            />
+
+            <div className="mt-5 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRejectDocId(null)}
+              >
+                Batal
+              </Button>
+
+              <Button
+                type="button"
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => {
+                  if (rejectDocId === null) return;
+                  void handleVerifyDocument(
+                    rejectDocId,
+                    "REJECTED",
+                    rejectNotes,
+                  );
+                  setRejectDocId(null);
+                  setRejectNotes("");
+                }}
+                disabled={rejectDocId === null}
+              >
+                Tolak Dokumen
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
