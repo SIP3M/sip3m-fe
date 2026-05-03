@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Search, Send, Trash2 } from "lucide-react";
+import { FileText, Pencil, Plus, Search, Send, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import {
   createProposal,
@@ -27,6 +28,7 @@ const defaultFormValues: ProposalFormValues = {
   prodi: "",
   skema: "",
   sumber_data_penelitian: "",
+  instansi: "",
   funding_request_amount: "",
   proposal_file: null,
   rab_file: null,
@@ -73,6 +75,16 @@ const getStatusClass = (status: string) => {
   return statusStyleMap[key] || "bg-gray-100 text-gray-600";
 };
 
+const formatSkemaLabel = (value?: string | null) => {
+  if (!value) return "-";
+  return value
+    .toLowerCase()
+    .split(/[_-]+/g)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 const getFileNameFromPath = (path?: string | null) => {
   if (!path) return "";
 
@@ -104,6 +116,23 @@ const resolveExistingFile = (
     "";
 
   return { link, name };
+};
+
+const isPdfFile = (file: File) => {
+  if (file.type === "application/pdf") return true;
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  return extension === "pdf";
+};
+
+const isRabFileAllowed = (file: File) => {
+  const allowedMimeTypes = [
+    "application/pdf",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ];
+  if (allowedMimeTypes.includes(file.type)) return true;
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  return extension === "pdf" || extension === "xls" || extension === "xlsx";
 };
 
 const getErrorMessage = (err: unknown, fallback: string) => {
@@ -268,6 +297,7 @@ export default function ProposalDosen() {
       prodi: proposal.prodi || "",
       skema: proposal.skema || "",
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
+      instansi: proposal.instansi || "",
       funding_request_amount: String(proposal.funding_request_amount || ""),
       proposal_file: null,
       rab_file: null,
@@ -280,7 +310,9 @@ export default function ProposalDosen() {
     resetForm();
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
@@ -290,6 +322,19 @@ export default function ProposalDosen() {
     field: "proposal_file" | "rab_file",
   ) => {
     const file = e.target.files?.[0] || null;
+
+    if (file && field === "proposal_file" && !isPdfFile(file)) {
+      setError("File proposal harus PDF.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file && field === "rab_file" && !isRabFileAllowed(file)) {
+      setError("File RAB harus PDF atau Excel (.xls/.xlsx).");
+      e.target.value = "";
+      return;
+    }
+
     setFormValues((prev) => ({ ...prev, [field]: file }));
   };
 
@@ -301,6 +346,7 @@ export default function ProposalDosen() {
       skema: formValues.skema.trim() || undefined,
       sumber_data_penelitian:
         formValues.sumber_data_penelitian.trim() || undefined,
+      instansi: formValues.instansi.trim() || undefined,
       funding_request_amount:
         formValues.funding_request_amount.trim() || undefined,
       is_draft: isDraft,
@@ -319,6 +365,21 @@ export default function ProposalDosen() {
 
     if (formValues.title.trim().length < 5) {
       setError("Judul proposal minimal 5 karakter.");
+      return;
+    }
+
+    if (!formValues.skema.trim()) {
+      setError("Skema proposal wajib dipilih.");
+      return;
+    }
+
+    if (formValues.proposal_file && !isPdfFile(formValues.proposal_file)) {
+      setError("File proposal harus PDF.");
+      return;
+    }
+
+    if (formValues.rab_file && !isRabFileAllowed(formValues.rab_file)) {
+      setError("File RAB harus PDF atau Excel (.xls/.xlsx).");
       return;
     }
 
@@ -477,12 +538,44 @@ export default function ProposalDosen() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm text-gray-600">Prodi</label>
-                <Input
-                  name="prodi"
-                  value={formValues.prodi}
+                <label className="text-sm text-gray-600">Skema*</label>
+                <select
+                  name="skema"
+                  value={formValues.skema}
                   onChange={handleInputChange}
-                  placeholder="Contoh: Teknik Informatika"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Pilih skema</option>
+                  <option value="Penelitian Pengembangan">
+                    Penelitian Pengembangan
+                  </option>
+                  <option value="Penelitian Terapan">Penelitian Terapan</option>
+                  <option value="Penelitian Kolaborasi">
+                    Penelitian Kolaborasi
+                  </option>
+                </select>
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-sm text-gray-600">
+                  Sumber Data Penelitian
+                </label>
+                <textarea
+                  name="sumber_data_penelitian"
+                  value={formValues.sumber_data_penelitian}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Survei lapangan dan data BPS"
+                  className="min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-gray-600">Instansi</label>
+                <Input
+                  name="instansi"
+                  value={formValues.instansi}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Kementerian Pertanian"
                 />
               </div>
 
@@ -583,12 +676,7 @@ export default function ProposalDosen() {
                     className="hidden"
                   />
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Hanya mendukung
-                  <span className="ml-1 rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-600">
-                    PDF (.pdf)
-                  </span>
-                </p>
+                <p className="text-xs text-gray-500">Format: PDF</p>
                 {existingProposalFile.link && (
                   <a
                     href={existingProposalFile.link}
@@ -632,15 +720,7 @@ export default function ProposalDosen() {
                     className="hidden"
                   />
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Mendukung
-                  <span className="ml-1 rounded bg-green-50 px-1.5 py-0.5 font-medium text-red-600">
-                    PDF (.pdf)
-                  </span>
-                  <span className="ml-1 rounded bg-blue-50 px-1.5 py-0.5 font-medium text-green-600">
-                    Excel (.xls, .xlsx)
-                  </span>
-                </p>
+                <p className="text-xs text-gray-500">Format: PDF atau Excel</p>
                 {existingRabFile.link && (
                   <a
                     href={existingRabFile.link}
@@ -754,6 +834,7 @@ export default function ProposalDosen() {
                   const canEdit = status === "DRAFT";
                   const canDelete = status === "DRAFT";
                   const canSubmit = status === "DRAFT" || status === "REVISION";
+                  const isDraft = status === "DRAFT";
                   const submittedYear = proposal.submitted_at
                     ? new Date(proposal.submitted_at).getFullYear()
                     : new Date(proposal.created_at).getFullYear();
@@ -772,7 +853,9 @@ export default function ProposalDosen() {
                         </div>
                       </td>
 
-                      <td className="text-gray-600">{proposal.skema || "-"}</td>
+                      <td className="text-gray-600">
+                        {formatSkemaLabel(proposal.skema)}
+                      </td>
                       <td className="text-gray-600">{submittedYear}</td>
 
                       <td>
@@ -784,45 +867,56 @@ export default function ProposalDosen() {
                       </td>
 
                       <td>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={
-                              !canEdit || isSubmittingAction === proposal.id
-                            }
-                            onClick={() => void openEditForm(proposal)}
-                          >
-                            <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
-                          </Button>
+                        {isDraft ? (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={
+                                !canEdit || isSubmittingAction === proposal.id
+                              }
+                              onClick={() => void openEditForm(proposal)}
+                            >
+                              <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
+                            </Button>
 
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={
-                              !canSubmit || isSubmittingAction === proposal.id
-                            }
-                            onClick={() =>
-                              void handleSubmitExistingProposal(proposal)
-                            }
-                          >
-                            <Send className="mr-1 h-3.5 w-3.5" /> Submit
-                          </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={
+                                !canSubmit || isSubmittingAction === proposal.id
+                              }
+                              onClick={() =>
+                                void handleSubmitExistingProposal(proposal)
+                              }
+                            >
+                              <Send className="mr-1 h-3.5 w-3.5" /> Submit
+                            </Button>
 
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="destructive"
-                            disabled={
-                              !canDelete || isSubmittingAction === proposal.id
-                            }
-                            onClick={() => void handleDeleteProposal(proposal)}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              disabled={
+                                !canDelete || isSubmittingAction === proposal.id
+                              }
+                              onClick={() =>
+                                void handleDeleteProposal(proposal)
+                              }
+                            >
+                              <Trash2 className="mr-1 h-3.5 w-3.5" /> Hapus
+                            </Button>
+                          </div>
+                        ) : (
+                          <Link
+                            to={`/dosen-dashboard/proposals/${proposal.id}`}
+                            className="inline-flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700"
                           >
-                            <Trash2 className="mr-1 h-3.5 w-3.5" /> Hapus
-                          </Button>
-                        </div>
+                            <FileText className="h-4 w-4" /> Lihat Detail
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );

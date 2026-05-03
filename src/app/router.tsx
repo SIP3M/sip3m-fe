@@ -49,7 +49,7 @@ import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage/>,
+    element: <LandingPage />,
   },
   {
     path: "/login",
@@ -198,6 +198,10 @@ export const router = createBrowserRouter([
       {
         path: "proposals",
         element: <ProposalDosen />,
+      },
+      {
+        path: "proposals/:id",
+        element: <ProposalDetail />,
       },
       {
         path: "project-dosen",
