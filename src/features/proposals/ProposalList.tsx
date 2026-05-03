@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Filter, Search } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import ProposalRow from "./components/ProposalRow";
 import { Proposal } from "./proposal.types";
 import { getAllProposals } from "./proposal.api";
 import Pagination from "@/components/common/Pagination";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -16,6 +16,9 @@ export default function ProposalList() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [skemaQuery, setSkemaQuery] = useState("");
+  const [statusQuery, setStatusQuery] = useState("");
+  const [tahunQuery, setTahunQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,8 +45,8 @@ export default function ProposalList() {
 
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message ||
-        err.message ||
-        "Gagal mengambil data proposal"
+          err.message ||
+          "Gagal mengambil data proposal"
         : err instanceof Error
           ? err.message
           : "Gagal mengambil data proposal";
@@ -87,7 +90,7 @@ export default function ProposalList() {
           </p>
         </div>
 
-        <Button variant="outline" className="text-sm">
+        <Button variant="outline" className="cursor-pointer px-4 py-2 rounded-lg text-sm shadow transition">
           <Download className="mr-2 h-4 w-4" />
           Export Excel
         </Button>
@@ -95,30 +98,51 @@ export default function ProposalList() {
 
       {/* FILTER BAR */}
 
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex gap-4 flex-wrap md:flex-nowrap">
-            <div className="flex items-center border rounded-lg px-3 flex-1">
-              <Search size={16} className="text-gray-400" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border-0 shadow-none focus-visible:ring-0"
-                placeholder="Cari judul atau nama peneliti..."
-              />
-            </div>
+      {/* FILTER BAR */}
+<Card className="mb-6">
+  <CardContent className="p-4">
+    <div className="flex flex-wrap gap-4 md:flex-nowrap">
 
-            <Input className="w-52" placeholder="Skema" disabled />
-            <Input className="w-52" placeholder="Status" disabled />
-            <Input className="w-52" placeholder="Tahun" disabled />
+      {/* Skema */}
+      <Input
+        value={skemaQuery}
+        onChange={(e) => setSkemaQuery(e.target.value)}
+        className="w-52"
+        placeholder="Skema"
+      />
 
-            <Button variant="outline" className="gap-2" disabled>
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Status */}
+      <Input
+        value={statusQuery}
+        onChange={(e) => setStatusQuery(e.target.value)}
+        className="w-52"
+        placeholder="Status"
+      />
+
+      {/* Tahun */}
+      <Input
+        value={tahunQuery}
+        onChange={(e) => setTahunQuery(e.target.value)}
+        className="w-52"
+        placeholder="Tahun"
+      />
+
+      {/* Search Button */}
+      <Button
+        type="button"
+        variant="outline"
+        className="gap-2 h-11 cursor-pointer"
+        onClick={() => {
+          setDebouncedSearch(searchQuery.trim());
+          setCurrentPage(1);
+        }}
+      >
+        <Search className="h-4 w-4" />
+        Search
+      </Button>
+    </div>
+  </CardContent>
+</Card>
 
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

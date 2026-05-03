@@ -12,6 +12,21 @@ import {
   CheckCircle,
   PlayCircle,
   FileCheck,
+  ArrowLeftIcon,
+  ArrowBigRightDashIcon,
+  ArrowRightIcon,
+  ArrowRightSquare,
+  ArrowRightFromLine,
+  ArrowUpRightFromSquare,
+  ArrowRightSquareIcon,
+  ArrowRightToLine,
+  LogIn,
+  Send,
+  Medal,
+  BookAIcon,
+  Library,
+  Archive,
+  CalendarDays,
 } from "lucide-react";
 import {
   Eye,
@@ -56,7 +71,6 @@ export default function LPPMLandingPage() {
         </button>
       </div>
 
-      {/* NAVBAR */}
       {/* NAVBAR MODERN */}
       <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-12 py-3">
@@ -107,43 +121,65 @@ export default function LPPMLandingPage() {
             {/* BUTTON */}
             <button
               onClick={() => navigate("/login")}
-              className="bg-red-600 text-white px-5 py-2 rounded-full flex items-center gap-2 hover:bg-red-700 transition"
+              className="bg-red-600 text-white px-3 py-1.5 text-sm rounded-full flex items-center gap-1.5 
+  hover:bg-red-700 transition cursor-pointer"
             >
-              <span>→</span>
-              Masuk Sistem
+              <LogIn size={16} />
+              <span>Masuk Sistem</span>
             </button>
           </div>
         </div>
       </nav>
 
       {/* HERO SLIDER */}
-      <section id="beranda" className="h-[650px]">
+      <section id="beranda" className="h-162.5">
         <Swiper
-          modules={[Autoplay, Navigation, Pagination]}
-          autoplay={{ delay: 4000 }}
-          loop
-          navigation
-          pagination={{ clickable: true }}
-          className="h-full"
-        >
+  modules={[Autoplay, Navigation, Pagination]}
+  autoplay={{ delay: 4000, disableOnInteraction: false }}
+  loop
+  navigation
+  pagination={{ clickable: true }}
+  className="h-full custom-swiper"
+>
           {heroImages.map((img, i) => (
             <SwiperSlide key={i}>
-              <div className="relative h-full">
+              <div className="relative h-full group">
+                {/* Background Image */}
                 <img
                   src={img}
-                  className="absolute w-full h-full object-cover"
+                  className="absolute w-full h-full object-cover scale-100 group-hover:scale-105 transition duration-700"
                 />
-                <div className="absolute w-full h-full bg-[#d60000]/50" />
 
+                {/* Gradient Overlay (lebih elegan dari merah solid) */}
+                <div className="absolute w-full h-full bg-linear-to-r from-black/70 via-red-600/50 to-transparent" />
+
+                {/* Content */}
                 <div className="relative z-10 px-12 py-32 text-white max-w-2xl">
-                  <h1 className="text-5xl font-bold">
+                  {/* Title */}
+                  <h1 className="text-5xl font-bold leading-tight drop-shadow-lg">
                     Pengajuan Hibah Penelitian 2026 Telah Dibuka
                   </h1>
-                  <p className="mt-4 text-sm">
+
+                  {/* Subtitle */}
+                  <p className="mt-4 text-sm text-gray-200">
                     Sistem LPPM online, transparan, dan terstruktur.
                   </p>
-                  <button className="mt-6 border px-6 py-3 rounded-xl">
-                    Ajukan Proposal
+
+                  {/* Button */}
+                  <button
+                    className="mt-6 border border-white/70 px-6 py-3 rounded-xl flex items-center gap-2 leading-none cursor-pointer 
+                    backdrop-blur-sm bg-white/10 text-white
+                    transition-all duration-300 ease-out
+                  hover:bg-red-700 hover:text-white hover:shadow-lg hover:scale-105 active:scale-95 hover:border-none"
+                  >
+                    <FileText
+                      size={18}
+                      className="shrink-0 transition-transform duration-300 "
+                    />
+
+                    <span className="flex items-center font-medium tracking-wide">
+                      Ajukan Proposal
+                    </span>
                   </button>
                 </div>
               </div>
@@ -155,16 +191,42 @@ export default function LPPMLandingPage() {
       {/* SHORTCUT */}
       <section className="bg-gray-100 py-12 px-12 grid md:grid-cols-4 gap-6">
         {[
-          { title: "Ajukan Proposal", icon: <FileText /> },
-          { title: "Cek Status", icon: <Search /> },
-          { title: "Panduan", icon: <BookOpen /> },
-          { title: "Download RAB", icon: <Download /> },
+          {
+            title: "Ajukan Proposal",
+            icon: <Send />,
+            bg: "bg-red-100",
+            text: "text-red-600",
+          },
+          {
+            title: "Cek Status",
+            icon: <Search />,
+            bg: "bg-blue-100",
+            text: "text-blue-600",
+          },
+          {
+            title: "Panduan",
+            icon: <BookOpen />,
+            bg: "bg-green-100",
+            text: "text-green-600",
+          },
+          {
+            title: "Download RAB",
+            icon: <Download />,
+            bg: "bg-orange-100",
+            text: "text-orange-600",
+          },
         ].map((item, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl text-center shadow">
-            <div className="w-12 h-12 flex items-center justify-center bg-red-100 mx-auto mb-3 rounded-full text-red-600">
+          <div
+            key={i}
+            className="bg-white p-6 rounded-2xl text-center shadow hover:shadow-lg transition duration-300 hover:-translate-y-1"
+          >
+            <div
+              className={`w-12 h-12 flex items-center justify-center mx-auto mb-3 rounded-full ${item.bg} ${item.text}`}
+            >
               {item.icon}
             </div>
-            <p>{item.title}</p>
+
+            <p className="font-medium text-gray-700">{item.title}</p>
           </div>
         ))}
       </section>
@@ -193,7 +255,7 @@ export default function LPPMLandingPage() {
             <div className="flex gap-8 mt-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-red-100 flex items-center justify-center rounded-lg text-red-600">
-                  🏅
+                  <Medal />
                 </div>
                 <div>
                   <p className="font-bold">10+</p>
@@ -205,7 +267,7 @@ export default function LPPMLandingPage() {
 
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-red-100 flex items-center justify-center rounded-lg text-red-600">
-                  📄
+                  <FileText />
                 </div>
                 <div>
                   <p className="font-bold">100+</p>
@@ -215,7 +277,7 @@ export default function LPPMLandingPage() {
 
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-red-100 flex items-center justify-center rounded-lg text-red-600">
-                  📚
+                  <BookOpen />
                 </div>
                 <div>
                   <p className="font-bold">50+</p>
@@ -243,7 +305,7 @@ export default function LPPMLandingPage() {
             {/* FLOAT CARD */}
             <div className="absolute -bottom-6 left-6 bg-white px-6 py-4 rounded-xl shadow flex items-center gap-3">
               <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-lg">
-                🏅
+                <Medal />
               </div>
               <div>
                 <p className="font-bold">10+</p>
@@ -297,7 +359,7 @@ export default function LPPMLandingPage() {
               desc: "Kelola anggaran dan pencairan dana penelitian secara akuntabel.",
             },
             {
-              icon: <FolderOpen size={20} />,
+              icon: <Archive size={20} />,
               title: "Publikasi & Repository",
               desc: "Simpan dan kelola hasil penelitian dan publikasi ilmiah.",
             },
@@ -344,9 +406,9 @@ export default function LPPMLandingPage() {
         </p>
 
         {/* FLOW */}
-        <div className="relative mt-16 flex justify-between items-center max-w-5xl mx-auto">
+        <div className="relative mt-16 flex justify-between max-w-5xl mx-auto">
           {/* GARIS */}
-          <div className="absolute top-1/2 left-0 w-full h-[2px] bg-gray-300 -translate-y-1/2"></div>
+          <div className="absolute left-8 right-8 h-0.5 bg-gray-300 top-8 z-0"></div>
 
           {[
             {
@@ -400,8 +462,7 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* STATS MERAH */}
-      {/* STATS MERAH */}
-      <section className="bg-red-600 text-white py-20 px-12">
+      <section className="bg-red-700 text-white py-20 px-12">
         <div className="grid md:grid-cols-4 gap-10 text-center">
           {[
             {
@@ -508,7 +569,10 @@ export default function LPPMLandingPage() {
               {/* CONTENT */}
               <div className="p-6">
                 {/* DATE */}
-                <p className="text-gray-400 text-xs mb-2">📅 {item.date}</p>
+                <p className="flex items-center gap-1 text-[11px] text-gray-400">
+                  <CalendarDays size={12} className="opacity-70" />
+                  <span>{item.date}</span>
+                </p>
 
                 {/* TITLE */}
                 <h3 className="font-semibold text-base leading-snug">
@@ -623,14 +687,14 @@ export default function LPPMLandingPage() {
 
       {/* CTA MODERN */}
       <section className="px-12 py-24 bg-[#f9f9f9]">
-        <div className="relative bg-gradient-to-br from-red-600 to-red-700 text-white rounded-[30px] py-20 px-6 text-center overflow-hidden">
+        <div className="relative bg-linear-to-br from-red-600 to-red-700 text-white rounded-[30px] py-20 px-6 text-center overflow-hidden">
           {/* DEKORASI BULAT */}
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full"></div>
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full"></div>
 
           {/* ICON ATAS */}
           <div className="w-14 h-14 mx-auto mb-6 bg-white/20 rounded-xl flex items-center justify-center text-white text-xl">
-            →
+            <LogIn />
           </div>
 
           {/* TITLE */}
@@ -647,7 +711,7 @@ export default function LPPMLandingPage() {
           {/* BUTTON */}
           <button
             onClick={() => navigate("/login")}
-            className="mt-8 bg-white text-red-600 px-8 py-4 rounded-xl font-semibold flex items-center gap-2 mx-auto hover:scale-105 transition"
+            className="mt-8 bg-white text-red-600 px-8 py-4 rounded-xl font-semibold flex items-center gap-2 mx-auto hover:scale-105 transition hover:cursor-pointer"
           >
             → Masuk Sistem Sekarang
           </button>

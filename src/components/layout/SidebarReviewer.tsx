@@ -41,7 +41,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     localStorage.clear(); // hapus semua data login
-    navigate("/");
+    navigate("/login");
   };
 
   return (
@@ -93,7 +93,7 @@ export default function Sidebar() {
       <div className="px-4 pb-6">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 text-gray-500 hover:text-red-600 text-sm"
+          className="flex items-center gap-3 text-gray-500 hover:text-red-600 text-sm cursor-pointer"
         >
           <LogOut size={18} />
           Keluar

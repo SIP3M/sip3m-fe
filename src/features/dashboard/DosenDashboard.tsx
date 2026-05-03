@@ -48,7 +48,7 @@ export default function DosenDashboard() {
           </p>
         </div>
 
-        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+        <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-3 rounded-lg flex items-center gap-2 text-sm">
           <Plus className="w-4 h-4" /> Buat Proposal Baru
         </button>
       </div>
@@ -158,7 +158,7 @@ export default function DosenDashboard() {
 
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <p>Pengembangan Algoritma AI untuk Deteksi Hama Padi</p>
+              <p>Pengembangan Algoritma AI untuk Deteksi Hama</p>
               <span className="bg-yellow-100 text-yellow-600 px-2 rounded">
                 REVIEW
               </span>
