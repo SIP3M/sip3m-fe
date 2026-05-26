@@ -328,6 +328,107 @@ export default function ProposalDetail() {
           </div>
         </div>
 
+        {/* Dosen Terlibat & Anggota Tables */}
+        <div className="mt-5 grid grid-cols-1 gap-6">
+          {/* Dosen Terlibat */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+              Kelompok Dosen Terlibat
+            </h3>
+            {(() => {
+              const names = (proposal.dosen_terlibat || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const nidns = (proposal.nidn_dosen_terlibat || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const rows = Math.max(names.length, nidns.length);
+
+              if (rows === 0) {
+                return (
+                  <p className="text-sm text-gray-500">
+                    Tidak ada data dosen terlibat.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b text-left text-gray-400">
+                      <tr>
+                        <th className="pb-2 pr-4">No</th>
+                        <th className="pb-2 pr-4">Nama Dosen</th>
+                        <th className="pb-2">NIDN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: rows }).map((_, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{i + 1}</td>
+                          <td className="py-2 pr-4">{names[i] || "-"}</td>
+                          <td className="py-2">{nidns[i] || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Anggota / Mahasiswa */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+              Kelompok Anggota / Mahasiswa
+            </h3>
+            {(() => {
+              const names = (proposal.nama_anggota || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const nims = (proposal.nim_anggota || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const rows = Math.max(names.length, nims.length);
+
+              if (rows === 0) {
+                return (
+                  <p className="text-sm text-gray-500">
+                    Tidak ada data anggota.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b text-left text-gray-400">
+                      <tr>
+                        <th className="pb-2 pr-4">No</th>
+                        <th className="pb-2 pr-4">Nama Anggota</th>
+                        <th className="pb-2">NIM</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: rows }).map((_, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{i + 1}</td>
+                          <td className="py-2 pr-4">{names[i] || "-"}</td>
+                          <td className="py-2">{nims[i] || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
           <a
             href={proposal.proposal_file_path || "#"}

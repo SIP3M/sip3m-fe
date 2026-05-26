@@ -76,7 +76,6 @@ export const router = createBrowserRouter([
   // ADMIN AREA
   // =========================
   {
-    path: "/",
     element: (
       <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
         <DashboardLayout />

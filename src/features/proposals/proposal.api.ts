@@ -87,6 +87,22 @@ const buildProposalFormData = (payload: UpsertProposalPayload) => {
     formData.append("instansi", payload.instansi);
   }
 
+  if (payload.dosen_terlibat !== undefined) {
+    formData.append("dosen_terlibat", payload.dosen_terlibat);
+  }
+
+  if (payload.nidn_dosen_terlibat !== undefined) {
+    formData.append("nidn_dosen_terlibat", payload.nidn_dosen_terlibat);
+  }
+
+  if (payload.nama_anggota !== undefined) {
+    formData.append("nama_anggota", payload.nama_anggota);
+  }
+
+  if (payload.nim_anggota !== undefined) {
+    formData.append("nim_anggota", payload.nim_anggota);
+  }
+
   if (payload.funding_request_amount !== undefined) {
     formData.append(
       "funding_request_amount",

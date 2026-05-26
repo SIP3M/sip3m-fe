@@ -9,10 +9,12 @@ import {
   LogOut,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "@/features/auth/auth.store";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const logout = useAuthStore((state) => state.logout);
 
   const menus = [
     {
@@ -53,8 +55,8 @@ export default function Sidebar() {
   ];
 
   const handleLogout = () => {
-    localStorage.clear(); // hapus semua data login
-    navigate("/");
+    logout();
+    navigate("/", { replace: true });
   };
 
   return (
