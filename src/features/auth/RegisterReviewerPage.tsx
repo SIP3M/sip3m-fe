@@ -12,7 +12,7 @@ import {
   PasswordInputProps,
   RegisterReviewerForm,
 } from "./RegisterReviewerPage.types";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 
 const MAX_CV_SIZE_MB = 5;
 const MAX_CV_SIZE_BYTES = MAX_CV_SIZE_MB * 1024 * 1024;

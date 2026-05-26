@@ -16,7 +16,7 @@ import {
   verifyPengabdianDocument,
 } from "./project.api";
 import { MonitoringProjectDetail } from "./project.types";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";

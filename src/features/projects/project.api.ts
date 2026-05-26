@@ -96,11 +96,13 @@ export const getPengabdianProjects = async (
 };
 
 export const uploadMilestoneDocuments = async (
+  projectId: number,
+  milestoneId: number,
   formData: FormData,
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
 ): Promise<UploadMilestoneDocumentsResponse> => {
   const res = await api.post<UploadMilestoneDocumentsResponse>(
-    `/pengabdian-documents/upload`,
+    `/pengabdian/projects/${projectId}/milestones/${milestoneId}/documents`,
     formData,
     {
       headers: {

@@ -5,6 +5,7 @@ export type DosenProposalStatusFilter = "ALL" | ProposalStatus;
 export type ProposalFormValues = {
   title: string;
   faculty: string;
+  prodi: string;
   skema: string;
   sumber_data_penelitian: string;
   instansi: string;

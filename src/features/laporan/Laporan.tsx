@@ -35,6 +35,14 @@ const fetchProjects = async () => {
       
       // Filter: Hanya simpan proyek yang BUKAN PENDING dan memiliki milestone yang belum selesai
       const projectsWithOngoingReport = res.data.filter((p) => {
+<<<<<<< HEAD
+        // Tambahan keamanan: Jangan tampilkan project yang masih PENDING
+        if (p.status === "PENDING") return false;
+
+        const sorted = [...p.milestones].sort((a, b) => a.sequence - b.sequence);
+        // Cari milestone yang BENAR-BENAR ONGOING
+        return sorted.some((m) => m.status === "ONGOING" && m.sequence > 1);
+=======
         // 1. Jika masih nunggu kontrak/Admin, jangan tampilkan di halaman ini
         if (p.status === "PENDING" || p.status === "MENUNGGU_PERSETUJUAN") {
           return false;
@@ -45,6 +53,7 @@ const fetchProjects = async () => {
         const hasPendingMilestone = sorted.some((m) => m.status !== "COMPLETED");
         
         return hasPendingMilestone;
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
       });
 
       setProjects(projectsWithOngoingReport);
@@ -61,7 +70,12 @@ const fetchProjects = async () => {
 
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
   const sortedMilestones = selectedProject ? [...selectedProject.milestones].sort((a, b) => a.sequence - b.sequence) : [];
+<<<<<<< HEAD
+  // Ubah !== "COMPLETED" menjadi === "ONGOING"
+  const activeMilestone = sortedMilestones.find((m) => m.status === "ONGOING" && m.sequence > 1);
+=======
   const activeMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
 
   const resetForm = () => {
     setFiles({ laporan: null, logbook: null, anggaran: null });

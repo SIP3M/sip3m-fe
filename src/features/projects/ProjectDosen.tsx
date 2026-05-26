@@ -80,15 +80,13 @@ export default function ProjectDosen() {
     setIsUploading(true);
     try {
       const formData = new FormData();
-      formData.append("projectId", String(selectedProject.id));
-      formData.append("milestoneId", String(selectedMilestone.id));
-      formData.append("isDraft", String(isDraft));
+      formData.append("is_draft", String(isDraft));
 
       formData.append("laporan", laporanFile);
       if (logbookFile) formData.append("logbook", logbookFile);
       if (anggaranFile) formData.append("anggaran", anggaranFile);
 
-      await uploadMilestoneDocuments(formData);
+      await uploadMilestoneDocuments(selectedProject.id, selectedMilestone.id, formData);
 
       setIsModalOpen(false);
       alert(isDraft ? "Draft berhasil disimpan!" : "Dokumen final berhasil dikirim!");
@@ -123,7 +121,7 @@ export default function ProjectDosen() {
         <button
           onClick={fetchProjects}
           disabled={isLoading}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white rounded-xl px-4 py-2 transition-all shadow-sm hover:shadow active:scale-95"
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-200 bg-white rounded-xl px-4 py-2 cursor-pointer transition-all shadow-sm hover:shadow active:scale-95"
         >
           <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           Refresh
@@ -173,12 +171,21 @@ export default function ProjectDosen() {
           </div>
         )}
 
-        {projects.map((project) => {
+        {(projects || []).map((project) => {
           // Sort milestones by sequence
+<<<<<<< HEAD
+          const sortedMilestones = [...(project.milestones || [])].sort((a, b) => a.sequence - b.sequence);
+          // Find the active ongoing milestone (first that is NOT COMPLETED or SELESAI)
+          const ongoingMilestone = sortedMilestones.find((m) => {
+            const s = (m.status || "").toUpperCase();
+            return s === "ONGOING"; // Harus benar-benar ONGOING
+          });
+=======
           const sortedMilestones = [...project.milestones].sort((a, b) => a.sequence - b.sequence);
           // Find the active ongoing milestone (first that is NOT COMPLETED), ignoring sequence 1
           // Cari milestone pertama yang belum COMPLETED
 const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
 
           return (
             <div key={project.id} className="bg-white rounded-[1.25rem] shadow-sm p-6 lg:p-8 border border-gray-200/70">
@@ -227,13 +234,19 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
 
                 <div className="relative z-10 flex justify-between">
                   {sortedMilestones.map((milestone) => {
+<<<<<<< HEAD
+                    // Trust the backend status completely
+                    const statusStr = (milestone.status || "").toUpperCase();
+                    const isVisuallyCompleted = ["COMPLETED", "SELESAI"].includes(statusStr);
+=======
                     // Force sequence 1 to be visually completed if it's not the only one, or just trust the logic
                     const isVisuallyCompleted = milestone.status === "COMPLETED"
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
                     const isVisuallyOngoing = ongoingMilestone?.id === milestone.id;
                     const isVisuallyPending = !isVisuallyCompleted && !isVisuallyOngoing;
 
                     return (
-                      <div key={milestone.id} className="flex flex-col items-center text-center w-1/4">
+                      <div key={milestone.id} className="flex flex-col items-center text-center flex-1">
                         <div className="h-8 flex items-center justify-center mb-3">
                           {isVisuallyCompleted && (
                             <div className="w-[30px] h-[30px] rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm ring-4 ring-white">
@@ -265,6 +278,13 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                 </div>
               </div>
 
+<<<<<<< HEAD
+{/* ACTION AREA */}
+              {project.status === "PENDING" ? (
+                <div className="border border-blue-200 bg-blue-50 rounded-2xl p-5 mt-10 flex flex-col items-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <AlertCircle size={24} className="text-blue-500" />
+                  <p className="text-sm font-semibold text-blue-700">
+=======
               {/* ACTION AREA (ONLY SHOWS IF ONGOING MILESTONE EXISTS) */}
 {/* ACTION AREA (TERGANTUNG STATUS PROYEK) */}
               {project.status === "PENDING" || project.status === "MENUNGGU_PERSETUJUAN" ? (
@@ -274,39 +294,57 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                     <AlertCircle size={24} className="text-blue-500" />
                   </div>
                   <p className="text-[14px] font-semibold text-blue-800">
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
                     Proyek ini sedang menunggu persetujuan / SK dari Admin LPPM untuk dapat dimulai.
                   </p>
                 </div>
               ) : ongoingMilestone ? (
+<<<<<<< HEAD
+=======
                 // JIKA PROYEK SUDAH ONGOING: Baru tampilkan tombol upload untuk milestone yang aktif
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
                 <div className="border border-gray-200 bg-white rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-between items-center gap-5 shadow-sm max-w-4xl mx-auto">
                   <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
-                      <Upload size={22} strokeWidth={2.5} />
+                    <div className="hover:bg-gray-50 cursor-pointer border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
+                      <Upload size={22} strokeWidth={2.5} className="cursor-pointer " />
                     </div>
                     <div>
                       <p className="text-[15px] font-bold text-gray-900">
                         Upload {ongoingMilestone.title} {ongoingMilestone.target_percentage > 0 && `(${ongoingMilestone.target_percentage}%)`}
                       </p>
                       <p className="text-xs text-gray-500 mt-1 font-medium">
-                        Tenggat waktu: 10 November 2023
+                        Tenggat waktu: Segera lengkapi
                       </p>
                     </div>
                   </div>
 
                   <div className="flex gap-3 w-full md:w-auto justify-end">
-                    <button className="px-5 py-2.5 text-[13px] font-bold border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none">
+                    <button className="cursor-pointer px-5 py-2.5 text-[13px] font-bold border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none">
                       Lihat Panduan
                     </button>
                     <button
                       onClick={() => handleUploadClick(project, ongoingMilestone)}
-                      className="px-5 py-2.5 text-[13px] font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm shadow-red-600/30 whitespace-nowrap focus:ring-2 focus:ring-red-600 focus:ring-offset-2 outline-none"
+                      className="cursor-pointer px-5 py-2.5 text-[13px] font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm shadow-red-600/30 whitespace-nowrap focus:ring-2 focus:ring-red-600 focus:ring-offset-2 outline-none"
                     >
                       Upload Dokumen
                     </button>
                   </div>
                 </div>
+<<<<<<< HEAD
+              ) : sortedMilestones.length > 0 ? (
+                <div className="border border-gray-200 bg-gray-50 rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-center items-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <Check size={24} className="text-green-500" />
+                  <p className="text-sm font-semibold text-gray-600">Semua tahapan dokumen telah selesai atau belum ada tahapan aktif.</p>
+                </div>
+              ) : (
+                <div className="border border-orange-200 bg-orange-50 rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-center items-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
+                  <AlertCircle size={24} className="text-orange-500" />
+                  <p className="text-sm font-semibold text-orange-700">Data milestone belum tersedia dari sistem.</p>
+                </div>
+              )}
+=======
               ) : null}
+>>>>>>> fec95f7f9fbcbb34e3152a1e5e0d7264c3755984
             </div>
           );
         })}

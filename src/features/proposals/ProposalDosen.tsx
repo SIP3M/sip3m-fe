@@ -16,8 +16,8 @@ import {
   ProposalFormMode,
   ProposalFormValues,
 } from "./ProposalDosen.types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PAGE_SIZE = 5;
@@ -25,6 +25,7 @@ const PAGE_SIZE = 5;
 const defaultFormValues: ProposalFormValues = {
   title: "",
   faculty: "",
+  prodi: "",
   skema: "",
   sumber_data_penelitian: "",
   instansi: "",
@@ -282,6 +283,12 @@ export default function ProposalDosen() {
     setIsFormOpen(true);
   };
 
+  const skemaOptions = [
+    "Penelitian Pengembangan",
+    "Penelitian Terapan",
+    "Penelitian Kolaborasi",
+  ];
+
   const openEditForm = (proposal: Proposal) => {
     setError(null);
     setFeedback(null);
@@ -291,6 +298,7 @@ export default function ProposalDosen() {
     setFormValues({
       title: proposal.title,
       faculty: proposal.faculty || "",
+      prodi: proposal.prodi || "",
       skema: proposal.skema || "",
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
       instansi: proposal.instansi || "",
@@ -342,6 +350,7 @@ export default function ProposalDosen() {
     const payload = {
       title: formValues.title.trim(),
       faculty: formValues.faculty.trim() || undefined,
+      prodi: formValues.prodi.trim() || undefined,
       skema: formValues.skema.trim() || undefined,
       sumber_data_penelitian:
         formValues.sumber_data_penelitian.trim() || undefined,
@@ -475,12 +484,13 @@ export default function ProposalDosen() {
         </div>
 
         <Button
-          type="button"
-          className="bg-red-600 text-white hover:bg-red-700"
-          onClick={openCreateForm}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Buat Proposal Baru
-        </Button>
+  type="button"
+  onClick={openCreateForm}
+  className="bg-red-600 hover:bg-red-700 text-sm text-white px-3 py-5 rounded-lg flex items-center gap-2 cursor-pointer"
+>
+  <Plus className="w-2 h-3" />
+  Buat Proposal Baru
+</Button>
       </div>
 
       {error && (
@@ -511,6 +521,22 @@ export default function ProposalDosen() {
                   onChange={handleInputChange}
                   placeholder="Masukkan judul proposal"
                 />
+              </div>
+
+              {/* SUMBER DATA PENELITIAN */}
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-sm text-gray-600">
+                  Sumber Data Penelitian
+                </label>
+                <Input
+                  name="sumber_data_penelitian"
+                  value={formValues.sumber_data_penelitian}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Data Primer, Observasi Lapangan, BPS, Dataset Internal"
+                />
+                <p className="text-xs text-gray-500">
+                  Jelaskan sumber utama data yang digunakan dalam penelitian.
+                </p>
               </div>
 
               <div className="space-y-1">
@@ -591,6 +617,67 @@ export default function ProposalDosen() {
                   onChange={handleInputChange}
                   placeholder="Contoh: Kementerian Pertanian"
                 />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Skema
+                </label>
+
+                <div className="relative">
+                  <select
+                    name="skema"
+                    value={formValues.skema}
+                    onChange={(e) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        skema: e.target.value,
+                      }))
+                    }
+                    className={`
+        h-11 w-full appearance-none rounded-xl
+        border border-gray-300 bg-white
+        px-4 pr-12
+        text-sm
+        shadow-sm
+        transition-all duration-200
+        hover:border-gray-400
+        focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500
+        cursor-pointer
+        ${!formValues.skema ? "text-gray-400" : "text-gray-900"}
+      `}
+                  >
+                    <option value="" disabled hidden>
+                      Pilih Skema Penelitian
+                    </option>
+
+                    {skemaOptions.map((option) => (
+                      <option
+                        key={option}
+                        value={option}
+                        className="text-gray-900"
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Custom Arrow */}
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <svg
+                      className="h-4 w-4 text-gray-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-1">
