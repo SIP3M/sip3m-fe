@@ -64,6 +64,16 @@ export const updateProposalStatus = async (
   return res.data;
 };
 
+export const assignProposalReviewersAuto = async (
+  id: number,
+): Promise<GetProposalByIdResponse> => {
+  const res = await api.post<GetProposalByIdResponse>(
+    `/proposals/${id}/assign-reviewers`,
+    {},
+  );
+  return res.data;
+};
+
 const buildProposalFormData = (payload: UpsertProposalPayload) => {
   const formData = new FormData();
 

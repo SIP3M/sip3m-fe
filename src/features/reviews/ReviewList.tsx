@@ -1,23 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { Search, User as UserIcon } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
-import { ReviewProposal, ReviewerOption } from "./review.types";
+import { ReviewProposal } from "./review.types";
 import { getAllProposals } from "@/features/proposals/proposal.api";
-import { APP_ROLES, AppRole } from "@/constant/roles";
-import { getUsers } from "@/features/users/Users.api";
-import { User } from "@/features/users/users.types";
 import { assignReviewers } from "./review.api";
 import Pagination from "@/components/common/Pagination";
 
-const ACTIVE_STATUS = "active" as const;
 const ITEMS_PER_PAGE = 5;
 
 const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "Semua Status" },
   { value: "DRAFT", label: "Draft" },
   { value: "SUBMITTED", label: "Submitted" },
-  { value: "ADMIN_VERIFIED", label: "Admin Verified" },
   { value: "UNDER_REVIEW", label: "Under Review" },
   { value: "REVISION", label: "Revision" },
   { value: "ACCEPTED", label: "Accepted" },
@@ -59,21 +54,6 @@ const mapReviewProposal = (proposal: {
   reviewer: "",
 });
 
-const mapReviewerOption = (user: User): ReviewerOption | null => {
-  const role = user.roles.roles;
-
-  if (role !== APP_ROLES.REVIEWER && role !== APP_ROLES.REVIEWER_EKSTERNAL) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role,
-  };
-};
-
 const getErrorMessage = (err: unknown, fallback: string) => {
   if (axios.isAxiosError(err)) {
     return err.response?.data?.message || fallback;
@@ -86,35 +66,13 @@ const getErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
-const fetchAllUsersByRole = async (role: AppRole): Promise<User[]> => {
-  const first = await getUsers({ page: 1, roles: role, status: ACTIVE_STATUS });
-  const users = [...first.data];
-  const totalPages = first.pagination?.total_pages || 1;
-
-  if (totalPages > 1) {
-    const requests: ReturnType<typeof getUsers>[] = [];
-    for (let page = 2; page <= totalPages; page++) {
-      requests.push(getUsers({ page, roles: role, status: ACTIVE_STATUS }));
-    }
-
-    const rest = await Promise.all(requests);
-    rest.forEach((res) => users.push(...res.data));
-  }
-
-  return users;
-};
-
 export default function ReviewList() {
   const [proposals, setProposals] = useState<ReviewProposal[]>([]);
-  const [reviewers, setReviewers] = useState<ReviewerOption[]>([]);
 
   const [selectedProposal, setSelectedProposal] =
     useState<ReviewProposal | null>(null);
-  const [reviewerA, setReviewerA] = useState("");
-  const [reviewerB, setReviewerB] = useState("");
 
   const [isLoadingProposals, setIsLoadingProposals] = useState(false);
-  const [isLoadingReviewers, setIsLoadingReviewers] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -221,31 +179,6 @@ export default function ReviewList() {
     [loadAllProposalPages],
   );
 
-  const loadReviewers = async () => {
-    setIsLoadingReviewers(true);
-    try {
-      const [internalReviewers, externalReviewers] = await Promise.all([
-        fetchAllUsersByRole(APP_ROLES.REVIEWER),
-        fetchAllUsersByRole(APP_ROLES.REVIEWER_EKSTERNAL),
-      ]);
-
-      const merged = [...internalReviewers, ...externalReviewers]
-        .map(mapReviewerOption)
-        .filter((item): item is ReviewerOption => item !== null);
-
-      const unique = Array.from(new Map(merged.map((x) => [x.id, x])).values());
-      setReviewers(unique);
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, "Gagal memuat daftar reviewer."));
-    } finally {
-      setIsLoadingReviewers(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadReviewers();
-  }, []);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery.trim());
@@ -261,19 +194,12 @@ export default function ReviewList() {
 
   const handleSelectProposal = (proposal: ReviewProposal) => {
     setSelectedProposal(proposal);
-    setReviewerA("");
-    setReviewerB("");
     setSuccessMessage(null);
     setError(null);
   };
 
   const isEligibleProposal =
-    selectedProposal?.status?.toUpperCase() === "ADMIN VERIFIED";
-
-  const reviewerBOptions = useMemo(
-    () => reviewers.filter((r) => String(r.id) !== reviewerA),
-    [reviewers, reviewerA],
-  );
+    selectedProposal?.status?.toUpperCase() === "SUBMITTED";
 
   const handlePageChange = (page: number) => {
     if (page <= 0 || page > totalPages || isLoadingProposals) return;
@@ -289,28 +215,14 @@ export default function ReviewList() {
 
     if (!isEligibleProposal) {
       setError(
-        "Reviewer hanya dapat ditugaskan untuk proposal berstatus ADMIN_VERIFIED.",
+        "Reviewer hanya dapat ditugaskan untuk proposal berstatus SUBMITTED.",
       );
       return;
     }
 
-    if (!reviewerA) {
-      setError("Harus memilih minimal 1 reviewer.");
-      return;
-    }
-
-    if (reviewerB && reviewerA === reviewerB) {
-      setError("ID reviewer tidak boleh sama.");
-      return;
-    }
-
-    const reviewerIds = [reviewerA, reviewerB]
-      .filter((id): id is string => Boolean(id))
-      .map((id) => Number(id));
-
     setIsAssigning(true);
     try {
-      const res = await assignReviewers(selectedProposal.id, reviewerIds);
+      const res = await assignReviewers(selectedProposal.id);
 
       setSuccessMessage(res.message);
 
@@ -320,7 +232,7 @@ export default function ReviewList() {
         prev
           ? {
               ...prev,
-              status: mapProposalStatusLabel(res.data.status),
+              status: mapProposalStatusLabel("UNDER_REVIEW"),
             }
           : prev,
       );
@@ -344,12 +256,12 @@ export default function ReviewList() {
           Plotting Reviewer
         </h1>
         <p className="text-gray-500 text-sm">
-          Tentukan reviewer untuk proposal yang masuk
+          Penugasan reviewer dilakukan otomatis oleh sistem
         </p>
 
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-          Catatan: Proposal hanya bisa ditugaskan ke reviewer jika statusnya
-          <span className="font-semibold"> ADMIN_VERIFIED</span>.
+          Catatan: Tombol plotting otomatis hanya aktif untuk proposal
+          <span className="font-semibold"> SUBMITTED</span>.
         </div>
       </div>
 
@@ -492,63 +404,25 @@ export default function ReviewList() {
               </div>
 
               <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs text-gray-500">
-                    Pilih Reviewer 1
-                  </label>
-                  <select
-                    value={reviewerA}
-                    onChange={(e) => setReviewerA(e.target.value)}
-                    disabled={isLoadingReviewers || isAssigning}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
-                  >
-                    <option value="">Pilih reviewer pertama</option>
-                    {reviewers.map((reviewer) => (
-                      <option key={reviewer.id} value={reviewer.id}>
-                        {reviewer.name} ({reviewer.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs text-gray-500">
-                    Pilih Reviewer 2 (Opsional)
-                  </label>
-                  <select
-                    value={reviewerB}
-                    onChange={(e) => setReviewerB(e.target.value)}
-                    disabled={isLoadingReviewers || isAssigning}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
-                  >
-                    <option value="">Pilih reviewer kedua</option>
-                    {reviewerBOptions.map((reviewer) => (
-                      <option key={reviewer.id} value={reviewer.id}>
-                        {reviewer.name} ({reviewer.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <button
                   type="button"
                   onClick={() => void handleAssign()}
-                  disabled={
-                    isAssigning || isLoadingReviewers || !isEligibleProposal
-                  }
+                  disabled={isAssigning || !isEligibleProposal}
                   className={`w-full rounded-lg px-4 py-2 text-white ${
-                    isAssigning || isLoadingReviewers || !isEligibleProposal
+                    isAssigning || !isEligibleProposal
                       ? "bg-red-300 cursor-not-allowed"
                       : "bg-red-500 hover:bg-red-600"
                   }`}
                 >
-                  {isAssigning ? "Menyimpan..." : "Simpan Penugasan"}
+                  {isAssigning
+                    ? "Memproses..."
+                    : "Plotting Reviewer (Otomatis)"}
                 </button>
 
                 {!isEligibleProposal && (
                   <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
-                    Proposal harus berstatus ADMIN_VERIFIED sebelum reviewer
-                    bisa ditugaskan.
+                    Proposal harus berstatus SUBMITTED sebelum reviewer bisa
+                    ditugaskan.
                   </p>
                 )}
               </div>

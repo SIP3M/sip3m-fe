@@ -11,23 +11,14 @@ import type {
 // ─── Assign Reviewers (Admin) ─────────────────────────────────────────────────
 export const assignReviewers = async (
   proposalId: number,
-  reviewerIds: number[],
 ): Promise<AssignReviewersResponse> => {
   if (!Number.isInteger(proposalId) || proposalId <= 0) {
     throw new Error("ID proposal tidak valid.");
   }
 
-  if (reviewerIds.length < 1 || reviewerIds.length > 2) {
-    throw new Error("Harus memilih minimal 1 dan maksimal 2 reviewer.");
-  }
-
-  if (new Set(reviewerIds).size !== reviewerIds.length) {
-    throw new Error("ID reviewer tidak boleh sama.");
-  }
-
   const res = await api.post<AssignReviewersResponse>(
     `/proposals/${proposalId}/assign-reviewers`,
-    { reviewerIds },
+    {},
   );
   return res.data;
 };

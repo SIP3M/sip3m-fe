@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getProposalById, updateProposalStatus } from "./proposal.api";
+import { assignProposalReviewersAuto, getProposalById } from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";
@@ -83,13 +83,8 @@ export default function ProposalDetail() {
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
-
-  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [rejectionNotes, setRejectionNotes] = useState("");
 
   const loadProposal = async () => {
     setIsLoading(true);
@@ -126,71 +121,37 @@ export default function ProposalDetail() {
 
   const isSubmitted = statusKey === "SUBMITTED";
 
-  const handleVerifySubmit = async () => {
+  const handleAutoAssign = async () => {
     if (!isAdmin) return;
     if (!proposal) return;
 
-    setIsVerifying(true);
-    setFeedback(null);
-
-    try {
-      const res = await updateProposalStatus(proposal.id, {
-        status: "ADMIN_VERIFIED",
-      });
-
-      setFeedback({ type: "success", message: res.message });
-      setProposal(res.data);
-      setIsVerifyModalOpen(false);
-
-      setTimeout(() => {
-        navigate("/plotting-reviewer");
-      }, 600);
-    } catch (err: unknown) {
+    if (!isSubmitted) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Gagal memverifikasi proposal."),
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleRejectSubmit = async () => {
-    if (!isAdmin) return;
-    if (!proposal) return;
-    const notes = rejectionNotes.trim();
-
-    if (!notes) {
-      setFeedback({
-        type: "error",
-        message: "Catatan penolakan wajib diisi.",
+        message:
+          "Plotting reviewer otomatis hanya tersedia untuk proposal berstatus Submitted.",
       });
       return;
     }
 
-    setIsRejecting(true);
+    setIsAssigning(true);
     setFeedback(null);
 
     try {
-      const res = await updateProposalStatus(proposal.id, {
-        status: "REJECTED",
-        notes,
-      });
+      const res = await assignProposalReviewersAuto(proposal.id);
 
       setFeedback({ type: "success", message: res.message });
-      setIsRejectModalOpen(false);
-      setRejectionNotes("");
-
-      setTimeout(() => {
-        navigate("/proposals");
-      }, 600);
+      setProposal(res.data);
     } catch (err: unknown) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Gagal menolak proposal."),
+        message: getErrorMessage(
+          err,
+          "Gagal melakukan plotting reviewer otomatis.",
+        ),
       });
     } finally {
-      setIsRejecting(false);
+      setIsAssigning(false);
     }
   };
 
@@ -465,135 +426,26 @@ export default function ProposalDetail() {
           <div className="flex flex-wrap justify-end gap-3">
             <button
               type="button"
-              onClick={() => setIsRejectModalOpen(true)}
-              disabled={isRejecting || isVerifying || !isSubmitted}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                isRejecting || isVerifying || !isSubmitted
-                  ? "cursor-not-allowed bg-red-200 text-white"
-                  : "bg-red-500 text-white hover:bg-red-600"
-              }`}
-            >
-              Tolak Proposal
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsVerifyModalOpen(true)}
-              disabled={isVerifying || isRejecting || !isSubmitted}
+              onClick={() => void handleAutoAssign()}
+              disabled={isAssigning || !isSubmitted}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-                isVerifying || isRejecting || !isSubmitted
+                isAssigning || !isSubmitted
                   ? "cursor-not-allowed bg-blue-200 text-white"
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {isVerifying && <Loader2 size={14} className="animate-spin" />}
-              {isVerifying ? "Memverifikasi..." : "Verifikasi Proposal"}
+              {isAssigning && <Loader2 size={14} className="animate-spin" />}
+              {isAssigning ? "Memproses..." : "Plotting Reviewer (Otomatis)"}
             </button>
           </div>
 
           {!isSubmitted && (
             <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              Aksi verifikasi/penolakan hanya tersedia untuk proposal berstatus
+              Plotting reviewer otomatis hanya tersedia untuk proposal berstatus
               Submitted.
             </p>
           )}
         </>
-      )}
-
-      {isAdmin && isVerifyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Verifikasi Proposal
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Proposal akan diubah ke status
-              <span className="font-semibold text-blue-700">
-                {" "}
-                Admin Verified
-              </span>
-              dan siap untuk proses plotting reviewer.
-            </p>
-
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isVerifying) return;
-                  setIsVerifyModalOpen(false);
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Batal
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void handleVerifySubmit()}
-                disabled={isVerifying}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white ${
-                  isVerifying
-                    ? "cursor-not-allowed bg-blue-300"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {isVerifying && <Loader2 size={14} className="animate-spin" />}
-                {isVerifying ? "Memverifikasi..." : "Ya, Verifikasi"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isAdmin && isRejectModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Tolak Proposal
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Berikan alasan penolakan agar peneliti dapat menindaklanjuti.
-            </p>
-
-            <textarea
-              value={rejectionNotes}
-              onChange={(e) => setRejectionNotes(e.target.value)}
-              placeholder="Tulis catatan penolakan (wajib diisi)..."
-              className="mt-4 h-32 w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-red-400"
-            />
-
-            <p className="mt-2 text-right text-xs text-gray-400">
-              {rejectionNotes.trim().length}/500 karakter
-            </p>
-
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isRejecting) return;
-                  setIsRejectModalOpen(false);
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Batal
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void handleRejectSubmit()}
-                disabled={isRejecting || !rejectionNotes.trim()}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white ${
-                  isRejecting || !rejectionNotes.trim()
-                    ? "cursor-not-allowed bg-red-300"
-                    : "bg-red-500 hover:bg-red-600"
-                }`}
-              >
-                {isRejecting && <Loader2 size={14} className="animate-spin" />}
-                {isRejecting ? "Menyimpan..." : "Submit Penolakan"}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
