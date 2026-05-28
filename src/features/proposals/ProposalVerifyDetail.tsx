@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getProposalById, updateProposalStatus } from "./proposal.api";
+import { assignProposalReviewersAuto, getProposalById } from "./proposal.api";
 import { Proposal } from "./proposal.types";
 
 type FeedbackState = {
@@ -19,7 +19,6 @@ const statusBadgeMap: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-500",
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
-  ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
 };
 
 const getStatusKey = (status: string) =>
@@ -38,7 +37,6 @@ const getStatusLabel = (status: string) => {
     SUBMITTED: "Submitted",
     APPROVED: "Approved",
     ACCEPTED: "Accepted",
-    ADMIN_VERIFIED: "Admin Verified",
     DRAFT: "Draft",
     REVISION: "Revision",
     REJECTED: "Rejected",
@@ -65,10 +63,8 @@ export default function ProposalVerifyDetail() {
   const proposalId = Number(id);
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
-  const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const loadProposal = async () => {
@@ -105,80 +101,35 @@ export default function ProposalVerifyDetail() {
   );
   const isSubmitted = statusKey === "SUBMITTED";
 
-  const handleVerify = async () => {
+  const handleAutoAssign = async () => {
     if (!proposal) return;
 
     if (!isSubmitted) {
       setFeedback({
         type: "error",
         message:
-          "Hanya proposal berstatus SUBMITTED yang bisa diverifikasi oleh Staff LPPM.",
+          "Plotting reviewer otomatis hanya tersedia untuk proposal berstatus SUBMITTED.",
       });
       return;
     }
 
-    setIsVerifying(true);
+    setIsAssigning(true);
     setFeedback(null);
 
     try {
-      const trimmedNotes = notes.trim();
-      const res = await updateProposalStatus(proposal.id, {
-        status: "ADMIN_VERIFIED",
-        notes: trimmedNotes || undefined,
-      });
-
+      const res = await assignProposalReviewersAuto(proposal.id);
       setProposal(res.data);
       setFeedback({ type: "success", message: res.message });
     } catch (err: unknown) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Gagal memverifikasi proposal."),
+        message: getErrorMessage(
+          err,
+          "Gagal melakukan plotting reviewer otomatis.",
+        ),
       });
     } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!proposal) return;
-
-    if (!isSubmitted) {
-      setFeedback({
-        type: "error",
-        message:
-          "Hanya proposal berstatus SUBMITTED yang bisa ditolak oleh Staff LPPM.",
-      });
-      return;
-    }
-
-    const trimmedNotes = notes.trim();
-    if (!trimmedNotes) {
-      setFeedback({
-        type: "error",
-        message:
-          "Catatan penolakan/revisi wajib diisi agar peneliti tahu perbaikan yang diperlukan.",
-      });
-      return;
-    }
-
-    setIsRejecting(true);
-    setFeedback(null);
-
-    try {
-      const res = await updateProposalStatus(proposal.id, {
-        status: "REJECTED",
-        notes: trimmedNotes,
-      });
-
-      setProposal(res.data);
-      setFeedback({ type: "success", message: res.message });
-    } catch (err: unknown) {
-      setFeedback({
-        type: "error",
-        message: getErrorMessage(err, "Gagal menolak proposal."),
-      });
-    } finally {
-      setIsRejecting(false);
+      setIsAssigning(false);
     }
   };
 
@@ -232,10 +183,11 @@ export default function ProposalVerifyDetail() {
 
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-800">
-          Detail Verifikasi Proposal
+          Plotting Reviewer Otomatis
         </h1>
         <p className="text-sm text-gray-500">
-          Pemeriksaan kelengkapan administrasi proposal
+          Sistem akan memilih reviewer otomatis berdasarkan kecocokan fakultas,
+          konflik kepentingan, dan beban kerja.
         </p>
       </div>
 
@@ -281,99 +233,33 @@ export default function ProposalVerifyDetail() {
               </div>
             </div>
           </div>
-
-          <div className="rounded-xl bg-white p-6 shadow-sm">
-            <h3 className="mb-4 font-medium text-gray-700">
-              Checklist Kelengkapan Dokumen
-            </h3>
-
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 rounded bg-gray-50 p-3">
-                <input
-                  type="checkbox"
-                  checked={Boolean(proposal.proposal_file_path)}
-                  readOnly
-                />
-                Dokumen Proposal Lengkap
-              </label>
-
-              <label className="flex items-center gap-3 rounded bg-gray-50 p-3">
-                <input
-                  type="checkbox"
-                  checked={Boolean(proposal.rab_file_path)}
-                  readOnly
-                />
-                RAB Sesuai Format
-              </label>
-
-              <label className="flex items-center gap-3 rounded bg-gray-50 p-3">
-                <input
-                  type="checkbox"
-                  checked={Boolean(
-                    proposal.proposal_file_path && proposal.rab_file_path,
-                  )}
-                  readOnly
-                />
-                Surat Pernyataan Dilampirkan
-              </label>
-
-              <label className="flex items-center gap-3 rounded bg-gray-50 p-3">
-                <input
-                  type="checkbox"
-                  checked={Boolean(proposal.proposal_file_path)}
-                  readOnly
-                />
-                Template LPPM Digunakan
-              </label>
-            </div>
-          </div>
         </div>
 
         <div className="space-y-4">
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="mb-2 text-sm font-medium">Catatan Administrasi</p>
-
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value.slice(0, 500))}
-              placeholder="Tuliskan catatan verifikasi / catatan revisi untuk peneliti (maks. 500 karakter)"
-              className="h-28 w-full rounded-lg border p-3 text-sm"
-            />
-
-            <p className="mt-2 text-right text-xs text-gray-400">
-              {notes.length}/500
+            <p className="mb-2 text-sm font-medium">Aksi Plotting</p>
+            <p className="text-xs text-gray-500">
+              Klik tombol di bawah untuk menjalankan penugasan reviewer secara
+              otomatis oleh sistem.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={() => void handleVerify()}
-            disabled={isVerifying || isRejecting || !isSubmitted}
+            onClick={() => void handleAutoAssign()}
+            disabled={isAssigning || !isSubmitted}
             className={`w-full rounded-lg py-2 text-white ${
-              isVerifying || isRejecting || !isSubmitted
+              isAssigning || !isSubmitted
                 ? "cursor-not-allowed bg-red-300"
                 : "bg-red-600 hover:bg-red-700"
             }`}
           >
-            {isVerifying ? "Memverifikasi..." : "Verifikasi Proposal"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => void handleReject()}
-            disabled={isVerifying || isRejecting || !isSubmitted}
-            className={`w-full rounded-lg border py-2 ${
-              isVerifying || isRejecting || !isSubmitted
-                ? "cursor-not-allowed border-red-300 text-red-300"
-                : "border-red-500 text-red-600"
-            }`}
-          >
-            {isRejecting ? "Menyimpan..." : "Tolak / Revisi"}
+            {isAssigning ? "Memproses..." : "Plotting Reviewer (Otomatis)"}
           </button>
 
           {!isSubmitted && (
             <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700">
-              Proposal hanya bisa diverifikasi saat statusnya SUBMITTED.
+              Proposal hanya bisa diproses jika statusnya SUBMITTED.
             </p>
           )}
 

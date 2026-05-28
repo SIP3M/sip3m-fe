@@ -27,7 +27,7 @@ interface Props {
 
 export default function ProposalReviewerRow({ proposal, onSelect }: Props) {
   const normalizedStatus = getStatusKey(proposal.status || "");
-  const canAssign = normalizedStatus === "ADMIN_VERIFIED";
+  const canAssign = normalizedStatus === "SUBMITTED";
 
   return (
     <tr className="hover:bg-gray-50 transition">
