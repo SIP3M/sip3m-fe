@@ -74,6 +74,31 @@ export const assignProposalReviewersAuto = async (
   return res.data;
 };
 
+export interface BulkAssignReviewersResponse {
+  message: string;
+  data: {
+    success: Array<{
+      proposalId: number;
+      title: string;
+      reviewerName: string;
+    }>;
+    failed: Array<{
+      proposalId: number;
+      reason: string;
+    }>;
+  };
+}
+
+export const bulkAssignProposalReviewers = async (
+  proposalIds: number[],
+): Promise<BulkAssignReviewersResponse> => {
+  const res = await api.post<BulkAssignReviewersResponse>(
+    "/proposals/bulk-assign-reviewers",
+    { proposalIds },
+  );
+  return res.data;
+};
+
 const buildProposalFormData = (payload: UpsertProposalPayload) => {
   const formData = new FormData();
 
