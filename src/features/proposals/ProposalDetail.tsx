@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { ArrowLeft, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { assignProposalReviewersAuto, getProposalById } from "./proposal.api";
+import {
+  assignProposalReviewersAuto,
+  getProposalById,
+  submitProposal,
+} from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";
@@ -84,6 +88,7 @@ export default function ProposalDetail() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const loadProposal = async () => {
@@ -120,6 +125,18 @@ export default function ProposalDetail() {
   );
 
   const isSubmitted = statusKey === "SUBMITTED";
+  const isRevision = statusKey === "REVISION";
+  const isDraft = statusKey === "DRAFT";
+  const isDosen = user?.roles?.roles === APP_ROLES.DOSEN;
+  const canEditRevise = isDosen && (isDraft || isRevision);
+
+  const latestReview = useMemo(
+    () =>
+      proposal?.reviews && proposal.reviews.length > 0
+        ? proposal.reviews[0]
+        : null,
+    [proposal?.reviews],
+  );
 
   const handleAutoAssign = async () => {
     if (!isAdmin) return;
@@ -152,6 +169,38 @@ export default function ProposalDetail() {
       });
     } finally {
       setIsAssigning(false);
+    }
+  };
+
+  const handleEditProposal = () => {
+    if (!proposal) return;
+    navigate(`/dosen-dashboard/proposals/${proposal.id}/edit`, {
+      state: { proposal },
+    });
+  };
+
+  const handleSubmitProposal = async () => {
+    if (!proposal) return;
+
+    const confirmed = window.confirm(
+      `Submit ulang proposal "${proposal.title}"? Proposal akan dikirim kembali ke reviewer.`,
+    );
+    if (!confirmed) return;
+
+    setIsSubmittingProposal(true);
+    setFeedback(null);
+
+    try {
+      const res = await submitProposal(proposal.id);
+      setFeedback({ type: "success", message: res.message });
+      setProposal(res.data);
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(err, "Gagal melakukan submit ulang proposal."),
+      });
+    } finally {
+      setIsSubmittingProposal(false);
     }
   };
 
@@ -207,6 +256,58 @@ export default function ProposalDetail() {
           Pemeriksaan administratif proposal oleh Admin LPPM.
         </p>
       </div>
+
+      {isRevision && latestReview && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
+          <div className="mb-3 flex items-start gap-3">
+            <AlertCircle
+              size={20}
+              className="mt-0.5 flex-shrink-0 text-amber-600"
+            />
+            <div>
+              <h3 className="font-semibold text-amber-900">
+                Catatan Revisi dari Reviewer
+              </h3>
+              <p className="mt-1 text-xs text-amber-700">
+                Reviewer: {latestReview.reviewer?.name || "Tim Reviewer"}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-md bg-white px-3 py-3 text-sm text-gray-700">
+            {latestReview.rekomendasi_akhir && (
+              <div>
+                <p className="font-semibold text-gray-900">
+                  Rekomendasi Akhir:
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                  {latestReview.rekomendasi_akhir}
+                </p>
+              </div>
+            )}
+
+            {latestReview.kelemahan_proposal && (
+              <div>
+                <p className="font-semibold text-gray-900">
+                  Catatan Perbaikan / Kelemahan:
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                  {latestReview.kelemahan_proposal}
+                </p>
+              </div>
+            )}
+
+            {latestReview.notes && (
+              <div>
+                <p className="font-semibold text-gray-900">Catatan Tambahan:</p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                  {latestReview.notes}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {feedback && (
         <div
@@ -420,6 +521,40 @@ export default function ProposalDetail() {
           </a>
         </div>
       </div>
+
+      {isDosen && canEditRevise && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleEditProposal}
+              disabled={isSubmittingProposal}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Edit Proposal
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleSubmitProposal()}
+              disabled={isSubmittingProposal}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+            >
+              {isSubmittingProposal && (
+                <Loader2 size={14} className="animate-spin" />
+              )}
+              {isSubmittingProposal ? "Memproses..." : "Submit Ulang Proposal"}
+            </button>
+          </div>
+
+          {isRevision && (
+            <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+              Proposal Anda telah ditandai untuk revisi. Silakan baca catatan
+              dari reviewer dan lakukan perbaikan, kemudian submit kembali.
+            </p>
+          )}
+        </div>
+      )}
 
       {isAdmin && (
         <>
