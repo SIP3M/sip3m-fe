@@ -45,6 +45,7 @@ import ReviewDetailPage from "@/features/dashboard/ReviewDetailPage";
 import ReviewListReviewer from "@/features/reviews/ReviewListReviewer";
 import HistoryReview from "@/features/reviews/HistoryReview";
 import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
+import EditProposalDosen from "@/features/proposals/EditProposalDosen";
 
 export const router = createBrowserRouter([
   {
@@ -76,7 +77,6 @@ export const router = createBrowserRouter([
   // ADMIN AREA
   // =========================
   {
-    path: "/",
     element: (
       <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
         <DashboardLayout />
@@ -111,6 +111,7 @@ export const router = createBrowserRouter([
         path: "proposals/:id",
         element: <ProposalDetail />,
       },
+
       {
         path: "plotting-reviewer",
         element: <ReviewList />,
@@ -202,6 +203,10 @@ export const router = createBrowserRouter([
       {
         path: "proposals/:id",
         element: <ProposalDetail />,
+      },
+            {
+        path: "proposals/:id/edit",
+        element: <EditProposalDosen />, // Ganti dengan nama komponen form edit kamu
       },
       {
         path: "project-dosen",

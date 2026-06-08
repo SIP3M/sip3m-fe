@@ -11,7 +11,6 @@ const ITEMS_PER_PAGE = 5;
 const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "Semua Status" },
   { value: "SUBMITTED", label: "Submitted" },
-  { value: "ADMIN_VERIFIED", label: "Admin Verified" },
   { value: "UNDER_REVIEW", label: "Under Review" },
   { value: "REVISION", label: "Revision" },
   { value: "ACCEPTED", label: "Accepted" },
@@ -33,7 +32,6 @@ const getStatusBadgeClass = (status: string) => {
   const normalized = status.trim().toUpperCase();
 
   if (normalized === "SUBMITTED") return "bg-orange-100 text-orange-700";
-  if (normalized === "ADMIN_VERIFIED") return "bg-blue-100 text-blue-700";
   if (normalized === "UNDER_REVIEW") return "bg-yellow-100 text-yellow-700";
   if (normalized === "ACCEPTED") return "bg-green-100 text-green-700";
   if (normalized === "REJECTED") return "bg-red-100 text-red-700";
@@ -122,10 +120,7 @@ export default function ProposalStaff() {
       if (requestId !== latestRequestId.current) return;
 
       setError(
-        getErrorMessage(
-          err,
-          "Gagal memuat data proposal verifikasi untuk Staff LPPM.",
-        ),
+        getErrorMessage(err, "Gagal memuat data proposal untuk Staff LPPM."),
       );
       setProposals([]);
       setCurrentPage(1);
@@ -154,10 +149,10 @@ export default function ProposalStaff() {
 
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
-          Verifikasi Proposal
+          Plotting Reviewer Otomatis
         </h1>
         <p className="text-sm text-gray-500">
-          Daftar proposal baru yang menunggu pemeriksaan administrasi.
+          Daftar proposal untuk penugasan reviewer otomatis.
         </p>
       </div>
 
@@ -256,7 +251,9 @@ export default function ProposalStaff() {
                       }
                       className="bg-red-600 text-white text-xs px-3 py-1 rounded-md hover:bg-red-700"
                     >
-                      {p.status === "SUBMITTED" ? "Verifikasi" : "Detail"}
+                      {p.status === "SUBMITTED"
+                        ? "Plotting Otomatis"
+                        : "Detail"}
                     </button>
                   </td>
                 </tr>

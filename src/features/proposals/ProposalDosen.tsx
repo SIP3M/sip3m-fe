@@ -29,6 +29,10 @@ const defaultFormValues: ProposalFormValues = {
   skema: "",
   sumber_data_penelitian: "",
   instansi: "",
+  dosen_terlibat: "",
+  nidn_dosen_terlibat: "",
+  nama_anggota: "",
+  nim_anggota: "",
   funding_request_amount: "",
   proposal_file: null,
   rab_file: null,
@@ -298,6 +302,10 @@ export default function ProposalDosen() {
       skema: proposal.skema || "",
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
       instansi: proposal.instansi || "",
+      dosen_terlibat: proposal.dosen_terlibat || "",
+      nidn_dosen_terlibat: proposal.nidn_dosen_terlibat || "",
+      nama_anggota: proposal.nama_anggota || "",
+      nim_anggota: proposal.nim_anggota || "",
       funding_request_amount: String(proposal.funding_request_amount || ""),
       proposal_file: null,
       rab_file: null,
@@ -347,6 +355,10 @@ export default function ProposalDosen() {
       sumber_data_penelitian:
         formValues.sumber_data_penelitian.trim() || undefined,
       instansi: formValues.instansi.trim() || undefined,
+      dosen_terlibat: formValues.dosen_terlibat.trim() || undefined,
+      nidn_dosen_terlibat: formValues.nidn_dosen_terlibat.trim() || undefined,
+      nama_anggota: formValues.nama_anggota.trim() || undefined,
+      nim_anggota: formValues.nim_anggota.trim() || undefined,
       funding_request_amount:
         formValues.funding_request_amount.trim() || undefined,
       is_draft: isDraft,
@@ -569,6 +581,34 @@ export default function ProposalDosen() {
                 />
               </div>
 
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-sm text-gray-600">Dosen Terlibat</label>
+                <textarea
+                  name="dosen_terlibat"
+                  value={formValues.dosen_terlibat}
+                  onChange={handleInputChange}
+                  placeholder="Satu nama per baris (enter untuk baris baru)"
+                  className="min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <p className="text-xs text-gray-400">
+                  Pisahkan nama dosen per baris. Urutan harus sama dengan kolom
+                  NIDN.
+                </p>
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-sm text-gray-600">
+                  NIDN Dosen Terlibat
+                </label>
+                <textarea
+                  name="nidn_dosen_terlibat"
+                  value={formValues.nidn_dosen_terlibat}
+                  onChange={handleInputChange}
+                  placeholder="Satu NIDN per baris sesuai urutan nama dosen"
+                  className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+
               <div className="space-y-1">
                 <label className="text-sm text-gray-600">Instansi</label>
                 <Input
@@ -647,6 +687,34 @@ export default function ProposalDosen() {
                   value={formValues.funding_request_amount}
                   onChange={handleInputChange}
                   placeholder="Contoh: 15000000"
+                />
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-sm text-gray-600">
+                  Nama Anggota / Mahasiswa
+                </label>
+                <textarea
+                  name="nama_anggota"
+                  value={formValues.nama_anggota}
+                  onChange={handleInputChange}
+                  placeholder="Satu nama per baris"
+                  className="min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <p className="text-xs text-gray-400">
+                  Pisahkan nama anggota per baris. Urutan harus sama dengan
+                  kolom NIM.
+                </p>
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-sm text-gray-600">NIM Anggota</label>
+                <textarea
+                  name="nim_anggota"
+                  value={formValues.nim_anggota}
+                  onChange={handleInputChange}
+                  placeholder="Satu NIM per baris sesuai urutan nama"
+                  className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
               </div>
 

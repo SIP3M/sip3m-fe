@@ -9,6 +9,10 @@ export type ProposalFormValues = {
   skema: string;
   sumber_data_penelitian: string;
   instansi: string;
+  dosen_terlibat: string;
+  nidn_dosen_terlibat: string;
+  nama_anggota: string;
+  nim_anggota: string;
   funding_request_amount: string;
   proposal_file: File | null;
   rab_file: File | null;

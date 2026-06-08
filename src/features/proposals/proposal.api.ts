@@ -9,6 +9,7 @@ import {
   UpdateProposalStatusPayload,
   UpdateProposalStatusResponse,
 } from "./proposal.types";
+import axios from "axios";
 
 interface GetAllProposalsParams {
   page?: number;
@@ -64,6 +65,52 @@ export const updateProposalStatus = async (
   return res.data;
 };
 
+export const assignProposalReviewersAuto = async (
+  id: number,
+): Promise<GetProposalByIdResponse> => {
+  const res = await api.post<GetProposalByIdResponse>(
+    `/proposals/${id}/assign-reviewers`,
+    {},
+  );
+  return res.data;
+};
+
+export interface BulkAssignReviewersResponse {
+  message: string;
+  data: {
+    success: Array<{
+      proposalId: number;
+      title: string;
+      reviewerName: string;
+    }>;
+    failed: Array<{
+      proposalId: number;
+      reason: string;
+    }>;
+  };
+}
+
+// Tambahkan ini di proposal.api.ts
+export const editProposalApi = async (id: number, formData: FormData) => {
+  // Pastikan URL-nya sesuai dengan base URL axios kamu
+  const response = await axios.put(`/proposals/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
+export const bulkAssignProposalReviewers = async (
+  proposalIds: number[],
+): Promise<BulkAssignReviewersResponse> => {
+  const res = await api.post<BulkAssignReviewersResponse>(
+    "/proposals/bulk-assign-reviewers",
+    { proposalIds },
+  );
+  return res.data;
+};
+
 const buildProposalFormData = (payload: UpsertProposalPayload) => {
   const formData = new FormData();
 
@@ -85,6 +132,22 @@ const buildProposalFormData = (payload: UpsertProposalPayload) => {
 
   if (payload.instansi !== undefined) {
     formData.append("instansi", payload.instansi);
+  }
+
+  if (payload.dosen_terlibat !== undefined) {
+    formData.append("dosen_terlibat", payload.dosen_terlibat);
+  }
+
+  if (payload.nidn_dosen_terlibat !== undefined) {
+    formData.append("nidn_dosen_terlibat", payload.nidn_dosen_terlibat);
+  }
+
+  if (payload.nama_anggota !== undefined) {
+    formData.append("nama_anggota", payload.nama_anggota);
+  }
+
+  if (payload.nim_anggota !== undefined) {
+    formData.append("nim_anggota", payload.nim_anggota);
   }
 
   if (payload.funding_request_amount !== undefined) {

@@ -21,6 +21,10 @@ export interface Proposal {
   skema: string;
   sumber_data_penelitian?: string | null;
   instansi?: string | null;
+  dosen_terlibat?: string | null;
+  nidn_dosen_terlibat?: string | null;
+  nama_anggota?: string | null;
+  nim_anggota?: string | null;
   funding_request_amount: number;
   status: ProposalStatus;
   proposal_file_path: string | null;
@@ -44,6 +48,18 @@ export interface Proposal {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  reviews?: Array<{
+    id: number;
+    status: string;
+    rekomendasi_akhir?: string | null;
+    kelemahan_proposal?: string | null;
+    kekuatan_proposal?: string | null;
+    notes?: string | null;
+    created_at: string;
+    reviewer?: {
+      name: string;
+    } | null;
+  }> | null;
 }
 
 export interface ProposalMeta {
@@ -88,6 +104,10 @@ export interface UpsertProposalPayload {
   sumber_data_penelitian?: string;
   instansi?: string;
   funding_request_amount?: number | string;
+  dosen_terlibat?: string;
+  nidn_dosen_terlibat?: string;
+  nama_anggota?: string;
+  nim_anggota?: string;
   is_draft?: boolean;
   proposal_file?: File;
   rab_file?: File;

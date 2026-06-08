@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { ArrowLeft, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getProposalById, updateProposalStatus } from "./proposal.api";
+import {
+  assignProposalReviewersAuto,
+  getProposalById,
+  submitProposal,
+} from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";
@@ -83,13 +87,9 @@ export default function ProposalDetail() {
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
-
-  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [rejectionNotes, setRejectionNotes] = useState("");
 
   const loadProposal = async () => {
     setIsLoading(true);
@@ -125,72 +125,82 @@ export default function ProposalDetail() {
   );
 
   const isSubmitted = statusKey === "SUBMITTED";
+  const isRevision = statusKey === "REVISION";
+  const isDraft = statusKey === "DRAFT";
+  const isDosen = user?.roles?.roles === APP_ROLES.DOSEN;
+  const canEditRevise = isDosen && (isDraft || isRevision);
 
-  const handleVerifySubmit = async () => {
+  const latestReview = useMemo(
+    () =>
+      proposal?.reviews && proposal.reviews.length > 0
+        ? proposal.reviews[0]
+        : null,
+    [proposal?.reviews],
+  );
+
+  const handleAutoAssign = async () => {
     if (!isAdmin) return;
     if (!proposal) return;
 
-    setIsVerifying(true);
-    setFeedback(null);
-
-    try {
-      const res = await updateProposalStatus(proposal.id, {
-        status: "ADMIN_VERIFIED",
-      });
-
-      setFeedback({ type: "success", message: res.message });
-      setProposal(res.data);
-      setIsVerifyModalOpen(false);
-
-      setTimeout(() => {
-        navigate("/plotting-reviewer");
-      }, 600);
-    } catch (err: unknown) {
+    if (!isSubmitted) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Gagal memverifikasi proposal."),
-      });
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleRejectSubmit = async () => {
-    if (!isAdmin) return;
-    if (!proposal) return;
-    const notes = rejectionNotes.trim();
-
-    if (!notes) {
-      setFeedback({
-        type: "error",
-        message: "Catatan penolakan wajib diisi.",
+        message:
+          "Plotting reviewer otomatis hanya tersedia untuk proposal berstatus Submitted.",
       });
       return;
     }
 
-    setIsRejecting(true);
+    setIsAssigning(true);
     setFeedback(null);
 
     try {
-      const res = await updateProposalStatus(proposal.id, {
-        status: "REJECTED",
-        notes,
-      });
+      const res = await assignProposalReviewersAuto(proposal.id);
 
       setFeedback({ type: "success", message: res.message });
-      setIsRejectModalOpen(false);
-      setRejectionNotes("");
-
-      setTimeout(() => {
-        navigate("/proposals");
-      }, 600);
+      setProposal(res.data);
     } catch (err: unknown) {
       setFeedback({
         type: "error",
-        message: getErrorMessage(err, "Gagal menolak proposal."),
+        message: getErrorMessage(
+          err,
+          "Gagal melakukan plotting reviewer otomatis.",
+        ),
       });
     } finally {
-      setIsRejecting(false);
+      setIsAssigning(false);
+    }
+  };
+
+  const handleEditProposal = () => {
+    if (!proposal) return;
+    navigate(`/dosen-dashboard/proposals/${proposal.id}/edit`, {
+      state: { proposal },
+    });
+  };
+
+  const handleSubmitProposal = async () => {
+    if (!proposal) return;
+
+    const confirmed = window.confirm(
+      `Submit ulang proposal "${proposal.title}"? Proposal akan dikirim kembali ke reviewer.`,
+    );
+    if (!confirmed) return;
+
+    setIsSubmittingProposal(true);
+    setFeedback(null);
+
+    try {
+      const res = await submitProposal(proposal.id);
+      setFeedback({ type: "success", message: res.message });
+      setProposal(res.data);
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(err, "Gagal melakukan submit ulang proposal."),
+      });
+    } finally {
+      setIsSubmittingProposal(false);
     }
   };
 
@@ -246,6 +256,58 @@ export default function ProposalDetail() {
           Pemeriksaan administratif proposal oleh Admin LPPM.
         </p>
       </div>
+
+      {isRevision && latestReview && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
+          <div className="mb-3 flex items-start gap-3">
+            <AlertCircle
+              size={20}
+              className="mt-0.5 flex-shrink-0 text-amber-600"
+            />
+            <div>
+              <h3 className="font-semibold text-amber-900">
+                Catatan Revisi dari Reviewer
+              </h3>
+              <p className="mt-1 text-xs text-amber-700">
+                Reviewer: {latestReview.reviewer?.name || "Tim Reviewer"}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-md bg-white px-3 py-3 text-sm text-gray-700">
+            {latestReview.rekomendasi_akhir && (
+              <div>
+                <p className="font-semibold text-gray-900">
+                  Rekomendasi Akhir:
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                  {latestReview.rekomendasi_akhir}
+                </p>
+              </div>
+            )}
+
+            {latestReview.kelemahan_proposal && (
+              <div>
+                <p className="font-semibold text-gray-900">
+                  Catatan Perbaikan / Kelemahan:
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                  {latestReview.kelemahan_proposal}
+                </p>
+              </div>
+            )}
+
+            {latestReview.notes && (
+              <div>
+                <p className="font-semibold text-gray-900">Catatan Tambahan:</p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                  {latestReview.notes}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {feedback && (
         <div
@@ -328,6 +390,107 @@ export default function ProposalDetail() {
           </div>
         </div>
 
+        {/* Dosen Terlibat & Anggota Tables */}
+        <div className="mt-5 grid grid-cols-1 gap-6">
+          {/* Dosen Terlibat */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+              Kelompok Dosen Terlibat
+            </h3>
+            {(() => {
+              const names = (proposal.dosen_terlibat || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const nidns = (proposal.nidn_dosen_terlibat || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const rows = Math.max(names.length, nidns.length);
+
+              if (rows === 0) {
+                return (
+                  <p className="text-sm text-gray-500">
+                    Tidak ada data dosen terlibat.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b text-left text-gray-400">
+                      <tr>
+                        <th className="pb-2 pr-4">No</th>
+                        <th className="pb-2 pr-4">Nama Dosen</th>
+                        <th className="pb-2">NIDN</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: rows }).map((_, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{i + 1}</td>
+                          <td className="py-2 pr-4">{names[i] || "-"}</td>
+                          <td className="py-2">{nidns[i] || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Anggota / Mahasiswa */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+              Kelompok Anggota / Mahasiswa
+            </h3>
+            {(() => {
+              const names = (proposal.nama_anggota || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const nims = (proposal.nim_anggota || "")
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean);
+              const rows = Math.max(names.length, nims.length);
+
+              if (rows === 0) {
+                return (
+                  <p className="text-sm text-gray-500">
+                    Tidak ada data anggota.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b text-left text-gray-400">
+                      <tr>
+                        <th className="pb-2 pr-4">No</th>
+                        <th className="pb-2 pr-4">Nama Anggota</th>
+                        <th className="pb-2">NIM</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: rows }).map((_, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{i + 1}</td>
+                          <td className="py-2 pr-4">{names[i] || "-"}</td>
+                          <td className="py-2">{nims[i] || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
           <a
             href={proposal.proposal_file_path || "#"}
@@ -359,140 +522,65 @@ export default function ProposalDetail() {
         </div>
       </div>
 
+      {isDosen && canEditRevise && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleEditProposal}
+              disabled={isSubmittingProposal}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Edit Proposal
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleSubmitProposal()}
+              disabled={isSubmittingProposal}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+            >
+              {isSubmittingProposal && (
+                <Loader2 size={14} className="animate-spin" />
+              )}
+              {isSubmittingProposal ? "Memproses..." : "Submit Ulang Proposal"}
+            </button>
+          </div>
+
+          {isRevision && (
+            <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+              Proposal Anda telah ditandai untuk revisi. Silakan baca catatan
+              dari reviewer dan lakukan perbaikan, kemudian submit kembali.
+            </p>
+          )}
+        </div>
+      )}
+
       {isAdmin && (
         <>
           <div className="flex flex-wrap justify-end gap-3">
             <button
               type="button"
-              onClick={() => setIsRejectModalOpen(true)}
-              disabled={isRejecting || isVerifying || !isSubmitted}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                isRejecting || isVerifying || !isSubmitted
-                  ? "cursor-not-allowed bg-red-200 text-white"
-                  : "bg-red-500 text-white hover:bg-red-600"
-              }`}
-            >
-              Tolak Proposal
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsVerifyModalOpen(true)}
-              disabled={isVerifying || isRejecting || !isSubmitted}
+              onClick={() => void handleAutoAssign()}
+              disabled={isAssigning || !isSubmitted}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-                isVerifying || isRejecting || !isSubmitted
+                isAssigning || !isSubmitted
                   ? "cursor-not-allowed bg-blue-200 text-white"
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {isVerifying && <Loader2 size={14} className="animate-spin" />}
-              {isVerifying ? "Memverifikasi..." : "Verifikasi Proposal"}
+              {isAssigning && <Loader2 size={14} className="animate-spin" />}
+              {isAssigning ? "Memproses..." : "Plotting Reviewer (Otomatis)"}
             </button>
           </div>
 
           {!isSubmitted && (
             <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              Aksi verifikasi/penolakan hanya tersedia untuk proposal berstatus
+              Plotting reviewer otomatis hanya tersedia untuk proposal berstatus
               Submitted.
             </p>
           )}
         </>
-      )}
-
-      {isAdmin && isVerifyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Verifikasi Proposal
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Proposal akan diubah ke status
-              <span className="font-semibold text-blue-700">
-                {" "}
-                Admin Verified
-              </span>
-              dan siap untuk proses plotting reviewer.
-            </p>
-
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isVerifying) return;
-                  setIsVerifyModalOpen(false);
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Batal
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void handleVerifySubmit()}
-                disabled={isVerifying}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white ${
-                  isVerifying
-                    ? "cursor-not-allowed bg-blue-300"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {isVerifying && <Loader2 size={14} className="animate-spin" />}
-                {isVerifying ? "Memverifikasi..." : "Ya, Verifikasi"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isAdmin && isRejectModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Tolak Proposal
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Berikan alasan penolakan agar peneliti dapat menindaklanjuti.
-            </p>
-
-            <textarea
-              value={rejectionNotes}
-              onChange={(e) => setRejectionNotes(e.target.value)}
-              placeholder="Tulis catatan penolakan (wajib diisi)..."
-              className="mt-4 h-32 w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:border-red-400"
-            />
-
-            <p className="mt-2 text-right text-xs text-gray-400">
-              {rejectionNotes.trim().length}/500 karakter
-            </p>
-
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isRejecting) return;
-                  setIsRejectModalOpen(false);
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Batal
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void handleRejectSubmit()}
-                disabled={isRejecting || !rejectionNotes.trim()}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white ${
-                  isRejecting || !rejectionNotes.trim()
-                    ? "cursor-not-allowed bg-red-300"
-                    : "bg-red-500 hover:bg-red-600"
-                }`}
-              >
-                {isRejecting && <Loader2 size={14} className="animate-spin" />}
-                {isRejecting ? "Menyimpan..." : "Submit Penolakan"}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

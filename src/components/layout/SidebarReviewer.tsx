@@ -1,25 +1,16 @@
 import {
   LayoutDashboard,
-  Users,
-  FileText,
-  UserCheck,
-  Activity,
-  Wallet,
-  ClipboardList,
   LogOut,
-  Upload,
-  Globe,
-  CheckCheck,
   CheckSquare,
   FileCheck,
 } from "lucide-react";
-import { Checkbox } from "radix-ui";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Global } from "recharts";
+import { useAuthStore } from "@/features/auth/auth.store";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const logout = useAuthStore((state) => state.logout);
 
   const menus = [
     {
@@ -40,8 +31,8 @@ export default function Sidebar() {
   ];
 
   const handleLogout = () => {
-    localStorage.clear(); // hapus semua data login
-    navigate("/login");
+    logout();
+    navigate("/", { replace: true });
   };
 
   return (

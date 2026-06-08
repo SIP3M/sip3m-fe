@@ -141,9 +141,5 @@ export interface ReviewerOption {
 
 export interface AssignReviewersResponse {
   message: string;
-  data: {
-    id: number;
-    status: string;
-    updated_at: string;
-  };
+  data: AssignedProposal;
 }
