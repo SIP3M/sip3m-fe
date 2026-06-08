@@ -48,6 +48,18 @@ export interface Proposal {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  reviews?: Array<{
+    id: number;
+    status: string;
+    rekomendasi_akhir?: string | null;
+    kelemahan_proposal?: string | null;
+    kekuatan_proposal?: string | null;
+    notes?: string | null;
+    created_at: string;
+    reviewer?: {
+      name: string;
+    } | null;
+  }> | null;
 }
 
 export interface ProposalMeta {

@@ -9,6 +9,7 @@ import {
   UpdateProposalStatusPayload,
   UpdateProposalStatusResponse,
 } from "./proposal.types";
+import axios from "axios";
 
 interface GetAllProposalsParams {
   page?: number;
@@ -70,6 +71,42 @@ export const assignProposalReviewersAuto = async (
   const res = await api.post<GetProposalByIdResponse>(
     `/proposals/${id}/assign-reviewers`,
     {},
+  );
+  return res.data;
+};
+
+export interface BulkAssignReviewersResponse {
+  message: string;
+  data: {
+    success: Array<{
+      proposalId: number;
+      title: string;
+      reviewerName: string;
+    }>;
+    failed: Array<{
+      proposalId: number;
+      reason: string;
+    }>;
+  };
+}
+
+// Tambahkan ini di proposal.api.ts
+export const editProposalApi = async (id: number, formData: FormData) => {
+  // Pastikan URL-nya sesuai dengan base URL axios kamu
+  const response = await axios.put(`/proposals/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
+export const bulkAssignProposalReviewers = async (
+  proposalIds: number[],
+): Promise<BulkAssignReviewersResponse> => {
+  const res = await api.post<BulkAssignReviewersResponse>(
+    "/proposals/bulk-assign-reviewers",
+    { proposalIds },
   );
   return res.data;
 };
