@@ -83,7 +83,14 @@ export default function Sidebar() {
     navigate("/", { replace: true });
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+  const current = location.pathname;
+
+  return (
+    current === path ||
+    current.startsWith(`${path}/`)
+  );
+};
 
   return (
     <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)]">

@@ -293,7 +293,7 @@ export default function AddUserPage() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6">
+    <div className="space-y-6 p-8">
       {/* HEADER */}
       <div className="flex items-start gap-3 w-full max-w-3xl">
         <button

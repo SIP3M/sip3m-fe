@@ -260,8 +260,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* STAT CARDS — data asli dari API (tidak diubah) */}
-      <div className="grid grid-cols-4 gap-6 items-stretch">
+      <div className="grid grid-cols-3 gap-6 items-stretch">
         <StatCard
           title="Total Proposal"
           value={isLoading ? "..." : dashboardData.summaryCards.totalProposal}
@@ -272,26 +271,6 @@ export default function AdminDashboard() {
         />
 
         <StatCard
-          title="Dosen Aktif"
-          value={isLoading ? "..." : dashboardData.summaryCards.dosenAktif}
-          desc="Dosen aktif di sistem"
-          icon={<Users size={18} />}
-          iconBg="bg-purple-100"
-          iconColor="text-purple-600"
-        />
-
-        <StatCard
-          title="Proposal Disetujui"
-          value={
-            isLoading ? "..." : dashboardData.summaryCards.proposalDisetujui
-          }
-          desc="Status accepted"
-          icon={<CheckCircle size={18} />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
-
-        <StatCard
           title="Menunggu Review"
           value={isLoading ? "..." : dashboardData.summaryCards.menungguReview}
           desc="Perlu tindakan segera"
@@ -299,10 +278,7 @@ export default function AdminDashboard() {
           iconBg="bg-orange-100"
           iconColor="text-orange-600"
         />
-      </div>
 
-      {/* STAT CARDS KKM — UI placeholder, belum ada API/tipe data */}
-      <div className="grid grid-cols-3 gap-6 items-stretch">
         <StatCard
           title="Peserta KKM Aktif"
           value={PLACEHOLDER_KKM_STATS.pesertaAktif}
@@ -329,9 +305,7 @@ export default function AdminDashboard() {
           iconBg="bg-teal-100"
           iconColor="text-teal-600"
         />
-      </div>
 
-      <div className="grid grid-cols-1 items-stretch">
         <StatCard
           title="Laporan Pending"
           value={PLACEHOLDER_KKM_STATS.laporanPending}
@@ -343,7 +317,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* AKSI CEPAT — UI only, tombol belum terhubung ke aksi apa pun */}
-      <div className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-6 shadow-sm">
+      <div className="bg-linear-to-r from-red-600 to-red-500 rounded-2xl p-6 shadow-sm">
         <p className="text-white/80 text-xs font-semibold tracking-wide mb-3">
           AKSI CEPAT
         </p>
@@ -577,9 +551,7 @@ export default function AdminDashboard() {
               />
               <div>
                 <p className="text-sm text-gray-700">{activity.text}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {activity.time}
-                </p>
+                <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
               </div>
             </div>
           ))}

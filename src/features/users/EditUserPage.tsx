@@ -201,8 +201,8 @@ export default function EditUserPage() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-8">
-      <div className="flex items-start gap-3 w-full max-w-3xl">
+    <div  className="space-y-6 p-8">
+      <div className="flex items-center gap-3">
         <Button
           variant="outline"
           size="icon"
@@ -220,7 +220,7 @@ export default function EditUserPage() {
         </div>
       </div>
 
-      <Card className="w-full max-w-3xl rounded-2xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+      <Card className="w-full bg-white rounded-2xl shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle>Informasi Pengguna</CardTitle>
           <CardDescription>
