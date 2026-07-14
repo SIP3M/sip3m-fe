@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckSquare, Square } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { assignProposalReviewersAuto, getProposalById } from "./proposal.api";
 import { Proposal } from "./proposal.types";
@@ -57,6 +57,22 @@ const getErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
+// =====================================================================
+// Checklist dokumen — UI ONLY, belum ada API. State lokal murni tampilan,
+// tidak dikirim ke server. Ganti dengan data/endpoint asli begitu tersedia.
+// =====================================================================
+type ChecklistItem = {
+  id: string;
+  label: string;
+};
+
+const CHECKLIST_ITEMS: ChecklistItem[] = [
+  { id: "dokumen_proposal", label: "Dokumen Proposal Lengkap" },
+  { id: "rab_format", label: "RAB Sesuai Format" },
+  { id: "surat_pernyataan", label: "Surat Pernyataan Dilampirkan" },
+  { id: "template_lppm", label: "Template LPPM Digunakan" },
+];
+
 export default function ProposalVerifyDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -66,6 +82,12 @@ export default function ProposalVerifyDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+
+  // State UI-only untuk checklist & catatan administrasi (belum ada API)
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [catatanAdministrasi, setCatatanAdministrasi] = useState("");
 
   const loadProposal = async () => {
     setIsLoading(true);
@@ -133,6 +155,10 @@ export default function ProposalVerifyDetail() {
     }
   };
 
+  const toggleChecklist = (itemId: string) => {
+    setCheckedItems((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-gray-500">
@@ -161,13 +187,23 @@ export default function ProposalVerifyDetail() {
 
   return (
     <div className="p-8">
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 flex items-center gap-2 text-gray-600"
-      >
-        <ArrowLeft size={18} />
-        Kembali
-      </button>
+      {/* HEADER */}
+      <div className="mb-6 flex items-center gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Detail Verifikasi Proposal
+          </h1>
+          <p className="text-sm text-gray-500">
+            Pemeriksaan kelengkapan administrasi proposal
+          </p>
+        </div>
+      </div>
 
       {feedback && (
         <div
@@ -181,37 +217,30 @@ export default function ProposalVerifyDetail() {
         </div>
       )}
 
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-800">
-          Plotting Reviewer Otomatis
-        </h1>
-        <p className="text-sm text-gray-500">
-          Sistem akan memilih reviewer otomatis berdasarkan kecocokan fakultas,
-          konflik kepentingan, dan beban kerja.
-        </p>
-      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* KIRI: Info Proposal + Checklist */}
+        <div className="space-y-6 lg:col-span-2">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Judul Proposal
+            </p>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
-          <div className="rounded-xl bg-white p-6 shadow-sm">
-            <p className="mb-2 text-xs text-gray-400">JUDUL PROPOSAL</p>
-
-            <h2 className="mb-6 font-semibold text-gray-800">
+            <h2 className="mb-5 text-lg font-bold text-gray-900">
               {proposal.title}
             </h2>
 
-            <div className="grid grid-cols-2 gap-6 text-sm">
+            <div className="grid grid-cols-2 gap-5 border-t border-gray-100 pt-5 text-sm">
               <div>
-                <p className="text-gray-400">Nama Peneliti</p>
-                <p className="font-medium">
+                <p className="text-xs text-gray-400">Nama Peneliti</p>
+                <p className="mt-1 font-semibold text-gray-800">
                   {proposal.user?.name ||
                     `ID Peneliti: ${proposal.lead_researcher_id}`}
                 </p>
               </div>
 
               <div>
-                <p className="text-gray-400">Tahun Anggaran</p>
-                <p className="font-medium">
+                <p className="text-xs text-gray-400">Tahun Anggaran</p>
+                <p className="mt-1 font-semibold text-gray-800">
                   {proposal.submitted_at
                     ? new Date(proposal.submitted_at).getFullYear()
                     : new Date(proposal.created_at).getFullYear()}
@@ -219,79 +248,93 @@ export default function ProposalVerifyDetail() {
               </div>
 
               <div>
-                <p className="text-gray-400">Skema</p>
-                <p className="font-medium">{proposal.skema}</p>
+                <p className="text-xs text-gray-400">Skema</p>
+                <p className="mt-1 font-semibold text-gray-800">
+                  {proposal.skema}
+                </p>
               </div>
 
               <div>
-                <p className="text-gray-400">Status Saat Ini</p>
+                <p className="text-xs text-gray-400">Status Saat Ini</p>
                 <span
-                  className={`rounded px-2 py-1 text-xs ${statusBadgeMap[statusKey] || "bg-gray-100 text-gray-700"}`}
+                  className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                    statusBadgeMap[statusKey] || "bg-gray-100 text-gray-700"
+                  }`}
                 >
                   {getStatusLabel(proposal.status)}
                 </span>
               </div>
             </div>
           </div>
+
+          {/* Checklist Kelengkapan Dokumen — UI ONLY, belum ada API */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <CheckSquare size={16} className="text-gray-400" />
+              Checklist Kelengkapan Dokumen
+            </h3>
+
+            <div className="space-y-2">
+              {CHECKLIST_ITEMS.map((item) => {
+                const checked = !!checkedItems[item.id];
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => toggleChecklist(item.id)}
+                    className="flex w-full items-center gap-3 rounded-lg bg-gray-50 px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {checked ? (
+                      <CheckSquare size={18} className="flex-shrink-0 text-red-600" />
+                    ) : (
+                      <Square size={18} className="flex-shrink-0 text-gray-300" />
+                    )}
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
+        {/* KANAN: Catatan Administrasi + Aksi */}
         <div className="space-y-4">
-          <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="mb-2 text-sm font-medium">Aksi Plotting</p>
-            <p className="text-xs text-gray-500">
-              Klik tombol di bawah untuk menjalankan penugasan reviewer secara
-              otomatis oleh sistem.
+          {/* Catatan Administrasi — UI ONLY, belum ada API */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <p className="mb-3 text-sm font-semibold text-gray-900">
+              Catatan Administrasi
             </p>
+            <textarea
+              value={catatanAdministrasi}
+              onChange={(e) => setCatatanAdministrasi(e.target.value)}
+              rows={5}
+              placeholder="Tuliskan catatan untuk peneliti jika ada revisi atau hal yang perlu diperhatikan..."
+              className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-200"
+            />
           </div>
+
+          {/* Tombol Verifikasi / Tolak — UI ONLY, belum ada API */}
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white hover:bg-red-700 cursor-pointer"
+          >
+            Verifikasi Proposal
+          </button>
 
           <button
             type="button"
-            onClick={() => void handleAutoAssign()}
-            disabled={isAssigning || !isSubmitted}
-            className={`w-full rounded-lg py-2 text-white ${
-              isAssigning || !isSubmitted
-                ? "cursor-not-allowed bg-red-300"
-                : "bg-red-600 hover:bg-red-700"
-            }`}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 cursor-pointer"
           >
-            {isAssigning ? "Memproses..." : "Plotting Reviewer (Otomatis)"}
+            Tolak / Revisi
           </button>
 
-          {!isSubmitted && (
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700">
-              Proposal hanya bisa diproses jika statusnya SUBMITTED.
-            </p>
-          )}
-
-          <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-4 text-xs">
-            <p className="font-medium text-gray-700">Dokumen Proposal</p>
-
-            {proposal.proposal_file_path ? (
-              <a
-                href={proposal.proposal_file_path}
-                target="_blank"
-                rel="noreferrer"
-                className="break-all text-blue-600 hover:underline"
-              >
-                Buka file proposal
-              </a>
-            ) : (
-              <p className="text-gray-400">File proposal tidak tersedia.</p>
-            )}
-
-            {proposal.rab_file_path ? (
-              <a
-                href={proposal.rab_file_path}
-                target="_blank"
-                rel="noreferrer"
-                className="break-all text-blue-600 hover:underline"
-              >
-                Buka file RAB
-              </a>
-            ) : (
-              <p className="text-gray-400">File RAB tidak tersedia.</p>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-full text-center text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
+          >
+            Kembali
+          </button>
         </div>
       </div>
     </div>

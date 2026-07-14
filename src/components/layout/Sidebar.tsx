@@ -61,7 +61,7 @@ export default function Sidebar() {
     {
       name: "Repository Publik",
       icon: Globe,
-      path: "/repository",
+      path: "/repository-publik",
     },
     {
       name: "Audit Logs",
@@ -93,7 +93,7 @@ export default function Sidebar() {
 };
 
   return (
-    <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
+    <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)] z-50 transition-transform duration-300 -translate-x-full peer-checked:translate-x-0 lg:translate-x-0">
       {/* TOP */}
       <div className="flex-1 overflow-y-auto">
         {/* LOGO */}

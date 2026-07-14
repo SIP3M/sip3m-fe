@@ -15,7 +15,7 @@ export default function ReviewerDashboard() {
   ];
 
   return (
-    <div className="p-6 min-h-screen bg-gray-50">
+    <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
 
       {/* HEADER */}
       <div className="mb-6">
@@ -28,7 +28,7 @@ export default function ReviewerDashboard() {
       </div>
 
       {/* TOP CARDS */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
 
         {/* TUGAS BARU */}
         <div className="bg-white border-2 border-red-500 rounded-xl p-5 flex justify-between">
@@ -84,7 +84,7 @@ export default function ReviewerDashboard() {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl p-5 shadow-sm">
+      <div className="bg-white rounded-xl p-5 shadow-sm overflow-hidden">
 
         <div className="mb-4">
           <h2 className="font-semibold text-gray-800">
@@ -95,38 +95,42 @@ export default function ReviewerDashboard() {
           </p>
         </div>
 
-        {/* HEADER */}
-        <div className="grid grid-cols-5 text-xs text-gray-400 border-b pb-2 mb-3">
-          <p>Judul Proposal</p>
-          <p>Kategori</p>
-          <p>Tenggat Waktu</p>
-          <p>Status</p>
-          <p>Aksi</p>
-        </div>
+        <div className="overflow-x-auto w-full">
+          <div className="min-w-[700px]">
+            {/* HEADER */}
+            <div className="grid grid-cols-5 text-xs text-gray-400 border-b pb-2 mb-3 gap-2">
+              <p>Judul Proposal</p>
+              <p>Kategori</p>
+              <p>Tenggat Waktu</p>
+              <p>Status</p>
+              <p>Aksi</p>
+            </div>
 
-        {/* ROW */}
-        {data.map((item) => (
-          <div key={item.id} className="grid grid-cols-5 items-center text-sm">
+            {/* ROW */}
+            {data.map((item) => (
+              <div key={item.id} className="grid grid-cols-5 items-center text-sm gap-2">
 
-            <p>{item.title}</p>
-            <p className="text-gray-500">{item.category}</p>
-            <p className="text-red-500">{item.deadline}</p>
+                <p>{item.title}</p>
+                <p className="text-gray-500">{item.category}</p>
+                <p className="text-red-500">{item.deadline}</p>
 
-            <span className="bg-yellow-100 text-yellow-600 px-2 py-1 text-xs rounded-full w-fit">
-              {item.status}
-            </span>
+                <span className="bg-yellow-100 text-yellow-600 px-2 py-1 text-xs rounded-full w-fit">
+                  {item.status}
+                </span>
 
-            <button
-              onClick={() =>
-                navigate(`/reviewer-dashboard/reviews/${item.id}`)
-              }
-              className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 w-fit"
-            >
-              Mulai Review
-            </button>
+                <button
+                  onClick={() =>
+                    navigate(`/reviewer-dashboard/reviews/${item.id}`)
+                  }
+                  className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-700 w-fit cursor-pointer"
+                >
+                  Mulai Review
+                </button>
 
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
 
       </div>
     </div>

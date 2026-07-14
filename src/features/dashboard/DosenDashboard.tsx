@@ -36,9 +36,9 @@ export default function DosenDashboard() {
   ];
 
   return (
-    <div className="p-6 min-h-screen overflow-auto">
+    <div className="p-4 sm:p-6 min-h-screen overflow-auto">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Selamat Datang, Budi Peneliti
@@ -48,13 +48,13 @@ export default function DosenDashboard() {
           </p>
         </div>
 
-        <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-3 rounded-lg flex items-center gap-2 text-sm">
+        <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-3 rounded-lg flex items-center gap-2 text-sm shrink-0">
           <Plus className="w-4 h-4" /> Buat Proposal Baru
         </button>
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 p-4 rounded-xl flex items-center gap-4">
           <div className="bg-blue-100 p-3 rounded-lg">
             <FileText className="text-blue-600" />
@@ -87,7 +87,7 @@ export default function DosenDashboard() {
       </div>
 
       {/* Middle Section */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         {/* Line Chart */}
         <div className="bg-white p-4 rounded-xl">
           <h2 className="font-semibold text-gray-700 mb-1">
@@ -137,7 +137,7 @@ export default function DosenDashboard() {
             </PieChart>
           </ResponsiveContainer>
 
-          <div className="flex gap-4 mt-2 text-sm">
+          <div className="flex gap-4 mt-2 text-sm flex-wrap justify-center">
             <span className="text-green-600">■ Disetujui</span>
             <span className="text-yellow-500">■ Review</span>
             <span className="text-orange-500">■ Revisi</span>
@@ -146,7 +146,7 @@ export default function DosenDashboard() {
       </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Proposal Saya */}
         <div className="bg-white p-4 rounded-xl">
           <div className="flex justify-between mb-3">
@@ -157,23 +157,23 @@ export default function DosenDashboard() {
           </div>
 
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <p>Pengembangan Algoritma AI untuk Deteksi Hama</p>
-              <span className="bg-yellow-100 text-yellow-600 px-2 rounded">
+            <div className="flex justify-between gap-4">
+              <p className="line-clamp-2">Pengembangan Algoritma AI untuk Deteksi Hama</p>
+              <span className="bg-yellow-100 text-yellow-600 px-2 rounded shrink-0 h-fit">
                 REVIEW
               </span>
             </div>
 
-            <div className="flex justify-between">
-              <p>Pemberdayaan UMKM Batik</p>
-              <span className="bg-orange-100 text-orange-600 px-2 rounded">
+            <div className="flex justify-between gap-4">
+              <p className="line-clamp-2">Pemberdayaan UMKM Batik</p>
+              <span className="bg-orange-100 text-orange-600 px-2 rounded shrink-0 h-fit">
                 SUBMITTED
               </span>
             </div>
 
-            <div className="flex justify-between">
-              <p>Analisis Dampak Lingkungan Limbah Pabrik Gula</p>
-              <span className="bg-green-100 text-green-600 px-2 rounded">
+            <div className="flex justify-between gap-4">
+              <p className="line-clamp-2">Analisis Dampak Lingkungan Limbah Pabrik Gula</p>
+              <span className="bg-green-100 text-green-600 px-2 rounded shrink-0 h-fit">
                 APPROVED
               </span>
             </div>
@@ -191,9 +191,9 @@ export default function DosenDashboard() {
 
           <div className="space-y-4 text-sm">
             <div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <p>Analisis Dampak Lingkungan</p>
-                <span className="bg-green-100 text-green-600 px-2 rounded">
+                <span className="bg-green-100 text-green-600 px-2 rounded shrink-0">
                   ON TRACK
                 </span>
               </div>
@@ -206,9 +206,9 @@ export default function DosenDashboard() {
             </div>
 
             <div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <p>Implementasi Smart Village</p>
-                <span className="bg-red-100 text-red-600 px-2 rounded">
+                <span className="bg-red-100 text-red-600 px-2 rounded shrink-0">
                   DELAYED
                 </span>
               </div>

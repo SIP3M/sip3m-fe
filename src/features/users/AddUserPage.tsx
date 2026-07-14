@@ -293,7 +293,7 @@ export default function AddUserPage() {
   }
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6 p-4 sm:p-8">
       {/* HEADER */}
       <div className="flex items-start gap-3 w-full max-w-3xl">
         <button
@@ -315,7 +315,7 @@ export default function AddUserPage() {
 
       {/* CARD FORM */}
       <Card className="w-full max-w-3xl rounded-2xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
-        <CardContent className="p-10">
+        <CardContent className="p-4 sm:p-10">
           {/* ERROR MESSAGE */}
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -487,7 +487,7 @@ export default function AddUserPage() {
             </div>
 
             {/* PASSWORD */}
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   Password <span className="text-red-500">*</span>

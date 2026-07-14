@@ -237,7 +237,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Dashboard Admin LPPM
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         <StatCard
           title="Total Proposal"
           value={isLoading ? "..." : dashboardData.summaryCards.totalProposal}
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* CHART: Status Proposal & Proposal per Fakultas */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="font-semibold text-gray-900">Status Proposal</h2>
           <p className="text-xs text-gray-400 mb-4">
@@ -401,33 +401,35 @@ export default function AdminDashboard() {
             Distribusi proposal berdasarkan asal fakultas
           </p>
 
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width="50%" height={220}>
-              <PieChart>
-                <Pie
-                  data={PLACEHOLDER_FAKULTAS_DATA}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={2}
-                >
-                  {PLACEHOLDER_FAKULTAS_DATA.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-full sm:w-1/2 h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={PLACEHOLDER_FAKULTAS_DATA}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {PLACEHOLDER_FAKULTAS_DATA.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
-            <div className="flex-1 space-y-2.5">
+            <div className="flex-1 w-full space-y-2.5">
               {PLACEHOLDER_FAKULTAS_DATA.map((item) => (
                 <div
                   key={item.name}
@@ -451,7 +453,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* CHART: Tren Proposal Masuk & Progress KKM per Kelompok */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="font-semibold text-gray-900">Tren Proposal Masuk</h2>
           <p className="text-xs text-gray-400 mb-4">
@@ -500,10 +502,10 @@ export default function AdminDashboard() {
             Progress KKM per Kelompok
           </h2>
           <p className="text-xs text-gray-400 mb-4">
-            Capaian kegiatan setiap kelompok KKM aktif
+            Kelompok dengan kemajuan paling lambat & cepat
           </p>
 
-          <div className="space-y-4 mt-2">
+          <div className="space-y-4">
             {PLACEHOLDER_KKM_PROGRESS.map((item) => (
               <div key={item.name} className="flex items-center gap-3">
                 <span className="text-xs font-medium text-gray-500 w-10">

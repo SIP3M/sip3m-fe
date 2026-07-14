@@ -46,6 +46,7 @@ import ReviewListReviewer from "@/features/reviews/ReviewListReviewer";
 import HistoryReview from "@/features/reviews/HistoryReview";
 import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
 import EditProposalDosen from "@/features/proposals/EditProposalDosen";
+import SystemSettings from "@/features/settings/SystemSettings";
 
 export const router = createBrowserRouter([
   {
@@ -129,8 +130,16 @@ export const router = createBrowserRouter([
         element: <FinancePage />,
       },
       {
+        path: "repository-publik",
+        element: <PublicationList />,
+      },
+      {
         path: "logs",
         element: <LogsPage />,
+      },
+      {
+        path: "settings",
+        element: <SystemSettings />
       },
     ],
   },
@@ -173,6 +182,10 @@ export const router = createBrowserRouter([
       {
         path: "finance",
         element: <FinancePage />,
+      },
+      {
+        path: "repository-publik",
+        element: <PublicationList />,
       },
       {
         path: "logs",

@@ -5,7 +5,7 @@ export default function RoleLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Outlet />
       </div>
     </div>

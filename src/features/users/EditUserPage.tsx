@@ -201,7 +201,7 @@ export default function EditUserPage() {
   }
 
   return (
-    <div  className="space-y-6 p-8">
+    <div className="space-y-6 p-4 sm:p-8">
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
@@ -227,7 +227,7 @@ export default function EditUserPage() {
             Field bersifat opsional dan dapat diubah sebagian.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-10 pt-0">
+        <CardContent className="p-4 sm:p-10 pt-0">
           {error && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
@@ -310,7 +310,7 @@ export default function EditUserPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   NIDN / NIP
