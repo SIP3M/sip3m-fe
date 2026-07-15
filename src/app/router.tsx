@@ -40,6 +40,7 @@ import ProposalDosen from "@/features/proposals/ProposalDosen";
 import ProjectDosen from "@/features/projects/ProjectDosen";
 import Laporan from "@/features/laporan/Laporan";
 import PublicationList from "@/features/repository/PublicationList";
+import Profile from "@/features/profile/Profile";
 
 import ReviewDetailPage from "@/features/dashboard/ReviewDetailPage";
 import ReviewListReviewer from "@/features/reviews/ReviewListReviewer";
@@ -233,6 +234,10 @@ export const router = createBrowserRouter([
         path: "repository-publik",
         element: <PublicationList />,
       },
+      {
+        path: "profile",
+        element: <Profile />,
+      }
     ],
   },
 

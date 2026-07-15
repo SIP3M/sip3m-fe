@@ -1,7 +1,52 @@
 import { useState, useEffect, useCallback, FormEvent, useRef } from "react";
-import { Check, Upload, Loader2, Search, FileText, RefreshCw, AlertCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Check,
+  Upload,
+  Loader2,
+  Search,
+  FileText,
+  RefreshCw,
+  AlertCircle,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  MoreHorizontal,
+  Calendar,
+} from "lucide-react";
 import { getPengabdianProjects, uploadMilestoneDocuments } from "./project.api";
 import { PengabdianProject, PengabdianMilestone } from "./project.types";
+
+// =====================================================================
+// Konten Panduan — UI ONLY, data statis (belum ada field ini di backend).
+// Sama untuk semua milestone. Ganti dengan data dari API begitu tersedia
+// (misalnya field `milestone.panduan` atau endpoint terpisah).
+// =====================================================================
+const PANDUAN_TUJUAN = [
+  "Aktivitas penelitian yang telah dilakukan",
+  "Progres kegiatan awal",
+  "Kendala penelitian",
+  "Dokumentasi kegiatan",
+  "Penggunaan anggaran sementara (jika ada)",
+];
+
+const PANDUAN_DOKUMEN_WAJIB = [
+  "Laporan Kemajuan",
+  "Logbook Kegiatan",
+  "Dokumentasi Penelitian",
+];
+
+const PANDUAN_DOKUMEN_OPSIONAL = [
+  "Bukti Penggunaan Anggaran",
+  "Lampiran Pendukung",
+];
+
+const PANDUAN_CHECKLIST = [
+  "Dokumen lengkap sesuai ketentuan",
+  "Format file sesuai (PDF / DOCX / XLSX / ZIP)",
+  "Sudah ditandatangani jika diperlukan",
+];
+// =====================================================================
 
 export default function ProjectDosen() {
   const [projects, setProjects] = useState<PengabdianProject[]>([]);
@@ -15,6 +60,7 @@ export default function ProjectDosen() {
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPanduanModalOpen, setIsPanduanModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<PengabdianProject | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<PengabdianMilestone | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -23,11 +69,15 @@ export default function ProjectDosen() {
   const [laporanFile, setLaporanFile] = useState<File | null>(null);
   const [logbookFile, setLogbookFile] = useState<File | null>(null);
   const [anggaranFile, setAnggaranFile] = useState<File | null>(null);
+  // Field baru sesuai desain — belum dikirim ke API, tinggal aktifkan
+  // di submitUpload() begitu backend menerima field ini.
+  const [dokumentasiFile, setDokumentasiFile] = useState<File | null>(null);
 
   // Refs
   const laporanRef = useRef<HTMLInputElement>(null);
   const logbookRef = useRef<HTMLInputElement>(null);
   const anggaranRef = useRef<HTMLInputElement>(null);
+  const dokumentasiRef = useRef<HTMLInputElement>(null);
 
   // Fetch
   useEffect(() => {
@@ -66,14 +116,26 @@ export default function ProjectDosen() {
     setLaporanFile(null);
     setLogbookFile(null);
     setAnggaranFile(null);
+    setDokumentasiFile(null);
     setIsModalOpen(true);
+  };
+
+  // Handler baru untuk modal Panduan — murni UI, tidak memanggil API apa pun
+  const handlePanduanClick = (project: PengabdianProject, milestone: PengabdianMilestone) => {
+    setSelectedProject(project);
+    setSelectedMilestone(milestone);
+    setIsPanduanModalOpen(true);
   };
 
   const submitUpload = async (e: FormEvent, isDraft: boolean) => {
     e.preventDefault();
     if (!selectedProject || !selectedMilestone) return;
     if (!laporanFile) {
-      alert("File Laporan Utama wajib diisi.");
+      alert("File Laporan Kemajuan wajib diisi.");
+      return;
+    }
+    if (!logbookFile) {
+      alert("File Logbook Kegiatan wajib diisi.");
       return;
     }
 
@@ -83,8 +145,10 @@ export default function ProjectDosen() {
       formData.append("is_draft", String(isDraft));
 
       formData.append("laporan", laporanFile);
-      if (logbookFile) formData.append("logbook", logbookFile);
+      formData.append("logbook", logbookFile);
       if (anggaranFile) formData.append("anggaran", anggaranFile);
+      // TODO: aktifkan baris ini begitu backend menerima field dokumentasi
+      // if (dokumentasiFile) formData.append("dokumentasi", dokumentasiFile);
 
       await uploadMilestoneDocuments(selectedProject.id, selectedMilestone.id, formData);
 
@@ -108,14 +172,20 @@ export default function ProjectDosen() {
     }
   };
 
+  const isCompletedStatus = (status: string) =>
+    status === "COMPLETED" || status === "SELESAI";
+
+  const activeProjects = (projects || []).filter((p) => !isCompletedStatus(p.status));
+  const completedProjects = (projects || []).filter((p) => isCompletedStatus(p.status));
+
   return (
     <div className="p-6 lg:p-8 bg-gray-50 min-h-screen font-sans text-gray-800">
       {/* HEADER */}
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Proyek Saya</h1>
           <p className="text-sm text-gray-500 mt-1.5">
-            Kelola milestone dan laporan kemajuan penelitian & pengabdian.
+            Kelola tahapan pelaporan penelitian dan pengabdian Anda.
           </p>
         </div>
         <button
@@ -126,6 +196,12 @@ export default function ProjectDosen() {
           <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           Refresh
         </button>
+      </div>
+
+      {/* INFO BANNER */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-6 flex items-center gap-3 text-sm text-blue-800">
+        <AlertCircle size={18} className="text-blue-500 shrink-0" />
+        Tahapan menunjukkan progres administrasi pelaporan penelitian, bukan progres substansi penelitian.
       </div>
 
       {/* SEARCH */}
@@ -142,7 +218,7 @@ export default function ProjectDosen() {
         </div>
       </div>
 
-      {/* PROJECT LIST */}
+      {/* STATE: LOADING / ERROR / EMPTY */}
       <div className="space-y-6">
         {isLoading && projects.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-4 py-20 text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-200/60">
@@ -171,12 +247,10 @@ export default function ProjectDosen() {
           </div>
         )}
 
-        {(projects || []).map((project) => {
-          // Sort milestones by sequence
+        {/* PROYEK AKTIF — card besar + timeline (data & logic sama seperti sebelumnya) */}
+        {activeProjects.map((project) => {
           const sortedMilestones = [...project.milestones].sort((a, b) => a.sequence - b.sequence);
-          // Find the active ongoing milestone (first that is NOT COMPLETED), ignoring sequence 1
-          // Cari milestone pertama yang belum COMPLETED
-const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
+          const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
 
           return (
             <div key={project.id} className="bg-white rounded-[1.25rem] shadow-sm p-6 lg:p-8 border border-gray-200/70">
@@ -199,24 +273,24 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                   </p>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                    Progress Keseluruhan
-                  </p>
-                  <div className="flex items-baseline justify-end">
-                    <p className="text-[2.5rem] font-extrabold text-red-600 tracking-tight leading-none">
-                      {project.overall_progress}
-                      <span className="text-2xl font-bold">%</span>
+                {ongoingMilestone && (
+                  <div className="text-right shrink-0">
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                      Tahap Aktif
                     </p>
+                    <p className="text-[15px] font-bold text-red-600 leading-tight mb-2">
+                      {ongoingMilestone.title}
+                    </p>
+                    <span className="text-[11px] px-3 py-1 rounded-full font-semibold bg-amber-100 text-amber-700">
+                      {getStatusLabel(ongoingMilestone.status)}
+                    </span>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* TIMELINE */}
               <div className="relative mt-12 mb-10 mx-auto w-full px-2">
-                {/* Horizontal Background Line */}
                 <div className="absolute top-[14px] left-[10%] right-[10%] h-[2px] bg-gray-200 -z-0">
-                  {/* Active fill line */}
                   <div
                     className="h-full bg-red-500 transition-all duration-1000 ease-out"
                     style={{ width: `${project.overall_progress}%` }}
@@ -225,8 +299,7 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
 
                 <div className="relative z-10 flex justify-between">
                   {sortedMilestones.map((milestone) => {
-                    // Force sequence 1 to be visually completed if it's not the only one, or just trust the logic
-                    const isVisuallyCompleted = milestone.status === "COMPLETED"
+                    const isVisuallyCompleted = milestone.status === "COMPLETED";
                     const isVisuallyOngoing = ongoingMilestone?.id === milestone.id;
                     const isVisuallyPending = !isVisuallyCompleted && !isVisuallyOngoing;
 
@@ -253,20 +326,25 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                         <p className={`text-[13px] leading-tight font-bold max-w-[140px] ${isVisuallyOngoing ? 'text-red-600' : isVisuallyCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
                           {milestone.title} {milestone.target_percentage > 0 && `(${milestone.target_percentage}%)`}
                         </p>
-                        <p className="text-[11px] text-gray-400 mt-1.5 font-medium">
-                          {/* We don't have due_date in the data by default, placeholder format */}
-                          2023-11-10
-                        </p>
+                        <span
+                          className={`mt-1.5 inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            isVisuallyCompleted
+                              ? "bg-green-100 text-green-700"
+                              : isVisuallyOngoing
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-gray-100 text-gray-400"
+                          }`}
+                        >
+                          {getStatusLabel(milestone.status)}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* ACTION AREA (ONLY SHOWS IF ONGOING MILESTONE EXISTS) */}
-{/* ACTION AREA (TERGANTUNG STATUS PROYEK) */}
+              {/* ACTION AREA */}
               {project.status === "PENDING" || project.status === "MENUNGGU_PERSETUJUAN" ? (
-                // JIKA PROYEK MASIH PENDING: Tampilkan kotak biru, sembunyikan semua tombol upload
                 <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mt-10 flex flex-col items-center justify-center gap-3 shadow-sm max-w-4xl mx-auto text-center">
                   <div className="bg-white p-2 rounded-full shadow-sm">
                     <AlertCircle size={24} className="text-blue-500" />
@@ -276,30 +354,37 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                   </p>
                 </div>
               ) : ongoingMilestone ? (
-                // JIKA PROYEK SUDAH ONGOING: Baru tampilkan tombol upload untuk milestone yang aktif
-                <div className="border border-gray-200 bg-white rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-between items-center gap-5 shadow-sm max-w-4xl mx-auto">
+                <div className="border border-gray-200 bg-gray-50 rounded-2xl p-5 mt-10 flex flex-col md:flex-row justify-between items-center gap-5 shadow-sm max-w-4xl mx-auto">
                   <div className="flex items-center gap-4 w-full md:w-auto">
-                    <div className="hover:bg-gray-50 cursor-pointer border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
-                      <Upload size={22} strokeWidth={2.5} className="cursor-pointer " />
+                    <div className="border border-gray-200 rounded-xl p-3 text-red-600 bg-white shrink-0 shadow-sm">
+                      <Upload size={22} strokeWidth={2.5} />
                     </div>
                     <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                        Tahapan saat ini
+                      </p>
                       <p className="text-[15px] font-bold text-gray-900">
-                        Upload {ongoingMilestone.title} {ongoingMilestone.target_percentage > 0 && `(${ongoingMilestone.target_percentage}%)`}
+                        {ongoingMilestone.title} {ongoingMilestone.target_percentage > 0 && `(${ongoingMilestone.target_percentage}%)`}
                       </p>
                       <p className="text-xs text-gray-500 mt-1 font-medium">
-                        Tenggat waktu: Segera lengkapi
+                        Menunggu unggahan laporan sesuai ketentuan LPPM
                       </p>
                     </div>
                   </div>
 
                   <div className="flex gap-3 w-full md:w-auto justify-end">
-                    <button className="cursor-pointer px-5 py-2.5 text-[13px] font-bold border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none">
+                    <button
+                      onClick={() => handlePanduanClick(project, ongoingMilestone)}
+                      className="cursor-pointer flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold border border-gray-300 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-all focus:ring-2 focus:ring-gray-200 outline-none"
+                    >
+                      <BookOpen size={15} />
                       Lihat Panduan
                     </button>
                     <button
                       onClick={() => handleUploadClick(project, ongoingMilestone)}
-                      className="cursor-pointer px-5 py-2.5 text-[13px] font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm shadow-red-600/30 whitespace-nowrap focus:ring-2 focus:ring-red-600 focus:ring-offset-2 outline-none"
+                      className="cursor-pointer flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-sm shadow-red-600/30 whitespace-nowrap focus:ring-2 focus:ring-red-600 focus:ring-offset-2 outline-none"
                     >
+                      <Upload size={15} />
                       Upload Dokumen
                     </button>
                   </div>
@@ -308,6 +393,39 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
             </div>
           );
         })}
+
+        {/* PROYEK SELESAI — card kecil + arsip (hanya memakai field yang sudah tersedia) */}
+        {completedProjects.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {completedProjects.map((project) => (
+              <div
+                key={project.id}
+                className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5"
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-base font-bold text-gray-900 leading-tight">
+                    {project.title}
+                  </h3>
+                  <span className="shrink-0 text-[11px] px-3 py-1 rounded-full font-semibold bg-green-100 text-green-700">
+                    {getStatusLabel(project.status)}
+                  </span>
+                </div>
+                <p className="text-xs font-mono text-gray-400">
+                  {project.project_code}
+                </p>
+              </div>
+            ))}
+
+            {/* Placeholder arsip — UI only, belum ada route/handler */}
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-2 min-h-[110px]">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <MoreHorizontal size={16} />
+              </div>
+              <p className="text-sm font-semibold text-gray-700">Lihat Arsip Proyek</p>
+              <p className="text-xs text-gray-400">Tampilkan semua proyek tahun lalu</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* PAGINATION */}
@@ -335,7 +453,136 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
         </div>
       )}
 
-      {/* UPLOAD MODAL OVERLAY */}
+      {/* MODAL: PANDUAN (baru — UI only, konten statis) */}
+      {isPanduanModalOpen && selectedMilestone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsPanduanModalOpen(false)}
+          ></div>
+
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[85vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white px-6 py-5 flex justify-between items-start border-b border-gray-100 z-10">
+              <div>
+                <h3 className="text-base font-bold text-gray-900 mb-1.5">
+                  Panduan {selectedMilestone.title}
+                </h3>
+                <span className="inline-block text-[11px] px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-700">
+                  {getStatusLabel(selectedMilestone.status)}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsPanduanModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              <div className="bg-blue-50 rounded-xl p-4 text-xs text-blue-900 leading-relaxed">
+                Tahap ini digunakan untuk melaporkan perkembangan penelitian/pengabdian
+                sesuai proposal yang telah disetujui oleh LPPM.
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-gray-900 mb-2.5">Tujuan Pelaporan</p>
+                <div className="space-y-1.5">
+                  {PANDUAN_TUJUAN.map((item) => (
+                    <div key={item} className="flex items-start gap-2 text-sm text-gray-600">
+                      <Check size={14} className="text-green-500 mt-0.5 shrink-0" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-gray-900 mb-2.5">Dokumen Wajib</p>
+                <div className="space-y-2">
+                  {PANDUAN_DOKUMEN_WAJIB.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2.5 text-sm text-gray-700"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Check size={14} className="text-green-600" />
+                        {item}
+                      </span>
+                      <span className="text-[10px] font-semibold text-green-700">Wajib</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-gray-900 mb-2.5">Dokumen Opsional</p>
+                <div className="space-y-2">
+                  {PANDUAN_DOKUMEN_OPSIONAL.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2.5 text-sm text-gray-500"
+                    >
+                      <AlertCircle size={14} className="text-gray-300" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  Format File
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["PDF", "DOCX", "XLSX", "ZIP"].map((fmt) => (
+                    <span
+                      key={fmt}
+                      className="text-xs font-semibold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg"
+                    >
+                      {fmt}
+                    </span>
+                  ))}
+                  <span className="text-xs text-gray-400 self-center">Maks. 10 MB per file</span>
+                </div>
+              </div>
+
+              {/* Deadline: belum ada field due_date di data milestone, jadi teks generik (bukan tanggal karangan) */}
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-2.5 text-sm">
+                <Calendar size={16} className="text-red-500 shrink-0" />
+                <div>
+                  <p className="text-[11px] font-semibold text-red-600 uppercase tracking-wide">
+                    Deadline Pengumpulan
+                  </p>
+                  <p className="text-sm font-bold text-gray-800">
+                    Sesuai jadwal yang ditentukan LPPM
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-gray-900 mb-2.5">Checklist Sebelum Submit</p>
+                <div className="space-y-2">
+                  {PANDUAN_CHECKLIST.map((item) => (
+                    <label
+                      key={item}
+                      className="flex items-center gap-2.5 text-sm text-gray-600 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      {item}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: UPLOAD DOKUMEN */}
       {isModalOpen && selectedMilestone && selectedProject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
@@ -347,8 +594,10 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
             {/* Modal Header */}
             <div className="px-6 py-5 flex justify-between items-start bg-white">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">Upload Dokumen</h3>
-                <p className="text-sm text-gray-500 font-medium">{selectedMilestone.title} &bull; <span className="font-mono text-gray-400">{selectedProject.project_code}</span></p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">Upload {selectedMilestone.title}</h3>
+                <p className="text-sm text-gray-500 font-medium">
+                  Unggah dokumen sesuai tahapan pelaporan penelitian yang sedang berlangsung.
+                </p>
               </div>
               <button
                 onClick={() => !isUploading && setIsModalOpen(false)}
@@ -361,22 +610,16 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
 
             {/* Modal Body / Form */}
             <form className="px-6 pb-6 space-y-5">
-              <div className="bg-blue-50 rounded-xl p-4 flex gap-3 items-start">
-                <AlertCircle className="text-blue-600 shrink-0 mt-0.5" size={18} />
-                <div className="text-sm text-blue-900">
-                  <p className="font-semibold mb-1">Ketentuan Dokumen</p>
-                  <p className="text-blue-800/80 leading-relaxed text-xs">
-                    Format file harus PDF, DOCX, XLSX, atau ZIP (Maks 10MB). Laporan utama <strong>wajib</strong> diunggah.
-                  </p>
-                </div>
-              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Dokumen Wajib
+                </p>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-2">
-                    Laporan Utama <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">
+                      Laporan Kemajuan <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="file"
                       accept=".pdf,.docx,.xlsx,.zip"
@@ -386,46 +629,64 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                       required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-2">
-                    Logbook Kegiatan <span className="text-xs font-medium text-gray-400 ml-1 font-normal">(Opsional)</span>
-                  </label>
-                  <input
-                    type="file"
-                    accept=".pdf,.docx,.xlsx,.zip"
-                    ref={logbookRef}
-                    onChange={(e) => setLogbookFile(e.target.files?.[0] || null)}
-                    className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-200 rounded-xl p-1 outline-none transition-all cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-2">
-                    Bukti Penggunaan Anggaran <span className="text-xs font-medium text-gray-400 ml-1 font-normal">(Opsional)</span>
-                  </label>
-                  <input
-                    type="file"
-                    accept=".pdf,.docx,.xlsx,.zip"
-                    ref={anggaranRef}
-                    onChange={(e) => setAnggaranFile(e.target.files?.[0] || null)}
-                    className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-200 rounded-xl p-1 outline-none transition-all cursor-pointer"
-                  />
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">
+                      Logbook Kegiatan <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.xlsx,.zip"
+                      ref={logbookRef}
+                      onChange={(e) => setLogbookFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 border border-gray-200 rounded-xl p-1 focus:ring-2 focus:ring-red-500/20 outline-none transition-all cursor-pointer"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
+
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Dokumen Pendukung (Opsional)
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">
+                      Dokumentasi Penelitian
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.xlsx,.zip"
+                      ref={dokumentasiRef}
+                      onChange={(e) => setDokumentasiFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-200 rounded-xl p-1 outline-none transition-all cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">
+                      Bukti Penggunaan Anggaran
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.xlsx,.zip"
+                      ref={anggaranRef}
+                      onChange={(e) => setAnggaranFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-200 rounded-xl p-1 outline-none transition-all cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-400">
+                Format yang diterima: PDF / DOCX / XLSX / ZIP &bull; Maks. 10 MB per file
+              </p>
             </form>
 
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 items-center">
-              <button
-                type="button"
-                onClick={() => !isUploading && setIsModalOpen(false)}
-                className="px-4 py-2.5 text-[13px] font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-                disabled={isUploading}
-              >
-                Batal
-              </button>
               <button
                 type="button"
                 onClick={(e) => submitUpload(e, true)}
@@ -442,7 +703,7 @@ const ongoingMilestone = sortedMilestones.find((m) => m.status !== "COMPLETED");
                 disabled={isUploading}
               >
                 {isUploading ? <Loader2 size={16} className="animate-spin text-white/80" /> : <Upload size={16} />}
-                Kirim Final
+                Ajukan Verifikasi
               </button>
             </div>
           </div>
