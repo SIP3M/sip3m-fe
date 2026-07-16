@@ -47,10 +47,6 @@ export default function DosenDashboard() {
             Kelola penelitian dan pengabdian Anda di sini.
           </p>
         </div>
-
-        <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-3 rounded-lg flex items-center gap-2 text-sm shrink-0">
-          <Plus className="w-4 h-4" /> Buat Proposal Baru
-        </button>
       </div>
 
       {/* Cards */}

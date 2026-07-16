@@ -1,5 +1,15 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { FileText, Pencil, Plus, Search, Send, Trash2, X, Calendar, Upload } from "lucide-react";
+import {
+  FileText,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  Trash2,
+  X,
+  Calendar,
+  Upload,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -206,7 +216,7 @@ export default function ProposalDosen() {
     { nidn: "", nama: "", peran: "Ketua Peneliti" },
   ]);
   const [mahasiswaRows, setMahasiswaRows] = useState<MahasiswaRow[]>([
-    { nim: "", nama: "", prodi: "", peran: "Pilih" },
+    { nim: "", nama: "", prodi: "", peran: "Anggota" },
   ]);
   const [sumberPendanaan, setSumberPendanaan] = useState("Pilih");
 
@@ -389,7 +399,10 @@ export default function ProposalDosen() {
   };
 
   const addDosenRow = () => {
-    const next = [...dosenRows, { nidn: "", nama: "", peran: "Pilih" }];
+    const next = [
+      ...dosenRows,
+      { nidn: "", nama: "", peran: "Anggota Peneliti" },
+    ];
     setDosenRows(next);
     syncDosenToForm(next);
   };
@@ -404,7 +417,7 @@ export default function ProposalDosen() {
   const addMahasiswaRow = () => {
     const next = [
       ...mahasiswaRows,
-      { nim: "", nama: "", prodi: "", peran: "Pilih" },
+      { nim: "", nama: "", prodi: "", peran: "Anggota" },
     ];
     setMahasiswaRows(next);
     syncMahasiswaToForm(next);
@@ -419,7 +432,7 @@ export default function ProposalDosen() {
   const openCreateForm = () => {
     resetForm();
     setDosenRows([{ nidn: "", nama: "", peran: "Ketua Peneliti" }]);
-    setMahasiswaRows([{ nim: "", nama: "", prodi: "", peran: "Pilih" }]);
+    setMahasiswaRows([{ nim: "", nama: "", prodi: "", peran: "Anggota" }]);
     setSumberPendanaan("Pilih");
     setFeedback(null);
     setError(null);
@@ -468,15 +481,13 @@ export default function ProposalDosen() {
       parsedDosen.push({
         nidn: nidns[i] || "",
         nama: namas[i] || "",
-        peran: i === 0 ? "Ketua Peneliti" : "Pilih",
+        peran: i === 0 ? "Ketua Peneliti" : "Anggota Peneliti",
       });
     }
     setDosenRows(parsedDosen);
 
     // PARSE MAHASISWA
-    const nims = proposal.nim_anggota
-      ? proposal.nim_anggota.split("\n")
-      : [];
+    const nims = proposal.nim_anggota ? proposal.nim_anggota.split("\n") : [];
     const namaMhs = proposal.nama_anggota
       ? proposal.nama_anggota.split("\n")
       : [];
@@ -487,7 +498,7 @@ export default function ProposalDosen() {
         nim: nims[i] || "",
         nama: namaMhs[i] || "",
         prodi: "",
-        peran: "Pilih",
+        peran: "Anggota",
       });
       if (nims[i]) {
         void (async (nimVal: string, idx: number) => {
@@ -685,13 +696,13 @@ export default function ProposalDosen() {
         </div>
 
         <Button
-  type="button"
-  onClick={openCreateForm}
-  className="bg-red-600 hover:bg-red-700 text-sm text-white px-3 py-5 rounded-lg flex items-center gap-2 cursor-pointer"
->
-  <Plus className="w-2 h-3" />
-  Buat Proposal Baru
-</Button>
+          type="button"
+          onClick={openCreateForm}
+          className="bg-red-600 hover:bg-red-700 text-sm text-white px-3 py-5 rounded-lg flex items-center gap-2 cursor-pointer"
+        >
+          <Plus className="w-2 h-3" />
+          Buat Proposal Baru
+        </Button>
       </div>
 
       {error && (
@@ -714,7 +725,8 @@ export default function ProposalDosen() {
               Buat Proposal Baru
             </h2>
             <p className="text-sm text-[#EF4444] mt-1 font-medium">
-              Lengkapi semua bagian yang diperlukan untuk mengajukan proposal penelitian.
+              Lengkapi semua bagian yang diperlukan untuk mengajukan proposal
+              penelitian.
             </p>
           </div>
 
@@ -779,7 +791,8 @@ export default function ProposalDosen() {
                   Pendanaan & Skema Penelitian
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Informasi sumber pendanaan, skema penelitian, dan nominal pengajuan proposal.
+                  Informasi sumber pendanaan, skema penelitian, dan nominal
+                  pengajuan proposal.
                 </p>
               </div>
 
@@ -797,13 +810,24 @@ export default function ProposalDosen() {
                     >
                       <option value="Pilih">Pilih</option>
                       <option value="Internal Kampus">Internal Kampus</option>
-                      <option value="Kemendikbudristek">Kemendikbudristek</option>
+                      <option value="Kemendikbudristek">
+                        Kemendikbudristek
+                      </option>
                       <option value="Mandiri">Mandiri</option>
                       <option value="Lainnya">Lainnya</option>
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                      <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                      <svg
+                        className="h-4 w-4 text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -829,8 +853,17 @@ export default function ProposalDosen() {
                       ))}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                      <svg className="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                      <svg
+                        className="h-4 w-4 text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -853,7 +886,8 @@ export default function ProposalDosen() {
                 {/* Nominal Pengajuan Dana */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-gray-700">
-                    Nominal Pengajuan Dana<span className="text-red-500">*</span>
+                    Nominal Pengajuan Dana
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-gray-500">
@@ -886,7 +920,8 @@ export default function ProposalDosen() {
                   Tim Dosen Peneliti
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Dosen-dosen yang terlibat dalam penelitian atau pengabdian, dll.
+                  Dosen-dosen yang terlibat dalam penelitian atau pengabdian,
+                  dll.
                 </p>
               </div>
 
@@ -894,10 +929,30 @@ export default function ProposalDosen() {
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
                     <tr className="text-xs font-semibold text-gray-500 border-b border-gray-100">
-                      <th className="pb-2 font-semibold" style={{ width: "25%" }}>NIDN</th>
-                      <th className="pb-2 font-semibold" style={{ width: "45%" }}>Nama Dosen</th>
-                      <th className="pb-2 font-semibold" style={{ width: "25%" }}>Peran</th>
-                      <th className="pb-2 font-semibold text-center" style={{ width: "5%" }}>Aksi</th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "25%" }}
+                      >
+                        NIDN
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "45%" }}
+                      >
+                        Nama Dosen
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "25%" }}
+                      >
+                        Peran
+                      </th>
+                      <th
+                        className="pb-2 font-semibold text-center"
+                        style={{ width: "5%" }}
+                      >
+                        Aksi
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -906,7 +961,9 @@ export default function ProposalDosen() {
                         <td className="py-2.5 pr-2">
                           <Input
                             value={row.nidn}
-                            onChange={(e) => handleDosenChange(idx, "nidn", e.target.value)}
+                            onChange={(e) =>
+                              handleDosenChange(idx, "nidn", e.target.value)
+                            }
                             placeholder="Masukkan NIDN"
                             className="h-10 text-xs rounded-lg min-h-[40px] bg-white border-gray-300"
                           />
@@ -914,33 +971,22 @@ export default function ProposalDosen() {
                         <td className="py-2.5 pr-2">
                           <Input
                             value={row.nama}
-                            onChange={(e) => handleDosenChange(idx, "nama", e.target.value)}
+                            onChange={(e) =>
+                              handleDosenChange(idx, "nama", e.target.value)
+                            }
                             placeholder="Nama dosen otomatis muncul"
                             className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
                           />
                         </td>
                         <td className="py-2.5 pr-2">
-                          <div className="relative">
-                            <select
-                              value={row.peran}
-                              disabled={idx === 0}
-                              onChange={(e) => handleDosenChange(idx, "peran", e.target.value)}
-                              className="h-10 w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 pr-8 text-xs text-gray-900 shadow-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:bg-gray-50 disabled:text-gray-500 cursor-pointer"
-                            >
-                              {idx === 0 ? (
-                                <option value="Ketua Peneliti">Ketua Peneliti</option>
-                              ) : (
-                                <>
-                                  <option value="Pilih">Pilih</option>
-                                  <option value="Anggota Peneliti">Anggota Peneliti</option>
-                                </>
-                              )}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                              <svg className="h-3.5 w-3.5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                              </svg>
-                            </div>
+                          <div
+                            className={`h-10 w-full flex items-center rounded-lg border px-3 text-xs font-medium shadow-sm ${
+                              idx === 0
+                                ? "border-red-200 bg-red-50 text-red-700"
+                                : "border-blue-200 bg-blue-50 text-blue-700"
+                            }`}
+                          >
+                            {row.peran}
                           </div>
                         </td>
                         <td className="py-2.5 text-center">
@@ -989,11 +1035,36 @@ export default function ProposalDosen() {
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
                     <tr className="text-xs font-semibold text-gray-500 border-b border-gray-100">
-                      <th className="pb-2 font-semibold" style={{ width: "20%" }}>NIM</th>
-                      <th className="pb-2 font-semibold" style={{ width: "35%" }}>Nama Mahasiswa</th>
-                      <th className="pb-2 font-semibold" style={{ width: "25%" }}>Program Studi</th>
-                      <th className="pb-2 font-semibold" style={{ width: "15%" }}>Peran</th>
-                      <th className="pb-2 font-semibold text-center" style={{ width: "5%" }}>Aksi</th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "20%" }}
+                      >
+                        NIM
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "35%" }}
+                      >
+                        Nama Mahasiswa
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "25%" }}
+                      >
+                        Program Studi
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "15%" }}
+                      >
+                        Peran
+                      </th>
+                      <th
+                        className="pb-2 font-semibold text-center"
+                        style={{ width: "5%" }}
+                      >
+                        Aksi
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -1002,7 +1073,9 @@ export default function ProposalDosen() {
                         <td className="py-2.5 pr-2">
                           <Input
                             value={row.nim}
-                            onChange={(e) => handleMahasiswaChange(idx, "nim", e.target.value)}
+                            onChange={(e) =>
+                              handleMahasiswaChange(idx, "nim", e.target.value)
+                            }
                             placeholder="Masukkan NIM"
                             className="h-10 text-xs rounded-lg min-h-[40px] bg-white border-gray-300"
                           />
@@ -1010,7 +1083,9 @@ export default function ProposalDosen() {
                         <td className="py-2.5 pr-2">
                           <Input
                             value={row.nama}
-                            onChange={(e) => handleMahasiswaChange(idx, "nama", e.target.value)}
+                            onChange={(e) =>
+                              handleMahasiswaChange(idx, "nama", e.target.value)
+                            }
                             placeholder="Nama mahasiswa otomatis muncul"
                             className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
                           />
@@ -1018,26 +1093,20 @@ export default function ProposalDosen() {
                         <td className="py-2.5 pr-2">
                           <Input
                             value={row.prodi}
-                            onChange={(e) => handleMahasiswaChange(idx, "prodi", e.target.value)}
+                            onChange={(e) =>
+                              handleMahasiswaChange(
+                                idx,
+                                "prodi",
+                                e.target.value,
+                              )
+                            }
                             placeholder="Prodi otomatis muncul"
                             className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
                           />
                         </td>
                         <td className="py-2.5 pr-2">
-                          <div className="relative">
-                            <select
-                              value={row.peran}
-                              onChange={(e) => handleMahasiswaChange(idx, "peran", e.target.value)}
-                              className="h-10 w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 pr-8 text-xs text-gray-900 shadow-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
-                            >
-                              <option value="Pilih">Pilih</option>
-                              <option value="Anggota">Anggota</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                              <svg className="h-3.5 w-3.5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                              </svg>
-                            </div>
+                          <div className="h-10 w-full flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-700 shadow-sm">
+                            {row.peran}
                           </div>
                         </td>
                         <td className="py-2.5 text-center">
@@ -1083,13 +1152,18 @@ export default function ProposalDosen() {
                     File Proposal<span className="text-red-500">*</span>
                   </label>
                   <div className="relative flex items-center justify-between border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
-                    <label htmlFor="proposal-file-input" className="flex items-center gap-3 cursor-pointer flex-1 py-1">
+                    <label
+                      htmlFor="proposal-file-input"
+                      className="flex items-center gap-3 cursor-pointer flex-1 py-1"
+                    >
                       <Upload className="text-gray-400" size={18} />
                       <div className="text-left">
                         <p className="text-sm font-medium text-gray-600">
-                          {formValues.proposal_file?.name || existingProposalFile.name ? (
+                          {formValues.proposal_file?.name ||
+                          existingProposalFile.name ? (
                             <span className="text-gray-900 truncate max-w-xs block">
-                              {formValues.proposal_file?.name || existingProposalFile.name}
+                              {formValues.proposal_file?.name ||
+                                existingProposalFile.name}
                             </span>
                           ) : (
                             "Pilih file atau drag & drop"
@@ -1133,13 +1207,17 @@ export default function ProposalDosen() {
                     File RAB<span className="text-red-500">*</span>
                   </label>
                   <div className="relative flex items-center justify-between border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
-                    <label htmlFor="rab-file-input" className="flex items-center gap-3 cursor-pointer flex-1 py-1">
+                    <label
+                      htmlFor="rab-file-input"
+                      className="flex items-center gap-3 cursor-pointer flex-1 py-1"
+                    >
                       <Upload className="text-gray-400" size={18} />
                       <div className="text-left">
                         <p className="text-sm font-medium text-gray-600">
                           {formValues.rab_file?.name || existingRabFile.name ? (
                             <span className="text-gray-900 truncate max-w-xs block">
-                              {formValues.rab_file?.name || existingRabFile.name}
+                              {formValues.rab_file?.name ||
+                                existingRabFile.name}
                             </span>
                           ) : (
                             "Pilih file atau drag & drop"

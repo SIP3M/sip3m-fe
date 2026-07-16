@@ -28,6 +28,65 @@ const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
   "REVIEWER_EKSTERNAL",
 ];
 
+const FAKULTAS_OPTIONS = [
+  "Fakultas Agama Islam (FAI)",
+  "Fakultas Ekonomi (FE)",
+  "Fakultas Keguruan dan Ilmu Pendidikan (FKIP)",
+  "Fakultas Ilmu Kesehatan (FIKes)",
+  "Fakultas Teknik (FT)",
+  "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)",
+  "Fakultas Hukum (FH)",
+];
+
+const PRODI_OPTIONS: { fakultas: string; prodi: string[] }[] = [
+  {
+    fakultas: "Fakultas Agama Islam (FAI)",
+    prodi: ["S1 Ilmu Al-Qur'an dan Tafsir", "S1 Tasawuf dan Psikoterapi"],
+  },
+  {
+    fakultas: "Fakultas Ekonomi (FE)",
+    prodi: ["S1 Akuntansi", "S1 Manajemen"],
+  },
+  {
+    fakultas: "Fakultas Keguruan dan Ilmu Pendidikan (FKIP)",
+    prodi: [
+      "S1 Pendidikan Guru Sekolah Dasar (PGSD)",
+      "S1 Pendidikan Guru Pendidikan Anak Usia Dini (PGPAUD)",
+      "S1 Pendidikan Matematika",
+      "S1 Pendidikan Kimia",
+      "S1 Pendidikan IPA",
+      "S1 Pendidikan Bahasa Inggris",
+      "S1 Ilmu Keolahragaan",
+      "Program Profesi Guru (PPG)",
+    ],
+  },
+  {
+    fakultas: "Fakultas Ilmu Kesehatan (FIKes)",
+    prodi: ["S1 Keperawatan", "S1 Ilmu Gizi", "Program Profesi Ners"],
+  },
+  {
+    fakultas: "Fakultas Teknik (FT)",
+    prodi: [
+      "S1 Teknik Informatika",
+      "D3 Teknik Informatika",
+      "S1 Teknik Industri",
+      "S1 Peternakan",
+    ],
+  },
+  {
+    fakultas: "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)",
+    prodi: [
+      "S1 Ilmu Komunikasi",
+      "S1 Ilmu Pemerintahan",
+      "D3 Hubungan Masyarakat (Humas)",
+    ],
+  },
+  {
+    fakultas: "Fakultas Hukum (FH)",
+    prodi: ["S1 Ilmu Hukum"],
+  },
+];
+
 export default function AddUserPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -535,14 +594,19 @@ export default function AddUserPage() {
                     Fakultas
                   </label>
 
-                  <Input
-                    type="text"
+                  <select
                     name="fakultas"
                     value={form.fakultas}
                     onChange={handleChange}
-                    placeholder="Contoh: Teknik"
-                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                  />
+                    className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                  >
+                    <option value="">Pilih Fakultas</option>
+                    {FAKULTAS_OPTIONS.map((fakultas) => (
+                      <option key={fakultas} value={fakultas}>
+                        {fakultas}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* PROGRAM STUDI */}
@@ -551,14 +615,23 @@ export default function AddUserPage() {
                     Program Studi
                   </label>
 
-                  <Input
-                    type="text"
+                  <select
                     name="program_studi"
                     value={form.program_studi}
                     onChange={handleChange}
-                    placeholder="Contoh: Teknik Informatika"
-                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                  />
+                    className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                  >
+                    <option value="">Pilih Program Studi</option>
+                    {PRODI_OPTIONS.map((group) => (
+                      <optgroup key={group.fakultas} label={group.fakultas}>
+                        {group.prodi.map((prodi) => (
+                          <option key={prodi} value={prodi}>
+                            {prodi}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                 </div>
 
                 {/* TEMPAT LAHIR */}
@@ -601,7 +674,7 @@ export default function AddUserPage() {
                     name="jenis_kelamin"
                     value={form.jenis_kelamin}
                     onChange={handleChange}
-                    className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                   >
                     <option value="">Pilih Jenis Kelamin</option>
                     <option value="Laki-laki">Laki-laki</option>
