@@ -917,7 +917,7 @@ export default function ProposalDosen() {
             <CardContent className="p-6 space-y-4">
               <div>
                 <h3 className="text-base font-bold text-gray-800">
-                  Tim Dosen Peneliti
+                  Tim  Peneliti
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Dosen-dosen yang terlibat dalam penelitian atau pengabdian,
@@ -1013,7 +1013,7 @@ export default function ProposalDosen() {
                   className="h-10 px-4 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus size={14} />
-                  Tambah Dosen
+                  Tambah Anggota
                 </Button>
               </div>
             </CardContent>
