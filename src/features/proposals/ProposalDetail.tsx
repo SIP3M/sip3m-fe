@@ -740,7 +740,7 @@ export default function ProposalDetail() {
         {isAdmin && (
           <button
             type="button"
-            onClick={() => void handleAutoAssign()}
+            onClick={() => navigate("/plotting-reviewer")}
             disabled={isAssigning || !isSubmitted}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
               isAssigning || !isSubmitted

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -16,7 +16,6 @@ import {
   MapPin,
   UserPlus,
   Megaphone,
-  BookOpen,
   CheckSquare,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -33,10 +32,30 @@ export default function Sidebar() {
   const [isSystemOpen, setIsSystemOpen] = useState(true);
   const [isKkmOpen, setIsKkmOpen] = useState(true);
 
-  const dashboardMenu = {
-    name: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/admin-dashboard",
+  // Auto navigate ke dashboard yang sesuai saat tab berubah
+  useEffect(() => {
+    if (activeTab === "penelitian") {
+      navigate("/admin-dashboard");
+    } else {
+      navigate("/admin-dashboard/kkm/dashboard");
+    }
+  }, [activeTab, navigate]);
+
+  // Dashboard menu dinamis berdasarkan tab aktif
+  const getDashboardMenu = () => {
+    if (activeTab === "penelitian") {
+      return {
+        name: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/admin-dashboard",
+      };
+    } else {
+      return {
+        name: "Dashboard KKM",
+        icon: LayoutDashboard,
+        path: "/admin-dashboard/kkm/dashboard",
+      };
+    }
   };
 
   const researchMenus = [
@@ -85,7 +104,7 @@ export default function Sidebar() {
     },
   ];
 
-  // Menu KKM untuk admin (sesuai desain)
+  // Menu KKM untuk admin
   const kkmMenus = [
     {
       name: "Periode KKM",
@@ -142,6 +161,12 @@ export default function Sidebar() {
   const isActive = (path: string) => {
     const current = location.pathname;
     return current === path || current.startsWith(`${path}/`);
+  };
+
+  // Cek apakah dashboard aktif
+  const isDashboardActive = () => {
+    const dashboardMenu = getDashboardMenu();
+    return isActive(dashboardMenu.path);
   };
 
   // Render menu berdasarkan activeTab
@@ -293,10 +318,8 @@ export default function Sidebar() {
     );
   };
 
-  // Menentukan judul dashboard berdasarkan tab aktif
-  const getDashboardLabel = () => {
-    return activeTab === "penelitian" ? "Dashboard" : "Dashboard KKM";
-  };
+  const dashboardMenu = getDashboardMenu();
+  const isDashboardActiveNow = isDashboardActive();
 
   return (
     <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)] z-50 transition-transform duration-300 -translate-x-full peer-checked:translate-x-0 lg:translate-x-0">
@@ -348,19 +371,19 @@ export default function Sidebar() {
           </span>
         </div>
 
-        {/* DASHBOARD */}
+        {/* DASHBOARD - Active state diperbaiki */}
         <div className="px-3 mb-4">
           <div
             onClick={() => navigate(dashboardMenu.path)}
             className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm cursor-pointer border-l-4 transition-colors
               ${
-                isActive(dashboardMenu.path)
+                isDashboardActiveNow
                   ? "bg-red-50 text-red-600 font-medium border-red-600"
                   : "text-gray-600 hover:bg-gray-100 border-transparent"
               }`}
           >
             <dashboardMenu.icon size={18} />
-            {getDashboardLabel()}
+            {dashboardMenu.name}
           </div>
         </div>
 

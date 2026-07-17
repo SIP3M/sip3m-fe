@@ -751,6 +751,18 @@ export default function ProposalDosen() {
                     className="h-11 rounded-xl"
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Fakultas/Bidang<span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="faculty"
+                    value={formValues.faculty}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan Nama Fakultas"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
 
                 {/* Sumber Data Penelitian */}
                 <div className="space-y-1.5">
