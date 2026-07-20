@@ -53,6 +53,11 @@ import SystemSettings from "@/features/settings/SystemSettings";
 import PeriodeKKM from "@/features/kkm/PeriodeKKM";
 import PesertaKKM from "@/features/kkm/PesertaKKM";
 import LokasiKKM from "@/features/kkm/LokasiKKM";
+import DPLKKM from "@/features/kkm/DPLKKM";
+import GenerateKelompok from "@/features/kkm/GenerateKelompok";
+import MonitoringKKM from "@/features/kkm/MonitoringKKM";
+import LaporanKKM from "@/features/kkm/LaporanKKM";
+import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 
 export const router = createBrowserRouter([
   {
@@ -170,23 +175,23 @@ export const router = createBrowserRouter([
     },
     {
       path: "admin-dashboard/kkm/dpl",
-      element: <div>DPL KKM</div>,
+      element: <DPLKKM />,
     },
     {
       path: "admin-dashboard/kkm/generate",
-      element: <div>Generate Kelompok</div>,
+      element: <GenerateKelompok />,
     },
     {
       path: "admin-dashboard/kkm/monitoring",
-      element: <div>Monitoring KKM</div>,
+      element: <MonitoringKKM />,
     },
     {
       path: "admin-dashboard/kkm/laporan",
-      element: <div>Laporan KKM</div>,
+      element: <LaporanKKM />,
     },
     {
       path: "admin-dashboard/kkm/pengumuman",
-      element: <div>Pengumuman KKM</div>,
+      element: <PengumumanKKM />,
     },
   ],
 },

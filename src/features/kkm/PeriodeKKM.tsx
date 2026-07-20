@@ -15,12 +15,39 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-export default function PeriodeKKM() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('semua');
+
+// Type definitions
+interface Periode {
+  id: number;
+  tahun: string;
+  nama: string;
+  target: string;
+  jenis: string;
+  pelaksanaan: string;
+  penarikan: string;
+  status: 'Aktif' | 'Draft' | 'Selesai';
+}
+
+interface StatusBadgeProps {
+  status: 'Aktif' | 'Draft' | 'Selesai';
+}
+
+interface StatusConfig {
+  bg: string;
+  text: string;
+  icon: React.ComponentType<{ size: number }>;
+  border: string;
+}
+
+export default function PeriodeKKM(): React.ReactElement {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('semua');
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [showTambah, setShowTambah] = useState<boolean>(false);
+  const [selectedPeriode, setSelectedPeriode] = useState<Periode | null>(null);
 
   // Data periode KKM
-  const periodeData = [
+  const periodeData: Periode[] = [
     {
       id: 1,
       tahun: '2026',
@@ -74,8 +101,8 @@ export default function PeriodeKKM() {
   ];
 
   // Status badge component
-  const StatusBadge = ({ status }: { status: string }) => {
-    const statusConfig = {
+  const StatusBadge = ({ status }: StatusBadgeProps): React.ReactElement => {
+    const statusConfig: Record<string, StatusConfig> = {
       Aktif: {
         bg: 'bg-green-50',
         text: 'text-green-700',
@@ -96,7 +123,7 @@ export default function PeriodeKKM() {
       },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Draft;
+    const config = statusConfig[status] || statusConfig.Draft;
     const Icon = config.icon;
 
     return (
@@ -108,19 +135,51 @@ export default function PeriodeKKM() {
   };
 
   // Filter data berdasarkan search dan status
-  const filteredData = periodeData.filter((item) => {
-    const matchesSearch = 
+  const filteredData: Periode[] = periodeData.filter((item: Periode) => {
+    const matchesSearch: boolean = 
       item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.tahun.includes(searchTerm) ||
       item.jenis.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === 'semua' || item.status.toLowerCase() === filterStatus.toLowerCase();
+    const matchesStatus: boolean = filterStatus === 'semua' || item.status.toLowerCase() === filterStatus.toLowerCase();
     
     return matchesSearch && matchesStatus;
   });
 
   // Hitung periode aktif
-  const activePeriode = periodeData.find(p => p.status === 'Aktif');
+  const activePeriode: Periode | undefined = periodeData.find((p: Periode) => p.status === 'Aktif');
+
+  // Handler untuk membuka detail
+  const handleViewDetail = (periode: Periode): void => {
+    setSelectedPeriode(periode);
+    setShowDetail(true);
+  };
+
+  // Handler untuk membuka tambah periode
+  const handleTambahPeriode = (): void => {
+    setShowTambah(true);
+  };
+
+  // Handler untuk kembali dari detail
+  const handleBackFromDetail = (): void => {
+    setShowDetail(false);
+    setSelectedPeriode(null);
+  };
+
+  // Handler untuk kembali dari tambah
+  const handleBackFromTambah = (): void => {
+    setShowTambah(false);
+  };
+
+  // Jika showDetail true, tampilkan halaman detail
+  if (showDetail && selectedPeriode) {
+    return <DetailPeriodeKKM periode={selectedPeriode} onBack={handleBackFromDetail} />;
+  }
+
+  // Jika showTambah true, tampilkan halaman tambah
+  if (showTambah) {
+    return <TambahPeriodeKKM onBack={handleBackFromTambah} />;
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -132,7 +191,10 @@ export default function PeriodeKKM() {
             Manajemen periode pelaksanaan Kuliah Kerja Mahasiswa
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+        <button 
+          onClick={handleTambahPeriode}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+        >
           <Plus size={18} />
           Tambah Periode
         </button>
@@ -173,7 +235,7 @@ export default function PeriodeKKM() {
                 type="text"
                 placeholder="Cari periode..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
@@ -182,7 +244,7 @@ export default function PeriodeKKM() {
             <Filter size={18} className="text-gray-400" />
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterStatus(e.target.value)}
               className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
             >
               <option value="semua">Semua Status</option>
@@ -228,7 +290,7 @@ export default function PeriodeKKM() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredData.length > 0 ? (
-                filteredData.map((periode) => (
+                filteredData.map((periode: Periode) => (
                   <tr key={periode.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-gray-800">
                       {periode.tahun}
@@ -256,7 +318,10 @@ export default function PeriodeKKM() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => handleViewDetail(periode)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
                           <Eye size={16} />
                         </button>
                         <button className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">

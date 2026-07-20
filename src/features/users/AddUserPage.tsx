@@ -30,9 +30,9 @@ const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
 
 const FAKULTAS_OPTIONS = [
   "Fakultas Agama Islam (FAI)",
-  "Fakultas Ekonomi (FE)",
+  "Fakultas Ekonomi dan Bisnis (FEB)",
   "Fakultas Keguruan dan Ilmu Pendidikan (FKIP)",
-  "Fakultas Ilmu Kesehatan (FIKes)",
+  "Fakultas Ilmu Kesehatan (FIKES)",
   "Fakultas Teknik (FT)",
   "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)",
   "Fakultas Hukum (FH)",
@@ -44,7 +44,7 @@ const PRODI_OPTIONS: { fakultas: string; prodi: string[] }[] = [
     prodi: ["S1 Ilmu Al-Qur'an dan Tafsir", "S1 Tasawuf dan Psikoterapi"],
   },
   {
-    fakultas: "Fakultas Ekonomi (FE)",
+    fakultas: "Fakultas Ekonomi dan Bisnis (FEB)",
     prodi: ["S1 Akuntansi", "S1 Manajemen"],
   },
   {
@@ -61,7 +61,7 @@ const PRODI_OPTIONS: { fakultas: string; prodi: string[] }[] = [
     ],
   },
   {
-    fakultas: "Fakultas Ilmu Kesehatan (FIKes)",
+    fakultas: "Fakultas Ilmu Kesehatan (FIKES)",
     prodi: ["S1 Keperawatan", "S1 Ilmu Gizi", "Program Profesi Ners"],
   },
   {
@@ -120,6 +120,12 @@ export default function AddUserPage() {
     is_active: true,
   });
 
+  // Daftar prodi yang ditampilkan di dropdown Program Studi,
+  // hanya berisi prodi dari fakultas yang sedang dipilih.
+  const availableProdi =
+    PRODI_OPTIONS.find((group) => group.fakultas === form.fakultas)?.prodi ??
+    [];
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
@@ -137,6 +143,18 @@ export default function AddUserPage() {
         [name]: undefined,
       }));
     }
+  };
+
+  // Handler khusus untuk Fakultas: selain update value-nya,
+  // reset program_studi karena pilihan prodi lama mungkin sudah
+  // tidak relevan dengan fakultas yang baru dipilih.
+  const handleFakultasChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      fakultas: value,
+      program_studi: "",
+    }));
   };
 
   const handleRoleSelect = (role: CreateUserRole) => {
@@ -232,10 +250,10 @@ export default function AddUserPage() {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data as
           | {
-            message?: string;
-            errors?: Array<{ field?: string; message?: string }>;
-            error?: { code?: string; field?: string };
-          }
+              message?: string;
+              errors?: Array<{ field?: string; message?: string }>;
+              error?: { code?: string; field?: string };
+            }
           | undefined;
 
         const message = responseData?.message || err.message;
@@ -357,7 +375,7 @@ export default function AddUserPage() {
       <div className="flex items-start gap-3 w-full max-w-3xl">
         <button
           onClick={() => navigate("/users")}
-          className="p-2 rounded-lg hover:bg-gray-100 transition"
+          className="p-2 rounded-lg hover:bg-gray-100 transition cursor-pointer"
         >
           <ArrowLeft size={18} />
         </button>
@@ -597,7 +615,7 @@ export default function AddUserPage() {
                   <select
                     name="fakultas"
                     value={form.fakultas}
-                    onChange={handleChange}
+                    onChange={handleFakultasChange}
                     className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                   >
                     <option value="">Pilih Fakultas</option>
@@ -619,17 +637,18 @@ export default function AddUserPage() {
                     name="program_studi"
                     value={form.program_studi}
                     onChange={handleChange}
-                    className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                    disabled={!form.fakultas}
+                    className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="">Pilih Program Studi</option>
-                    {PRODI_OPTIONS.map((group) => (
-                      <optgroup key={group.fakultas} label={group.fakultas}>
-                        {group.prodi.map((prodi) => (
-                          <option key={prodi} value={prodi}>
-                            {prodi}
-                          </option>
-                        ))}
-                      </optgroup>
+                    <option value="">
+                      {form.fakultas
+                        ? "Pilih Program Studi"
+                        : "Pilih Fakultas terlebih dahulu"}
+                    </option>
+                    {availableProdi.map((prodi) => (
+                      <option key={prodi} value={prodi}>
+                        {prodi}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -717,12 +736,13 @@ export default function AddUserPage() {
             </div>
 
             {/* BUTTON */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => navigate("/users")}
                 disabled={isLoading}
+                className="px-8 py-5 text-base font-medium rounded-lg cursor-pointer"
               >
                 Batal
               </Button>
@@ -730,9 +750,9 @@ export default function AddUserPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-8 py-5 text-base font-medium rounded-lg cursor-pointer"
               >
-                <Save className="h-4 w-4" />
+                <Save className="h-5 w-5" />
                 {isLoading ? "Menyimpan..." : "Simpan Pengguna"}
               </Button>
             </div>
