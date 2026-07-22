@@ -6,8 +6,8 @@ import { getAllProposals } from "./proposal.api";
 import Pagination from "@/components/common/Pagination";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
-import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
 
 const ITEMS_PER_PAGE = 5;
 

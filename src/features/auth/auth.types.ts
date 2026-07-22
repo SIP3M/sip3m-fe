@@ -47,8 +47,8 @@ export interface RegisterDosenPayload {
   nomor_hp: string;
   email: string;
   nidn: string;
-  fakultas: string;
-  program_studi: string;
+  fakultas_id: number;
+  program_studi_id: number;
   username: string;
   password: string;
   konfirmasi_password: string;
@@ -70,4 +70,9 @@ export interface RegisterReviewerPayload {
 export interface RegisterResponse {
   message: string;
   data: User & { is_active: boolean }; // Mengambil struktur User ditambah field is_active
+}
+
+export interface MasterData {
+  id: number;
+  nama: string;
 }
