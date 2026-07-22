@@ -56,6 +56,7 @@ import LokasiKKM from "@/features/kkm/LokasiKKM";
 import DPLKKM from "@/features/kkm/DPLKKM";
 import GenerateKelompok from "@/features/kkm/GenerateKelompok";
 import MonitoringKKM from "@/features/kkm/MonitoringKKM";
+import KelompokKKM from "@/features/kkm/KelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 
@@ -167,7 +168,7 @@ export const router = createBrowserRouter([
     },
     {
       path: "admin-dashboard/kkm/kelompok",
-      element: <div>Kelompok KKM</div>,
+      element: <KelompokKKM />,
     },
     {
       path: "admin-dashboard/kkm/lokasi",
