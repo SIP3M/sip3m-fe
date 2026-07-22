@@ -16,6 +16,8 @@ interface LoginFormProps {
   rememberMe: boolean;
   handleRememberMeChange: (checked: boolean) => void;
   isLoading?: boolean;
+  loginSuccess?: boolean;
+  userName?: string;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({
@@ -25,9 +27,21 @@ const LoginForm: React.FC<LoginFormProps> = ({
   rememberMe,
   handleRememberMeChange,
   isLoading,
+  loginSuccess,
+  userName,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (loginSuccess) {
+      const enterTimer = setTimeout(() => setToastVisible(true), 50);
+      return () => clearTimeout(enterTimer);
+    } else {
+      setToastVisible(false);
+    }
+  }, [loginSuccess]);
 
   const handleGoogleLogin = () => {
     window.location.href = "https://sip3m-be.vercel.app/api/auth/oauth/google";
@@ -46,8 +60,57 @@ const LoginForm: React.FC<LoginFormProps> = ({
         shadow-[0_30px_80px_rgba(0,0,0,0.15)]
         flex
         overflow-hidden
+        relative
       "
     >
+      {/* TOAST — Login Berhasil */}
+      {loginSuccess && (
+        <div className="fixed top-6 right-6 z-[100] w-full max-w-sm">
+          <div
+            className={`flex items-start gap-3 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 p-4 pr-3 transition-all duration-300 ease-out
+              ${toastVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}
+          >
+            {/* Icon */}
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M20 6L9 17l-5-5"
+                  stroke="#e10600"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">
+                Login berhasil!
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {userName ? `Selamat datang, ${userName}` : "Mengalihkan ke dashboard..."}
+              </p>
+
+              {/* Progress bar auto-dismiss */}
+              <div className="mt-2.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#e10600] rounded-full"
+                  style={{ animation: "toastProgress 1.8s linear forwards" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes toastProgress {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* ================= LEFT ================= */}
       <div className="max-w-1/2 relative p-4 flex">
         <div className="w-80 h-full rounded-4xl overflow-hidden shadow-md">
