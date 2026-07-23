@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
-import Logo from "@/assets/images/logo.png";
+import Logo from "@/assets/images/Logo LPPM UMC 2.png";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import {
   FileText,
@@ -75,18 +75,7 @@ export default function LPPMLandingPage() {
       <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-12 py-3">
           {/* LOGO */}
-          <div className="flex items-center gap-3">
-            <img src={Logo} className="w-10 h-10 object-contain" />
-
-            <div className="leading-tight">
-              <h1 className="font-bold text-sm">
-                LPPM <span className="text-red-600">UMC</span>
-              </h1>
-              <p className="text-[10px] text-gray-400">
-                Universitas Muhammadiyah Cirebon
-              </p>
-            </div>
-          </div>
+            <img src={Logo} className="w-23 h-10 object-contain" />
 
           {/* MENU */}
           <div className="hidden md:flex items-center gap-8 text-sm">
