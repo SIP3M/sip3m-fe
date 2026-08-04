@@ -2,31 +2,35 @@ import React, { useState } from 'react';
 import {
   Search,
   Filter,
-  ChevronDown,
   Eye,
-  Edit,
-  Trash2,
+  Check,
+  X,
   CheckCircle,
+  CheckCircle2,
   XCircle,
+  AlertCircle,
   Clock,
   Users,
-  UserCheck,
-  UserX,
-  UserPlus,
+  Upload,
   FileText,
   ChevronLeft,
   ChevronRight,
+  UserCog,
   Download,
-  RefreshCw,
 } from 'lucide-react';
+import ImportMahasiswaModal from './ImportMahasiswaModal';
 
 export default function PesertaKKM() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPeriode, setSelectedPeriode] = useState('KKM Reguler 2026');
+  const [selectedFakultas, setSelectedFakultas] = useState('semua');
+  const [selectedProdi, setSelectedProdi] = useState('semua');
   const [selectedSemester, setSelectedSemester] = useState('semua');
   const [selectedKelompok, setSelectedKelompok] = useState('semua');
   const [selectedStatus, setSelectedStatus] = useState('semua');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Data peserta KKM
   const pesertaData = [
@@ -141,55 +145,66 @@ export default function PesertaKKM() {
     belumKelompok: pesertaData.filter(p => p.statusKelompok === 'Belum Diempatkan').length,
   };
 
+  // Opsi filter Fakultas & Program Studi diturunkan otomatis dari data yang ada
+  const fakultasOptions = Array.from(new Set(pesertaData.map((p) => p.fakultas)));
+  const prodiOptions = Array.from(new Set(pesertaData.map((p) => p.prodi)));
+
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
     const statusConfig = {
       Verified: {
         bg: 'bg-green-50',
         text: 'text-green-700',
-        icon: CheckCircle,
-        border: 'border-green-200',
+        dot: 'bg-green-500',
       },
       Pending: {
-        bg: 'bg-yellow-50',
-        text: 'text-yellow-700',
-        icon: Clock,
-        border: 'border-yellow-200',
+        bg: 'bg-amber-50',
+        text: 'text-amber-700',
+        dot: 'bg-amber-500',
       },
       Rejected: {
         bg: 'bg-red-50',
         text: 'text-red-700',
-        icon: XCircle,
-        border: 'border-red-200',
+        dot: 'bg-red-500',
       },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending;
-    const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}>
-        <Icon size={12} />
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
         {status}
       </span>
     );
   };
 
-  // Status kelompok badge
-  const KelompokBadge = ({ status }: { status: string }) => {
-    if (status === 'Belum Diempatkan') {
+  // Parse "Kelompok 07 Astana Japura" -> { nomor: "Kelompok 07", lokasi: "Astana Japura" }
+  const parseKelompok = (status: string): { nomor: string; lokasi: string } | null => {
+    if (status === 'Belum Diempatkan') return null;
+    const match = status.match(/^(Kelompok\s+\d+)\s+(.*)$/i);
+    if (!match) return { nomor: status, lokasi: '' };
+    return { nomor: match[1], lokasi: match[2] };
+  };
+
+  // Status kelompok cell
+  const KelompokCell = ({ status }: { status: string }) => {
+    const parsed = parseKelompok(status);
+
+    if (!parsed) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
-          <UserX size={12} />
-          {status}
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-600">
+          <Clock size={12} />
+          Belum Ditempatkan
         </span>
       );
     }
+
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-        <Users size={12} />
-        {status}
-      </span>
+      <div>
+        <p className="text-sm font-semibold text-gray-800">{parsed.nomor}</p>
+        {parsed.lokasi && <p className="text-xs text-gray-400">{parsed.lokasi}</p>}
+      </div>
     );
   };
 
@@ -200,13 +215,20 @@ export default function PesertaKKM() {
       item.nim.includes(searchTerm) ||
       item.prodi.toLowerCase().includes(searchTerm.toLowerCase());
 
+    const matchesFakultas = selectedFakultas === 'semua' || item.fakultas === selectedFakultas;
+    const matchesProdi = selectedProdi === 'semua' || item.prodi === selectedProdi;
     const matchesSemester = selectedSemester === 'semua' || item.semester.toString() === selectedSemester;
-    const matchesKelompok = selectedKelompok === 'semua' || 
+    const matchesKelompok = selectedKelompok === 'semua' ||
       (selectedKelompok === 'berkelompok' && item.statusKelompok !== 'Belum Diempatkan') ||
       (selectedKelompok === 'belum' && item.statusKelompok === 'Belum Diempatkan');
-    const matchesStatus = selectedStatus === 'semua' || item.statusVerifikasi.toLowerCase() === selectedStatus;
 
-    return matchesSearch && matchesSemester && matchesKelompok && matchesStatus;
+    const matchesStatus =
+      selectedStatus === 'semua' ||
+      (selectedStatus === 'belum-kelompok'
+        ? item.statusKelompok === 'Belum Diempatkan'
+        : item.statusVerifikasi.toLowerCase() === selectedStatus);
+
+    return matchesSearch && matchesFakultas && matchesProdi && matchesSemester && matchesKelompok && matchesStatus;
   });
 
   // Filter status untuk tab
@@ -236,8 +258,8 @@ export default function PesertaKKM() {
     }
   };
 
-  // Pagination
-  const itemsPerPage = 5;
+  // Pagination — 10 per halaman sesuai desain (10 data contoh muat dalam 1 halaman)
+  const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
@@ -252,85 +274,72 @@ export default function PesertaKKM() {
             Manajemen dan verifikasi peserta Kuliah Kerja Mahasiswa
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-            <Download size={16} />
-            Export
-          </button>
-          <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
-            <RefreshCw size={16} />
-            Refresh
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-            <UserPlus size={18} />
-            Tambah Peserta
-          </button>
-        </div>
+        <button
+          onClick={() => setIsImportModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+        >
+          <Upload size={18} />
+          Import Mahasiswa
+        </button>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Peserta</p>
-              <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats.total}</p>
-            </div>
-            <div className="bg-blue-50 p-2 rounded-lg">
-              <Users size={18} className="text-blue-600" />
-            </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+          <div className="bg-red-50 p-2.5 rounded-xl shrink-0">
+            <Users size={18} className="text-red-600" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Total Peserta</p>
+            <p className="text-xl font-bold text-gray-800 mt-0.5">{stats.total}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Verified</p>
-              <p className="text-2xl font-bold text-green-600 mt-0.5">{stats.verified}</p>
-            </div>
-            <div className="bg-green-50 p-2 rounded-lg">
-              <CheckCircle size={18} className="text-green-600" />
-            </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+          <div className="bg-green-50 p-2.5 rounded-xl shrink-0">
+            <CheckCircle size={18} className="text-green-600" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Verified</p>
+            <p className="text-xl font-bold text-gray-800 mt-0.5">{stats.verified}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600 mt-0.5">{stats.pending}</p>
-            </div>
-            <div className="bg-yellow-50 p-2 rounded-lg">
-              <Clock size={18} className="text-yellow-600" />
-            </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+          <div className="bg-amber-50 p-2.5 rounded-xl shrink-0">
+            <Clock size={18} className="text-amber-600" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Pending</p>
+            <p className="text-xl font-bold text-gray-800 mt-0.5">{stats.pending}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Rejected</p>
-              <p className="text-2xl font-bold text-red-600 mt-0.5">{stats.rejected}</p>
-            </div>
-            <div className="bg-red-50 p-2 rounded-lg">
-              <XCircle size={18} className="text-red-600" />
-            </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+          <div className="bg-red-50 p-2.5 rounded-xl shrink-0">
+            <XCircle size={18} className="text-red-600" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Rejected</p>
+            <p className="text-xl font-bold text-gray-800 mt-0.5">{stats.rejected}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Belum Kelompok</p>
-              <p className="text-2xl font-bold text-orange-600 mt-0.5">{stats.belumKelompok}</p>
-            </div>
-            <div className="bg-orange-50 p-2 rounded-lg">
-              <UserX size={18} className="text-orange-600" />
-            </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+          <div className="bg-indigo-50 p-2.5 rounded-xl shrink-0">
+            <AlertCircle size={18} className="text-indigo-500" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Belum Kelompok</p>
+            <p className="text-xl font-bold text-gray-800 mt-0.5">{stats.belumKelompok}</p>
           </div>
         </div>
       </div>
 
       {/* Filter & Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[250px]">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[240px]">
             <div className="relative">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -342,27 +351,59 @@ export default function PesertaKKM() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Filter size={18} className="text-gray-400" />
-            <select
-              value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
-            >
-              <option value="semua">Semua Semester</option>
-              <option value="5">Semester 5</option>
-              <option value="7">Semester 7</option>
-            </select>
-            <select
-              value={selectedKelompok}
-              onChange={(e) => setSelectedKelompok(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
-            >
-              <option value="semua">Semua (Kelompok)</option>
-              <option value="berkelompok">Sudah Berkelompok</option>
-              <option value="belum">Belum Berkelompok</option>
-            </select>
-          </div>
+
+          {/* Periode masih 1 opsi statis — siap dikembangkan begitu ada multi-periode dari API */}
+          <select
+            value={selectedPeriode}
+            onChange={(e) => setSelectedPeriode(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white cursor-pointer"
+          >
+            <option value="KKM Reguler 2026">KKM Reguler 2026</option>
+          </select>
+
+          <select
+            value={selectedFakultas}
+            onChange={(e) => setSelectedFakultas(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white cursor-pointer"
+          >
+            <option value="semua">Semua Fakultas</option>
+            {fakultasOptions.map((fak) => (
+              <option key={fak} value={fak}>{fak}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedProdi}
+            onChange={(e) => setSelectedProdi(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white cursor-pointer"
+          >
+            <option value="semua">Semua Program Studi</option>
+            {prodiOptions.map((prodi) => (
+              <option key={prodi} value={prodi}>{prodi}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Filter size={18} className="text-gray-400" />
+          <select
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white cursor-pointer"
+          >
+            <option value="semua">Semua Semester</option>
+            <option value="5">Semester 5</option>
+            <option value="7">Semester 7</option>
+          </select>
+          <select
+            value={selectedKelompok}
+            onChange={(e) => setSelectedKelompok(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white cursor-pointer"
+          >
+            <option value="semua">Semua (Kelompok)</option>
+            <option value="berkelompok">Sudah Berkelompok</option>
+            <option value="belum">Belum Berkelompok</option>
+          </select>
         </div>
       </div>
 
@@ -372,10 +413,10 @@ export default function PesertaKKM() {
           <button
             key={tab.value}
             onClick={() => setSelectedStatus(tab.value)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
               selectedStatus === tab.value
                 ? 'bg-red-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             {tab.label} {tab.count}
@@ -385,16 +426,33 @@ export default function PesertaKKM() {
 
       {/* Selected count */}
       {selectedItems.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 mb-4 flex items-center justify-between">
-          <span className="text-sm text-blue-700 font-medium">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-blue-700 font-semibold">
             {selectedItems.length} peserta dipilih
           </span>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
-              Verifikasi
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* TODO: sambungkan tombol-tombol berikut ke API begitu tersedia */}
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer">
+              <Check size={14} />
+              Verifikasi Massal
             </button>
-            <button className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors">
-              Hapus
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer">
+              <X size={14} />
+              Reject
+            </button>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer">
+              <UserCog size={14} />
+              Assign Kelompok
+            </button>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer">
+              <Download size={14} />
+              Export Data
+            </button>
+            <button
+              onClick={() => setSelectedItems([])}
+              className="text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer ml-1"
+            >
+              Batal pilih
             </button>
           </div>
         </div>
@@ -414,26 +472,26 @@ export default function PesertaKKM() {
                     className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   NIM
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  NAMA
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Nama
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  PRODI / FAK.
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Prodi / Fak.
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  SEM.
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Sem.
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  STATUS VERIFIKASI
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Status Verifikasi
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  STATUS KELOMPOK
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Status Kelompok
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  AKSI
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Aksi
                 </th>
               </tr>
             </thead>
@@ -452,7 +510,7 @@ export default function PesertaKKM() {
                     <td className="px-4 py-3 text-sm font-medium text-gray-800">
                       {peserta.nim}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-800">
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-800">
                       {peserta.nama}
                     </td>
                     <td className="px-4 py-3">
@@ -468,19 +526,25 @@ export default function PesertaKKM() {
                       <StatusBadge status={peserta.statusVerifikasi} />
                     </td>
                     <td className="px-4 py-3">
-                      <KelompokBadge status={peserta.statusKelompok} />
+                      <KelompokCell status={peserta.statusKelompok} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
-                        <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer">
                           <Eye size={16} />
                         </button>
-                        <button className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
-                          <Edit size={16} />
-                        </button>
-                        <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 size={16} />
-                        </button>
+
+                        {/* Aksi cepat verifikasi/tolak hanya muncul untuk peserta berstatus Pending */}
+                        {peserta.statusVerifikasi === 'Pending' && (
+                          <>
+                            <button className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer">
+                              <CheckCircle2 size={16} />
+                            </button>
+                            <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
+                              <XCircle size={16} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -503,13 +567,13 @@ export default function PesertaKKM() {
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
           <div className="text-sm text-gray-500">
-            Menampilkan {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredData.length)} dari {filteredData.length} peserta
+            Menampilkan {paginatedData.length} dari {filteredData.length} peserta
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft size={18} />
             </button>
@@ -517,7 +581,7 @@ export default function PesertaKKM() {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
                   currentPage === page
                     ? 'bg-red-600 text-white'
                     : 'text-gray-600 hover:bg-gray-100'
@@ -529,13 +593,23 @@ export default function PesertaKKM() {
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight size={18} />
             </button>
           </div>
         </div>
       </div>
+
+      {isImportModalOpen && (
+        <ImportMahasiswaModal
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={() => {
+            // TODO: refresh data peserta dari API begitu endpoint sudah tersedia
+            console.log('Import mahasiswa berhasil disimpan');
+          }}
+        />
+      )}
     </div>
   );
 }

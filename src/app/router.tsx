@@ -59,6 +59,10 @@ import MonitoringKKM from "@/features/kkm/MonitoringKKM";
 import KelompokKKM from "@/features/kkm/KelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
+import TambahPeriodeKkm from "@/features/kkm/TambahPeriodeKkm";
+import DetailPeriodeKKM from "@/features/kkm/DetailPeriodeKKM";
+// import ImportMahasiswaModal from "@/features/kkm/ImportmahasiswaModal";
+
 
 export const router = createBrowserRouter([
   {
@@ -163,9 +167,21 @@ export const router = createBrowserRouter([
       element: <PeriodeKKM />,
     },
     {
+      path:"/kkm/periode/tambah",
+      element:<TambahPeriodeKkm />,
+    },
+    {
+      path : "/kkm/periode/:id",
+      element : <DetailPeriodeKKM />,
+    },
+    {
       path: "admin-dashboard/kkm/peserta",
       element: <PesertaKKM />,
     },
+    // {
+    //   path : "/kkm/periode/importMahasiswaModal",
+    //   element : <ImportMahasiswaModal />,
+    // },
     {
       path: "admin-dashboard/kkm/kelompok",
       element: <KelompokKKM />,

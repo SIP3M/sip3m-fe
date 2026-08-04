@@ -14,6 +14,7 @@ import {
   Filter,
   ChevronDown,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 
 // Type definitions
@@ -40,11 +41,9 @@ interface StatusConfig {
 }
 
 export default function PeriodeKKM(): React.ReactElement {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('semua');
-  const [showDetail, setShowDetail] = useState<boolean>(false);
-  const [showTambah, setShowTambah] = useState<boolean>(false);
-  const [selectedPeriode, setSelectedPeriode] = useState<Periode | null>(null);
 
   // Data periode KKM
   const periodeData: Periode[] = [
@@ -151,35 +150,8 @@ export default function PeriodeKKM(): React.ReactElement {
 
   // Handler untuk membuka detail
   const handleViewDetail = (periode: Periode): void => {
-    setSelectedPeriode(periode);
-    setShowDetail(true);
+  navigate(`/kkm/periode/${periode.id}`);
   };
-
-  // Handler untuk membuka tambah periode
-  const handleTambahPeriode = (): void => {
-    setShowTambah(true);
-  };
-
-  // Handler untuk kembali dari detail
-  const handleBackFromDetail = (): void => {
-    setShowDetail(false);
-    setSelectedPeriode(null);
-  };
-
-  // Handler untuk kembali dari tambah
-  const handleBackFromTambah = (): void => {
-    setShowTambah(false);
-  };
-
-  // Jika showDetail true, tampilkan halaman detail
-  if (showDetail && selectedPeriode) {
-    return <DetailPeriodeKKM periode={selectedPeriode} onBack={handleBackFromDetail} />;
-  }
-
-  // Jika showTambah true, tampilkan halaman tambah
-  if (showTambah) {
-    return <TambahPeriodeKKM onBack={handleBackFromTambah} />;
-  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -192,8 +164,8 @@ export default function PeriodeKKM(): React.ReactElement {
           </p>
         </div>
         <button 
-          onClick={handleTambahPeriode}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+          onClick={() => navigate("/kkm/periode/tambah")}
+          className="flex items-center gap-2 px-4 py-2 cursor-pointer bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
         >
           <Plus size={18} />
           Tambah Periode
@@ -327,14 +299,14 @@ export default function PeriodeKKM(): React.ReactElement {
                         <button className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
                           <Edit size={16} />
                         </button>
-                        <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        {/* <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                           <Trash2 size={16} />
-                        </button>
-                        {periode.status === 'Draft' && (
+                        </button> */}
+                        {/* {periode.status === 'Draft' && (
                           <button className="px-2 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-medium rounded-lg transition-colors">
                             Aktifkan
                           </button>
-                        )}
+                        )} */}
                       </div>
                     </td>
                   </tr>
