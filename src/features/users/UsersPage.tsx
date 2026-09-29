@@ -156,9 +156,9 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-4 sm:p-8 space-y-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Manajemen Pengguna
@@ -171,7 +171,7 @@ export default function UsersPage() {
 
         <button
           onClick={() => navigate("/users/add")}
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow transition"
+          className="cursor-pointer bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm shadow transition shrink-0"
         >
           + Tambah Pengguna
         </button>
@@ -179,7 +179,7 @@ export default function UsersPage() {
 
       {/* FILTERS */}
       <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Search */}
           <input
             type="text"
@@ -195,7 +195,7 @@ export default function UsersPage() {
             onChange={(e) => setSelectedRole((e.target.value as AppRole) || "")}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
-            <option value="">Semua Role</option>
+            <option value="" >Semua Role</option>
             {Object.entries(APP_ROLES).map(([, value]) => (
               <option key={value} value={value}>
                 {value}

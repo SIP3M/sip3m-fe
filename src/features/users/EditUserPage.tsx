@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {Input} from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -201,8 +201,8 @@ export default function EditUserPage() {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-8">
-      <div className="flex items-start gap-3 w-full max-w-3xl">
+    <div className="space-y-6 p-4 sm:p-8">
+      <div className="flex items-center gap-3">
         <Button
           variant="outline"
           size="icon"
@@ -220,14 +220,14 @@ export default function EditUserPage() {
         </div>
       </div>
 
-      <Card className="w-full max-w-3xl rounded-2xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+      <Card className="w-full bg-white rounded-2xl shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle>Informasi Pengguna</CardTitle>
           <CardDescription>
             Field bersifat opsional dan dapat diubah sebagian.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-10 pt-0">
+        <CardContent className="p-4 sm:p-10 pt-0">
           {error && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
@@ -310,7 +310,7 @@ export default function EditUserPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   NIDN / NIP

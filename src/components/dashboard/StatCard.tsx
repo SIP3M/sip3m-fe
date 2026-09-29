@@ -18,7 +18,7 @@ export default function StatCard({
   iconColor,
 }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl p-5 shadow-[0_4px_15px_rgba(0,0,0,0.05)] flex justify-between items-center">
+    <div className="bg-white rounded-xl p-5 shadow-[0_4px_15px_rgba(0,0,0,0.05)] flex justify-between items-center h-full min-h-[110px]">
       <div>
         <p className="text-sm text-gray-500">{title}</p>
         <p className="text-2xl font-semibold mt-1">{value}</p>

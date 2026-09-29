@@ -1,4 +1,4 @@
-import { ReviewProposal } from "../review.types";
+import { Proposal } from "@/features/proposals/proposal.types";
 
 const statusStyle: Record<string, string> = {
   REVIEW: "bg-yellow-100 text-yellow-700",
@@ -21,46 +21,47 @@ const getStatusKey = (status: string) =>
     .replace(/^_+|_+$/g, "");
 
 interface Props {
-  proposal: ReviewProposal;
-  onSelect: (proposal: ReviewProposal) => void;
+  proposal: Proposal;
+  checked: boolean;
+  disabled?: boolean;
+  onToggle: (proposal: Proposal) => void;
 }
 
-export default function ProposalReviewerRow({ proposal, onSelect }: Props) {
+export default function ProposalReviewerRow({
+  proposal,
+  checked,
+  disabled = false,
+  onToggle,
+}: Props) {
   const normalizedStatus = getStatusKey(proposal.status || "");
-  const canAssign = normalizedStatus === "ADMIN_VERIFIED";
+  const canSelect = normalizedStatus === "SUBMITTED";
 
   return (
     <tr className="hover:bg-gray-50 transition">
-      {/* TITLE */}
-      <td className="px-6 py-4 text-sm font-medium text-gray-800">
-        {proposal.title}
+      <td className="px-6 py-4 align-middle">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={!canSelect || disabled}
+          onChange={() => onToggle(proposal)}
+          aria-label={`Pilih proposal ${proposal.title}`}
+        />
       </td>
 
-      {/* CATEGORY */}
-      <td className="px-6 py-4 text-sm text-gray-600">{proposal.category}</td>
+      <td className="px-6 py-4 text-sm font-medium text-gray-800">
+        <div className="max-w-[320px] line-clamp-2">{proposal.title}</div>
+      </td>
 
-      {/* REVIEWER */}
+      <td className="px-6 py-4 text-sm text-gray-600">
+        {proposal.faculty || "-"}
+      </td>
+
       <td className="px-6 py-4 text-sm">
         <span
           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[normalizedStatus] || "bg-gray-100 text-gray-600"}`}
         >
           {proposal.status}
         </span>
-      </td>
-
-      <td className="px-6 py-4">
-        <button
-          type="button"
-          onClick={() => onSelect(proposal)}
-          disabled={!canAssign}
-          className={`px-3 py-1 text-sm rounded-lg ${
-            canAssign
-              ? "bg-gray-100 hover:bg-gray-200"
-              : "bg-gray-100 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Pilih
-        </button>
       </td>
     </tr>
   );

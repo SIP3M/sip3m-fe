@@ -1,23 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Search, User as UserIcon } from "lucide-react";
+import { Inbox, Search } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
-import { ReviewProposal, ReviewerOption } from "./review.types";
-import { getAllProposals } from "@/features/proposals/proposal.api";
-import { APP_ROLES, AppRole } from "@/constant/roles";
-import { getUsers } from "@/features/users/Users.api";
-import { User } from "@/features/users/users.types";
-import { assignReviewers } from "./review.api";
+import {
+  bulkAssignProposalReviewers,
+  getAllProposals,
+} from "@/features/proposals/proposal.api";
+import { Proposal } from "@/features/proposals/proposal.types";
 import Pagination from "@/components/common/Pagination";
 
-const ACTIVE_STATUS = "active" as const;
 const ITEMS_PER_PAGE = 5;
 
 const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "Semua Status" },
   { value: "DRAFT", label: "Draft" },
   { value: "SUBMITTED", label: "Submitted" },
-  { value: "ADMIN_VERIFIED", label: "Admin Verified" },
   { value: "UNDER_REVIEW", label: "Under Review" },
   { value: "REVISION", label: "Revision" },
   { value: "ACCEPTED", label: "Accepted" },
@@ -39,40 +36,8 @@ const isStatusFilteredResult = (
   return items.every((item) => normalizeStatus(item.status) === target);
 };
 
-const mapProposalStatusLabel = (status: string) =>
-  status
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
-const mapReviewProposal = (proposal: {
-  id: number;
-  title: string;
-  skema: string;
-  status: string;
-}): ReviewProposal => ({
-  id: proposal.id,
-  title: proposal.title,
-  category: proposal.skema,
-  status: mapProposalStatusLabel(proposal.status),
-  reviewer: "",
-});
-
-const mapReviewerOption = (user: User): ReviewerOption | null => {
-  const role = user.roles.roles;
-
-  if (role !== APP_ROLES.REVIEWER && role !== APP_ROLES.REVIEWER_EKSTERNAL) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role,
-  };
-};
+const formatProposalCode = (id: number) =>
+  `PROP-${String(id).padStart(4, "0")}`;
 
 const getErrorMessage = (err: unknown, fallback: string) => {
   if (axios.isAxiosError(err)) {
@@ -86,38 +51,15 @@ const getErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
-const fetchAllUsersByRole = async (role: AppRole): Promise<User[]> => {
-  const first = await getUsers({ page: 1, roles: role, status: ACTIVE_STATUS });
-  const users = [...first.data];
-  const totalPages = first.pagination?.total_pages || 1;
-
-  if (totalPages > 1) {
-    const requests: ReturnType<typeof getUsers>[] = [];
-    for (let page = 2; page <= totalPages; page++) {
-      requests.push(getUsers({ page, roles: role, status: ACTIVE_STATUS }));
-    }
-
-    const rest = await Promise.all(requests);
-    rest.forEach((res) => users.push(...res.data));
-  }
-
-  return users;
-};
-
 export default function ReviewList() {
-  const [proposals, setProposals] = useState<ReviewProposal[]>([]);
-  const [reviewers, setReviewers] = useState<ReviewerOption[]>([]);
-
-  const [selectedProposal, setSelectedProposal] =
-    useState<ReviewProposal | null>(null);
-  const [reviewerA, setReviewerA] = useState("");
-  const [reviewerB, setReviewerB] = useState("");
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [selectedProposals, setSelectedProposals] = useState<Proposal[]>([]);
 
   const [isLoadingProposals, setIsLoadingProposals] = useState(false);
-  const [isLoadingReviewers, setIsLoadingReviewers] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -179,32 +121,14 @@ export default function ReviewList() {
             startIndex + ITEMS_PER_PAGE,
           );
 
-          const mappedFallback = pagedItems.map((item) =>
-            mapReviewProposal({
-              id: item.id,
-              title: item.title,
-              skema: item.skema,
-              status: item.status,
-            }),
-          );
-
-          setProposals(mappedFallback);
+          setProposals(pagedItems);
           setCurrentPage(safePage);
           setTotalPages(computedTotalPages);
           setTotalItems(computedTotalItems);
           return;
         }
 
-        const mapped = response.data.map((item) =>
-          mapReviewProposal({
-            id: item.id,
-            title: item.title,
-            skema: item.skema,
-            status: item.status,
-          }),
-        );
-
-        setProposals(mapped);
+        setProposals(response.data);
         setCurrentPage(response.meta.currentPage);
         setTotalPages(response.meta.totalPages);
         setTotalItems(response.meta.totalData);
@@ -221,31 +145,6 @@ export default function ReviewList() {
     [loadAllProposalPages],
   );
 
-  const loadReviewers = async () => {
-    setIsLoadingReviewers(true);
-    try {
-      const [internalReviewers, externalReviewers] = await Promise.all([
-        fetchAllUsersByRole(APP_ROLES.REVIEWER),
-        fetchAllUsersByRole(APP_ROLES.REVIEWER_EKSTERNAL),
-      ]);
-
-      const merged = [...internalReviewers, ...externalReviewers]
-        .map(mapReviewerOption)
-        .filter((item): item is ReviewerOption => item !== null);
-
-      const unique = Array.from(new Map(merged.map((x) => [x.id, x])).values());
-      setReviewers(unique);
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, "Gagal memuat daftar reviewer."));
-    } finally {
-      setIsLoadingReviewers(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadReviewers();
-  }, []);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery.trim());
@@ -256,24 +155,68 @@ export default function ReviewList() {
   }, [searchQuery]);
 
   useEffect(() => {
+    setSelectedProposals([]);
+  }, [debouncedSearch, statusFilter]);
+
+  useEffect(() => {
     void loadProposals(currentPage, debouncedSearch, statusFilter);
   }, [currentPage, debouncedSearch, statusFilter, loadProposals]);
 
-  const handleSelectProposal = (proposal: ReviewProposal) => {
-    setSelectedProposal(proposal);
-    setReviewerA("");
-    setReviewerB("");
+  const submittedProposalsOnPage = useMemo(
+    () =>
+      proposals.filter(
+        (proposal) => normalizeStatus(proposal.status) === "SUBMITTED",
+      ),
+    [proposals],
+  );
+
+  const selectedIds = useMemo(
+    () => new Set(selectedProposals.map((proposal) => proposal.id)),
+    [selectedProposals],
+  );
+
+  const allSubmittedSelected =
+    submittedProposalsOnPage.length > 0 &&
+    submittedProposalsOnPage.every((proposal) => selectedIds.has(proposal.id));
+
+  const toggleProposalSelection = (proposal: Proposal) => {
+    if (normalizeStatus(proposal.status) !== "SUBMITTED") return;
+
+    setSelectedProposals((prev) => {
+      const exists = prev.some((item) => item.id === proposal.id);
+      if (exists) {
+        return prev.filter((item) => item.id !== proposal.id);
+      }
+      return [...prev, proposal];
+    });
     setSuccessMessage(null);
     setError(null);
+    setWarningMessage(null);
   };
 
-  const isEligibleProposal =
-    selectedProposal?.status?.toUpperCase() === "ADMIN VERIFIED";
+  const toggleSelectAllOnPage = () => {
+    setSelectedProposals((prev) => {
+      const currentSubmittedIds = new Set(
+        submittedProposalsOnPage.map((proposal) => proposal.id),
+      );
 
-  const reviewerBOptions = useMemo(
-    () => reviewers.filter((r) => String(r.id) !== reviewerA),
-    [reviewers, reviewerA],
-  );
+      if (allSubmittedSelected) {
+        return prev.filter((proposal) => !currentSubmittedIds.has(proposal.id));
+      }
+
+      const merged = [...prev];
+      submittedProposalsOnPage.forEach((proposal) => {
+        if (!merged.some((item) => item.id === proposal.id)) {
+          merged.push(proposal);
+        }
+      });
+      return merged;
+    });
+
+    setSuccessMessage(null);
+    setError(null);
+    setWarningMessage(null);
+  };
 
   const handlePageChange = (page: number) => {
     if (page <= 0 || page > totalPages || isLoadingProposals) return;
@@ -281,54 +224,44 @@ export default function ReviewList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleAssign = async () => {
-    if (!selectedProposal) return;
+  const handleBulkAssign = async () => {
+    if (selectedProposals.length === 0) return;
 
     setError(null);
     setSuccessMessage(null);
+    setWarningMessage(null);
 
-    if (!isEligibleProposal) {
-      setError(
-        "Reviewer hanya dapat ditugaskan untuk proposal berstatus ADMIN_VERIFIED.",
-      );
+    const proposalIds = selectedProposals
+      .filter((proposal) => normalizeStatus(proposal.status) === "SUBMITTED")
+      .map((proposal) => proposal.id);
+
+    if (proposalIds.length === 0) {
+      setError("Tidak ada proposal SUBMITTED yang dipilih.");
       return;
     }
-
-    if (!reviewerA) {
-      setError("Harus memilih minimal 1 reviewer.");
-      return;
-    }
-
-    if (reviewerB && reviewerA === reviewerB) {
-      setError("ID reviewer tidak boleh sama.");
-      return;
-    }
-
-    const reviewerIds = [reviewerA, reviewerB]
-      .filter((id): id is string => Boolean(id))
-      .map((id) => Number(id));
 
     setIsAssigning(true);
     try {
-      const res = await assignReviewers(selectedProposal.id, reviewerIds);
+      const res = await bulkAssignProposalReviewers(proposalIds);
 
       setSuccessMessage(res.message);
 
+      const failedDetails = res.data.failed
+        .map((item) => `#${item.proposalId}: ${item.reason}`)
+        .join("; ");
+
+      if (failedDetails) {
+        setWarningMessage(`Detail kegagalan: ${failedDetails}`);
+      }
+
       await loadProposals(currentPage, debouncedSearch, statusFilter);
 
-      setSelectedProposal((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: mapProposalStatusLabel(res.data.status),
-            }
-          : prev,
-      );
+      setSelectedProposals([]);
     } catch (err: unknown) {
       setError(
         getErrorMessage(
           err,
-          "Terjadi kesalahan pada server saat menugaskan reviewer.",
+          "Terjadi kesalahan pada server saat plotting reviewer massal.",
         ),
       );
     } finally {
@@ -336,20 +269,21 @@ export default function ReviewList() {
     }
   };
 
+  const selectedCount = selectedProposals.length;
+
   return (
-    <div className="p-10 min-h-screen">
-      {/* HEADER */}
+    <div className="min-h-screen p-10">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
           Plotting Reviewer
         </h1>
-        <p className="text-gray-500 text-sm">
-          Tentukan reviewer untuk proposal yang masuk
+        <p className="text-sm text-gray-500">
+          Penugasan reviewer dilakukan otomatis oleh sistem.
         </p>
 
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-          Catatan: Proposal hanya bisa ditugaskan ke reviewer jika statusnya
-          <span className="font-semibold"> ADMIN_VERIFIED</span>.
+          Catatan: hanya proposal berstatus{" "}
+          <span className="font-semibold">SUBMITTED</span> yang bisa dipilih.
         </div>
       </div>
 
@@ -365,9 +299,8 @@ export default function ReviewList() {
         </div>
       )}
 
-      <div className="grid grid-cols-[2fr_1fr] gap-6">
-        {/* TABLE */}
-        <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
             <div className="flex items-center gap-2 rounded-lg border px-3 md:w-80">
               <Search size={16} className="text-gray-400" />
@@ -395,15 +328,33 @@ export default function ReviewList() {
             </select>
           </div>
 
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={allSubmittedSelected}
+                onChange={toggleSelectAllOnPage}
+                disabled={submittedProposalsOnPage.length === 0 || isAssigning}
+              />
+              <span>Pilih semua proposal SUBMITTED pada halaman ini</span>
+            </label>
+
+            <span className="font-medium text-gray-500">
+              {selectedCount} proposal dipilih
+            </span>
+          </div>
+
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500">
               <tr>
-                <th className="px-6 py-4 text-left font-medium">
+                <th className="px-4 py-4 text-left font-medium">
+                  <span className="sr-only">Pilih</span>
+                </th>
+                <th className="px-4 py-4 text-left font-medium">
                   Judul Proposal
                 </th>
-                <th className="px-6 py-4 text-left font-medium">Kategori</th>
-                <th className="px-6 py-4 text-left font-medium">Status</th>
-                <th className="px-6 py-4 text-left font-medium">Aksi</th>
+                <th className="px-4 py-4 text-left font-medium">Bidang</th>
+                <th className="px-4 py-4 text-left font-medium">Status</th>
               </tr>
             </thead>
 
@@ -427,11 +378,13 @@ export default function ReviewList() {
                   </td>
                 </tr>
               ) : (
-                proposals.map((p) => (
+                proposals.map((proposal) => (
                   <ProposalReviewerRow
-                    key={p.id}
-                    proposal={p}
-                    onSelect={handleSelectProposal}
+                    key={proposal.id}
+                    proposal={proposal}
+                    checked={selectedIds.has(proposal.id)}
+                    disabled={isAssigning}
+                    onToggle={toggleProposalSelection}
                   />
                 ))
               )}
@@ -475,94 +428,107 @@ export default function ReviewList() {
           )}
         </div>
 
-        {/* RIGHT PANEL */}
-        <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 min-w-[280px] flex flex-col justify-between">
-          {selectedProposal ? (
-            <div>
-              <h2 className="font-semibold text-gray-800 mb-1">
-                Tugaskan Reviewer
-              </h2>
-
-              <p className="text-xs text-gray-400 mb-4">
-                ID: PROP-00{selectedProposal.id}
-              </p>
-
-              <div className="bg-gray-100 p-3 rounded-lg text-sm text-gray-700 mb-4">
-                {selectedProposal.title}
+        <div className="flex min-w-[280px] flex-col justify-between rounded-2xl border border-gray-100 bg-white p-6 shadow">
+          <div>
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="mb-1 font-semibold text-gray-800">
+                  Ringkasan Plotting
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {selectedCount > 0
+                    ? "Proposal yang dipilih akan diproses sekaligus."
+                    : "Pilih proposal SUBMITTED dari tabel di sebelah kiri."}
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs text-gray-500">
-                    Pilih Reviewer 1
-                  </label>
-                  <select
-                    value={reviewerA}
-                    onChange={(e) => setReviewerA(e.target.value)}
-                    disabled={isLoadingReviewers || isAssigning}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
-                  >
-                    <option value="">Pilih reviewer pertama</option>
-                    {reviewers.map((reviewer) => (
-                      <option key={reviewer.id} value={reviewer.id}>
-                        {reviewer.name} ({reviewer.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs text-gray-500">
-                    Pilih Reviewer 2 (Opsional)
-                  </label>
-                  <select
-                    value={reviewerB}
-                    onChange={(e) => setReviewerB(e.target.value)}
-                    disabled={isLoadingReviewers || isAssigning}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
-                  >
-                    <option value="">Pilih reviewer kedua</option>
-                    {reviewerBOptions.map((reviewer) => (
-                      <option key={reviewer.id} value={reviewer.id}>
-                        {reviewer.name} ({reviewer.role})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
+              {selectedCount > 0 && (
                 <button
                   type="button"
-                  onClick={() => void handleAssign()}
-                  disabled={
-                    isAssigning || isLoadingReviewers || !isEligibleProposal
-                  }
-                  className={`w-full rounded-lg px-4 py-2 text-white ${
-                    isAssigning || isLoadingReviewers || !isEligibleProposal
-                      ? "bg-red-300 cursor-not-allowed"
-                      : "bg-red-500 hover:bg-red-600"
-                  }`}
+                  onClick={() => setSelectedProposals([])}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-700"
                 >
-                  {isAssigning ? "Menyimpan..." : "Simpan Penugasan"}
+                  Hapus pilihan
                 </button>
-
-                {!isEligibleProposal && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
-                    Proposal harus berstatus ADMIN_VERIFIED sebelum reviewer
-                    bisa ditugaskan.
-                  </p>
-                )}
-              </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center text-gray-400 flex flex-col items-center justify-center h-full">
-              <UserIcon size={48} className="mb-3" />
-              <p>
-                Pilih proposal di sebelah kiri
-                <br />
-                untuk menugaskan reviewer.
+
+            <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Total dipilih</span>
+                <span className="text-lg font-semibold text-gray-800">
+                  {selectedCount}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Hanya proposal berstatus SUBMITTED yang akan dikirim ke endpoint
+                bulk plotting.
               </p>
             </div>
-          )}
+
+            <div className="max-h-[420px] space-y-3 overflow-auto pr-1">
+              {selectedProposals.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 px-4 py-10 text-center text-gray-400">
+                  <Inbox size={40} className="mb-3" />
+                  <p className="text-sm">
+                    Belum ada proposal yang dipilih untuk plotting massal.
+                  </p>
+                </div>
+              ) : (
+                selectedProposals.map((proposal) => (
+                  <div
+                    key={proposal.id}
+                    className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-medium text-gray-400">
+                          {formatProposalCode(proposal.id)}
+                        </p>
+                        <h3 className="line-clamp-2 text-sm font-semibold text-gray-800">
+                          {proposal.title}
+                        </h3>
+                      </div>
+
+                      <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[11px] font-medium text-orange-700">
+                        {proposal.status}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-xs text-gray-500">
+                      {proposal.faculty || "-"}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {warningMessage && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                {warningMessage}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => void handleBulkAssign()}
+              disabled={isAssigning || selectedCount === 0}
+              className={`w-full rounded-lg px-4 py-2 text-white ${
+                isAssigning || selectedCount === 0
+                  ? "cursor-not-allowed bg-blue-300"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {isAssigning ? "Memproses..." : "Plotting Reviewer Massal"}
+            </button>
+
+            <p className="text-xs text-gray-500">
+              Setelah proses berhasil, daftar proposal akan dimuat ulang dan
+              pilihan yang sudah diproses akan dibersihkan.
+            </p>
+          </div>
         </div>
       </div>
     </div>

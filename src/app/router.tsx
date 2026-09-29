@@ -16,6 +16,7 @@ import ReviewerLayout from "@/components/layout/ReviewerLayout";
 import EksternalLayout from "@/components/layout/EksternalLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
+import DashboardAdminKKM from "@/features/dashboard/DashboardAdminKKM";
 import StaffDashboard from "@/features/dashboard/StaffDashboard";
 import DosenDashboard from "@/features/dashboard/DosenDashboard";
 import ReviewerDashboard from "@/features/dashboard/ReviewerDashboard";
@@ -40,11 +41,24 @@ import ProposalDosen from "@/features/proposals/ProposalDosen";
 import ProjectDosen from "@/features/projects/ProjectDosen";
 import Laporan from "@/features/laporan/Laporan";
 import PublicationList from "@/features/repository/PublicationList";
+import Profile from "@/features/profile/Profile";
 
 import ReviewDetailPage from "@/features/dashboard/ReviewDetailPage";
 import ReviewListReviewer from "@/features/reviews/ReviewListReviewer";
 import HistoryReview from "@/features/reviews/HistoryReview";
 import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
+import EditProposalDosen from "@/features/proposals/EditProposalDosen";
+import SystemSettings from "@/features/settings/SystemSettings";
+
+import PeriodeKKM from "@/features/kkm/PeriodeKKM";
+import PesertaKKM from "@/features/kkm/PesertaKKM";
+import LokasiKKM from "@/features/kkm/LokasiKKM";
+import DPLKKM from "@/features/kkm/DPLKKM";
+import GenerateKelompok from "@/features/kkm/GenerateKelompok";
+import MonitoringKKM from "@/features/kkm/MonitoringKKM";
+import KelompokKKM from "@/features/kkm/KelompokKKM";
+import LaporanKKM from "@/features/kkm/LaporanKKM";
+import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 
 export const router = createBrowserRouter([
   {
@@ -75,65 +89,113 @@ export const router = createBrowserRouter([
   // =========================
   // ADMIN AREA
   // =========================
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
-        <DashboardLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "admin-dashboard",
-        element: <AdminDashboard />,
-      },
-      {
-        path: "users",
-        element: <UsersPage />,
-      },
-      {
-        path: "users/add",
-        element: <AddUserPage />,
-      },
-      {
-        path: "users/:id",
-        element: <UserDetailPage />,
-      },
-      {
-        path: "users/:id/edit",
-        element: <EditUserPage />,
-      },
-      {
-        path: "proposals",
-        element: <ProposalList />,
-      },
-      {
-        path: "proposals/:id",
-        element: <ProposalDetail />,
-      },
-      {
-        path: "plotting-reviewer",
-        element: <ReviewList />,
-      },
-      {
-        path: "monitoring-project",
-        element: <ProjectList />,
-      },
-      {
-        path: "monitoring-project/:id",
-        element: <ProjectDetail />,
-      },
-      {
-        path: "finance",
-        element: <FinancePage />,
-      },
-      {
-        path: "logs",
-        element: <LogsPage />,
-      },
-    ],
-  },
-
+  // ADMIN AREA - Perbaiki bagian ini
+{
+  element: (
+    <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
+      <DashboardLayout />
+    </ProtectedRoute>
+  ),
+  children: [
+    {
+      path: "admin-dashboard",
+      element: <AdminDashboard />, // Dashboard Penelitian
+    },
+    {
+      path: "admin-dashboard/kkm/dashboard", // Dashboard KKM
+      element: <DashboardAdminKKM />,
+    },
+    {
+      path: "users",
+      element: <UsersPage />,
+    },
+    {
+      path: "users/add",
+      element: <AddUserPage />,
+    },
+    {
+      path: "users/:id",
+      element: <UserDetailPage />,
+    },
+    {
+      path: "users/:id/edit",
+      element: <EditUserPage />,
+    },
+    {
+      path: "proposals",
+      element: <ProposalList />,
+    },
+    {
+      path: "proposals/:id",
+      element: <ProposalDetail />,
+    },
+    {
+      path: "plotting-reviewer",
+      element: <ReviewList />,
+    },
+    {
+      path: "monitoring-project",
+      element: <ProjectList />,
+    },
+    {
+      path: "monitoring-project/:id",
+      element: <ProjectDetail />,
+    },
+    {
+      path: "finance",
+      element: <FinancePage />,
+    },
+    {
+      path: "repository-publik",
+      element: <PublicationList />,
+    },
+    {
+      path: "logs",
+      element: <LogsPage />,
+    },
+    {
+      path: "settings",
+      element: <SystemSettings />
+    },
+    // Tambahkan route untuk menu KKM lainnya
+    {
+      path: "admin-dashboard/kkm/periode",
+      element: <PeriodeKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/peserta",
+      element: <PesertaKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/kelompok",
+      element: <KelompokKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/lokasi",
+      element: <LokasiKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/dpl",
+      element: <DPLKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/generate",
+      element: <GenerateKelompok />,
+    },
+    {
+      path: "admin-dashboard/kkm/monitoring",
+      element: <MonitoringKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/laporan",
+      element: <LaporanKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/pengumuman",
+      element: <PengumumanKKM />,
+    },
+  ],
+},
   // =========================
   // STAFF LPPM
   // =========================
@@ -174,6 +236,10 @@ export const router = createBrowserRouter([
         element: <FinancePage />,
       },
       {
+        path: "repository-publik",
+        element: <PublicationList />,
+      },
+      {
         path: "logs",
         element: <LogsPage />,
       },
@@ -203,6 +269,10 @@ export const router = createBrowserRouter([
         path: "proposals/:id",
         element: <ProposalDetail />,
       },
+            {
+        path: "proposals/:id/edit",
+        element: <EditProposalDosen />, // Ganti dengan nama komponen form edit kamu
+      },
       {
         path: "project-dosen",
         element: <ProjectDosen />,
@@ -215,6 +285,10 @@ export const router = createBrowserRouter([
         path: "repository-publik",
         element: <PublicationList />,
       },
+      {
+        path: "profile",
+        element: <Profile />,
+      }
     ],
   },
 

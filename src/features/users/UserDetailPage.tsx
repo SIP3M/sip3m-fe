@@ -113,7 +113,7 @@ export default function UserDetailPage() {
         </div>
       </div>
 
-      <Card className="max-w-4xl">
+      <Card className="w-full">
         <CardHeader className="border-b">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">

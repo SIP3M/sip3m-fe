@@ -1,5 +1,15 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { FileText, Pencil, Plus, Search, Send, Trash2 } from "lucide-react";
+import {
+  FileText,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  Trash2,
+  X,
+  Calendar,
+  Upload,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -17,17 +27,23 @@ import {
   ProposalFormValues,
 } from "./ProposalDosen.types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {Input} from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { getUsers } from "@/features/users/Users.api";
 
 const PAGE_SIZE = 5;
 
 const defaultFormValues: ProposalFormValues = {
   title: "",
   faculty: "",
+  prodi: "",
   skema: "",
   sumber_data_penelitian: "",
   instansi: "",
+  dosen_terlibat: "",
+  nidn_dosen_terlibat: "",
+  nama_anggota: "",
+  nim_anggota: "",
   funding_request_amount: "",
   proposal_file: null,
   rab_file: null,
@@ -159,6 +175,19 @@ const getErrorMessage = (err: unknown, fallback: string) => {
 };
 
 export default function ProposalDosen() {
+  interface DosenRow {
+    nidn: string;
+    nama: string;
+    peran: string;
+  }
+
+  interface MahasiswaRow {
+    nim: string;
+    nama: string;
+    prodi: string;
+    peran: string;
+  }
+
   const [data, setData] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -182,6 +211,14 @@ export default function ProposalDosen() {
   );
   const [formValues, setFormValues] =
     useState<ProposalFormValues>(defaultFormValues);
+
+  const [dosenRows, setDosenRows] = useState<DosenRow[]>([
+    { nidn: "", nama: "", peran: "Ketua Peneliti" },
+  ]);
+  const [mahasiswaRows, setMahasiswaRows] = useState<MahasiswaRow[]>([
+    { nim: "", nama: "", prodi: "", peran: "Anggota" },
+  ]);
+  const [sumberPendanaan, setSumberPendanaan] = useState("Pilih");
 
   const editingProposal = useMemo(
     () => data.find((item) => item.id === editingProposalId) || null,
@@ -271,12 +308,142 @@ export default function ProposalDosen() {
     setFormMode("create");
   };
 
+  const syncDosenToForm = (rows: DosenRow[]) => {
+    setFormValues((prev) => ({
+      ...prev,
+      nidn_dosen_terlibat: rows.map((r) => r.nidn.trim()).join("\n"),
+      dosen_terlibat: rows.map((r) => r.nama.trim()).join("\n"),
+    }));
+  };
+
+  const syncMahasiswaToForm = (rows: MahasiswaRow[]) => {
+    setFormValues((prev) => ({
+      ...prev,
+      nim_anggota: rows.map((r) => r.nim.trim()).join("\n"),
+      nama_anggota: rows.map((r) => r.nama.trim()).join("\n"),
+    }));
+  };
+
+  const handleDosenChange = (
+    index: number,
+    field: keyof DosenRow,
+    value: string,
+  ) => {
+    const next = [...dosenRows];
+    next[index] = { ...next[index], [field]: value };
+    setDosenRows(next);
+    syncDosenToForm(next);
+
+    if (field === "nidn") {
+      void searchDosenUser(value, index);
+    }
+  };
+
+  const searchDosenUser = async (nidn: string, index: number) => {
+    if (nidn.trim().length < 3) return;
+    try {
+      const res = await getUsers({ search: nidn, roles: "DOSEN" });
+      if (res.data && res.data.length > 0) {
+        const matched = res.data.find(
+          (u) => u.nidn === nidn || u.username === nidn,
+        );
+        if (matched) {
+          const next = [...dosenRows];
+          next[index] = { ...next[index], nama: matched.name };
+          setDosenRows(next);
+          syncDosenToForm(next);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat info dosen:", err);
+    }
+  };
+
+  const handleMahasiswaChange = (
+    index: number,
+    field: keyof MahasiswaRow,
+    value: string,
+  ) => {
+    const next = [...mahasiswaRows];
+    next[index] = { ...next[index], [field]: value };
+    setMahasiswaRows(next);
+    syncMahasiswaToForm(next);
+
+    if (field === "nim") {
+      void searchMahasiswaUser(value, index);
+    }
+  };
+
+  const searchMahasiswaUser = async (nim: string, index: number) => {
+    if (nim.trim().length < 3) return;
+    try {
+      const res = await getUsers({ search: nim });
+      if (res.data && res.data.length > 0) {
+        const matched = res.data.find(
+          (u) => u.username === nim || u.nidn === nim,
+        );
+        if (matched) {
+          const next = [...mahasiswaRows];
+          next[index] = {
+            ...next[index],
+            nama: matched.name,
+            prodi: matched.program_studi || "",
+          };
+          setMahasiswaRows(next);
+          syncMahasiswaToForm(next);
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat info mahasiswa:", err);
+    }
+  };
+
+  const addDosenRow = () => {
+    const next = [
+      ...dosenRows,
+      { nidn: "", nama: "", peran: "Anggota Peneliti" },
+    ];
+    setDosenRows(next);
+    syncDosenToForm(next);
+  };
+
+  const removeDosenRow = (index: number) => {
+    if (index === 0) return;
+    const next = dosenRows.filter((_, i) => i !== index);
+    setDosenRows(next);
+    syncDosenToForm(next);
+  };
+
+  const addMahasiswaRow = () => {
+    const next = [
+      ...mahasiswaRows,
+      { nim: "", nama: "", prodi: "", peran: "Anggota" },
+    ];
+    setMahasiswaRows(next);
+    syncMahasiswaToForm(next);
+  };
+
+  const removeMahasiswaRow = (index: number) => {
+    const next = mahasiswaRows.filter((_, i) => i !== index);
+    setMahasiswaRows(next);
+    syncMahasiswaToForm(next);
+  };
+
   const openCreateForm = () => {
     resetForm();
+    setDosenRows([{ nidn: "", nama: "", peran: "Ketua Peneliti" }]);
+    setMahasiswaRows([{ nim: "", nama: "", prodi: "", peran: "Anggota" }]);
+    setSumberPendanaan("Pilih");
     setFeedback(null);
     setError(null);
     setIsFormOpen(true);
   };
+
+  const skemaOptions = [
+    "Penelitian Pengembangan",
+    "Penelitian Terapan",
+    "Penelitian Kolaborasi",
+  ];
 
   const openEditForm = (proposal: Proposal) => {
     setError(null);
@@ -287,13 +454,74 @@ export default function ProposalDosen() {
     setFormValues({
       title: proposal.title,
       faculty: proposal.faculty || "",
+      prodi: (proposal as any).prodi || "",
       skema: proposal.skema || "",
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
       instansi: proposal.instansi || "",
+      dosen_terlibat: proposal.dosen_terlibat || "",
+      nidn_dosen_terlibat: proposal.nidn_dosen_terlibat || "",
+      nama_anggota: proposal.nama_anggota || "",
+      nim_anggota: proposal.nim_anggota || "",
       funding_request_amount: String(proposal.funding_request_amount || ""),
       proposal_file: null,
       rab_file: null,
     });
+    setSumberPendanaan("Pilih");
+
+    // PARSE DOSEN
+    const nidns = proposal.nidn_dosen_terlibat
+      ? proposal.nidn_dosen_terlibat.split("\n")
+      : [];
+    const namas = proposal.dosen_terlibat
+      ? proposal.dosen_terlibat.split("\n")
+      : [];
+    const length = Math.max(nidns.length, namas.length, 1);
+    const parsedDosen: DosenRow[] = [];
+    for (let i = 0; i < length; i++) {
+      parsedDosen.push({
+        nidn: nidns[i] || "",
+        nama: namas[i] || "",
+        peran: i === 0 ? "Ketua Peneliti" : "Anggota Peneliti",
+      });
+    }
+    setDosenRows(parsedDosen);
+
+    // PARSE MAHASISWA
+    const nims = proposal.nim_anggota ? proposal.nim_anggota.split("\n") : [];
+    const namaMhs = proposal.nama_anggota
+      ? proposal.nama_anggota.split("\n")
+      : [];
+    const mhsLength = Math.max(nims.length, namaMhs.length, 1);
+    const parsedMhs: MahasiswaRow[] = [];
+    for (let i = 0; i < mhsLength; i++) {
+      parsedMhs.push({
+        nim: nims[i] || "",
+        nama: namaMhs[i] || "",
+        prodi: "",
+        peran: "Anggota",
+      });
+      if (nims[i]) {
+        void (async (nimVal: string, idx: number) => {
+          try {
+            const res = await getUsers({ search: nimVal });
+            const matched = res.data.find(
+              (u) => u.username === nimVal || u.nidn === nimVal,
+            );
+            if (matched && matched.program_studi) {
+              setMahasiswaRows((prev) => {
+                const updated = [...prev];
+                if (updated[idx]) {
+                  updated[idx].prodi = matched.program_studi || "";
+                }
+                return updated;
+              });
+            }
+          } catch {}
+        })(nims[i], i);
+      }
+    }
+    setMahasiswaRows(parsedMhs);
+
     setIsFormOpen(true);
   };
 
@@ -334,10 +562,15 @@ export default function ProposalDosen() {
     const payload = {
       title: formValues.title.trim(),
       faculty: formValues.faculty.trim() || undefined,
+      prodi: formValues.prodi.trim() || undefined,
       skema: formValues.skema.trim() || undefined,
       sumber_data_penelitian:
         formValues.sumber_data_penelitian.trim() || undefined,
       instansi: formValues.instansi.trim() || undefined,
+      dosen_terlibat: formValues.dosen_terlibat.trim() || undefined,
+      nidn_dosen_terlibat: formValues.nidn_dosen_terlibat.trim() || undefined,
+      nama_anggota: formValues.nama_anggota.trim() || undefined,
+      nim_anggota: formValues.nim_anggota.trim() || undefined,
       funding_request_amount:
         formValues.funding_request_amount.trim() || undefined,
       is_draft: isDraft,
@@ -464,10 +697,11 @@ export default function ProposalDosen() {
 
         <Button
           type="button"
-          className="bg-red-600 text-white hover:bg-red-700"
           onClick={openCreateForm}
+          className="bg-red-600 hover:bg-red-700 text-sm text-white px-3 py-5 rounded-lg flex items-center gap-2 cursor-pointer"
         >
-          <Plus className="mr-2 h-4 w-4" /> Buat Proposal Baru
+          <Plus className="w-2 h-3" />
+          Buat Proposal Baru
         </Button>
       </div>
 
@@ -484,199 +718,592 @@ export default function ProposalDosen() {
       )}
 
       {isFormOpen && (
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <h2 className="text-base font-semibold text-gray-800">
-              {formMode === "create" ? "Buat Proposal" : "Edit Proposal"}
+        <div className="space-y-6">
+          {/* Banner Header Merah Muda */}
+          <div className="rounded-xl border border-red-100 bg-[#FEF2F2] p-5 shadow-xs">
+            <h2 className="text-base font-bold text-[#DC2626]">
+              Buat Proposal Baru
             </h2>
+            <p className="text-sm text-[#EF4444] mt-1 font-medium">
+              Lengkapi semua bagian yang diperlukan untuk mengajukan proposal
+              penelitian.
+            </p>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-sm text-gray-600">Judul Proposal*</label>
-                <Input
-                  name="title"
-                  value={formValues.title}
-                  onChange={handleInputChange}
-                  placeholder="Masukkan judul proposal"
-                />
+          {/* Card 1: Informasi Proposal */}
+          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
+            <CardContent className="p-6 space-y-4">
+              <h3 className="text-base font-bold text-gray-800">
+                Informasi Proposal
+              </h3>
+
+              <div className="space-y-4">
+                {/* Judul Proposal */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Judul Proposal<span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="title"
+                    value={formValues.title}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan judul proposal"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Fakultas/Bidang<span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="faculty"
+                    value={formValues.faculty}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan Nama Fakultas"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+
+                {/* Sumber Data Penelitian */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Sumber Data Penelitian
+                  </label>
+                  <Input
+                    name="sumber_data_penelitian"
+                    value={formValues.sumber_data_penelitian}
+                    onChange={handleInputChange}
+                    placeholder="Contoh: Data Primer, Observasi Lapangan, BPS, Dataset Internal"
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+
+                {/* Detail Sumber Data Penelitian */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Detail Sumber Data Penelitian
+                  </label>
+                  <textarea
+                    name="sumber_data_penelitian"
+                    value={formValues.sumber_data_penelitian}
+                    onChange={handleInputChange}
+                    placeholder="Jelaskan lebih detail mengenai sumber data yang akan digunakan dalam penelitian..."
+                    className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Pendanaan & Skema Penelitian */}
+          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-gray-800">
+                  Pendanaan & Skema Penelitian
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Informasi sumber pendanaan, skema penelitian, dan nominal
+                  pengajuan proposal.
+                </p>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-600">Fakultas</label>
-                <Input
-                  name="faculty"
-                  value={formValues.faculty}
-                  onChange={handleInputChange}
-                  placeholder="Contoh: Teknik"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Sumber Pendanaan */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Sumber Pendanaan
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={sumberPendanaan}
+                      onChange={(e) => setSumberPendanaan(e.target.value)}
+                      className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                    >
+                      <option value="Pilih">Pilih</option>
+                      <option value="Internal Kampus">Internal Kampus</option>
+                      <option value="Kemendikbudristek">
+                        Kemendikbudristek
+                      </option>
+                      <option value="Mandiri">Mandiri</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                      <svg
+                        className="h-4 w-4 text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Skema Penelitian / Hibah */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Skema Penelitian / Hibah
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="skema"
+                      value={formValues.skema}
+                      onChange={handleInputChange}
+                      className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+                    >
+                      <option value="">Pilih</option>
+                      {skemaOptions.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                      <svg
+                        className="h-4 w-4 text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instansi Pemberi Dana */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Instansi Pemberi Dana
+                  </label>
+                  <Input
+                    name="instansi"
+                    value={formValues.instansi}
+                    onChange={handleInputChange}
+                    placeholder="Contoh: LPPM UMC, Kemendikbudristek, ..."
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+
+                {/* Nominal Pengajuan Dana */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Nominal Pengajuan Dana
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-gray-500">
+                      Rp.
+                    </span>
+                    <Input
+                      name="funding_request_amount"
+                      value={formValues.funding_request_amount}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/[^0-9]/g, "");
+                        setFormValues((prev) => ({
+                          ...prev,
+                          funding_request_amount: cleaned,
+                        }));
+                      }}
+                      placeholder="15.000.000"
+                      className="h-11 pl-12 rounded-xl"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Tim Dosen Peneliti */}
+          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-gray-800">
+                  Tim  Peneliti
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Dosen-dosen yang terlibat dalam penelitian atau pengabdian,
+                  dll.
+                </p>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-600">Skema*</label>
-                <select
-                  name="skema"
-                  value={formValues.skema}
-                  onChange={handleInputChange}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="text-xs font-semibold text-gray-500 border-b border-gray-100">
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "25%" }}
+                      >
+                        NIDN
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "45%" }}
+                      >
+                        Nama Dosen
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "25%" }}
+                      >
+                        Peran
+                      </th>
+                      <th
+                        className="pb-2 font-semibold text-center"
+                        style={{ width: "5%" }}
+                      >
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {dosenRows.map((row, idx) => (
+                      <tr key={idx} className="align-middle">
+                        <td className="py-2.5 pr-2">
+                          <Input
+                            value={row.nidn}
+                            onChange={(e) =>
+                              handleDosenChange(idx, "nidn", e.target.value)
+                            }
+                            placeholder="Masukkan NIDN"
+                            className="h-10 text-xs rounded-lg min-h-[40px] bg-white border-gray-300"
+                          />
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <Input
+                            value={row.nama}
+                            onChange={(e) =>
+                              handleDosenChange(idx, "nama", e.target.value)
+                            }
+                            placeholder="Nama dosen otomatis muncul"
+                            className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
+                          />
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <div
+                            className={`h-10 w-full flex items-center rounded-lg border px-3 text-xs font-medium shadow-sm ${
+                              idx === 0
+                                ? "border-red-200 bg-red-50 text-red-700"
+                                : "border-blue-200 bg-blue-50 text-blue-700"
+                            }`}
+                          >
+                            {row.peran}
+                          </div>
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => removeDosenRow(idx)}
+                            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:hover:text-gray-400 cursor-pointer transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addDosenRow}
+                  className="h-10 px-4 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <option value="">Pilih skema</option>
-                  <option value="Penelitian Pengembangan">
-                    Penelitian Pengembangan
-                  </option>
-                  <option value="Penelitian Terapan">Penelitian Terapan</option>
-                  <option value="Penelitian Kolaborasi">
-                    Penelitian Kolaborasi
-                  </option>
-                </select>
+                  <Plus size={14} />
+                  Tambah Anggota
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 4: Mahasiswa Terlibat */}
+          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-gray-800">
+                  Mahasiswa Terlibat
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Daftar mahasiswa yang terlibat dalam penelitian. (Opsional)
+                </p>
               </div>
 
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-sm text-gray-600">
-                  Sumber Data Penelitian
-                </label>
-                <textarea
-                  name="sumber_data_penelitian"
-                  value={formValues.sumber_data_penelitian}
-                  onChange={handleInputChange}
-                  placeholder="Contoh: Survei lapangan dan data BPS"
-                  className="min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="text-xs font-semibold text-gray-500 border-b border-gray-100">
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "20%" }}
+                      >
+                        NIM
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "35%" }}
+                      >
+                        Nama Mahasiswa
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "25%" }}
+                      >
+                        Program Studi
+                      </th>
+                      <th
+                        className="pb-2 font-semibold"
+                        style={{ width: "15%" }}
+                      >
+                        Peran
+                      </th>
+                      <th
+                        className="pb-2 font-semibold text-center"
+                        style={{ width: "5%" }}
+                      >
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {mahasiswaRows.map((row, idx) => (
+                      <tr key={idx} className="align-middle">
+                        <td className="py-2.5 pr-2">
+                          <Input
+                            value={row.nim}
+                            onChange={(e) =>
+                              handleMahasiswaChange(idx, "nim", e.target.value)
+                            }
+                            placeholder="Masukkan NIM"
+                            className="h-10 text-xs rounded-lg min-h-[40px] bg-white border-gray-300"
+                          />
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <Input
+                            value={row.nama}
+                            onChange={(e) =>
+                              handleMahasiswaChange(idx, "nama", e.target.value)
+                            }
+                            placeholder="Nama mahasiswa otomatis muncul"
+                            className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
+                          />
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <Input
+                            value={row.prodi}
+                            onChange={(e) =>
+                              handleMahasiswaChange(
+                                idx,
+                                "prodi",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Prodi otomatis muncul"
+                            className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
+                          />
+                        </td>
+                        <td className="py-2.5 pr-2">
+                          <div className="h-10 w-full flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-700 shadow-sm">
+                            {row.peran}
+                          </div>
+                        </td>
+                        <td className="py-2.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeMahasiswaRow(idx)}
+                            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-600">Instansi</label>
-                <Input
-                  name="instansi"
-                  value={formValues.instansi}
-                  onChange={handleInputChange}
-                  placeholder="Contoh: Kementerian Pertanian"
-                />
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addMahasiswaRow}
+                  className="h-10 px-4 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus size={14} />
+                  Tambah Mahasiswa
+                </Button>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-600">Permintaan Dana</label>
-                <Input
-                  name="funding_request_amount"
-                  value={formValues.funding_request_amount}
-                  onChange={handleInputChange}
-                  placeholder="Contoh: 15000000"
-                />
-              </div>
+          {/* Card 5: Upload Dokumen */}
+          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
+            <CardContent className="p-6 space-y-4">
+              <h3 className="text-base font-bold text-gray-800">
+                Upload Dokumen
+              </h3>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-600">File Proposal</label>
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <div className="flex items-center">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* File Proposal */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    File Proposal<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center justify-between border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
                     <label
                       htmlFor="proposal-file-input"
-                      className="cursor-pointer border-r border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-3 cursor-pointer flex-1 py-1"
                     >
-                      Browse
+                      <Upload className="text-gray-400" size={18} />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-600">
+                          {formValues.proposal_file?.name ||
+                          existingProposalFile.name ? (
+                            <span className="text-gray-900 truncate max-w-xs block">
+                              {formValues.proposal_file?.name ||
+                                existingProposalFile.name}
+                            </span>
+                          ) : (
+                            "Pilih file atau drag & drop"
+                          )}
+                        </p>
+                      </div>
                     </label>
-                    <p className="min-w-0 flex-1 px-3 py-2 text-sm text-gray-500">
-                      <span className="block truncate">
-                        {formValues.proposal_file?.name ||
-                          existingProposalFile.name ||
-                          "No file selected"}
-                      </span>
-                    </p>
+                    <span className="text-xs font-semibold text-gray-400 bg-white border border-gray-200 rounded px-2.5 py-1">
+                      PDF
+                    </span>
+                    <input
+                      id="proposal-file-input"
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      onChange={(e) => handleFileChange(e, "proposal_file")}
+                      className="hidden"
+                    />
                   </div>
-                  <input
-                    id="proposal-file-input"
-                    type="file"
-                    accept=".pdf,application/pdf"
-                    onChange={(e) => handleFileChange(e, "proposal_file")}
-                    className="hidden"
-                  />
+                  {existingProposalFile.link && (
+                    <div className="mt-1">
+                      <a
+                        href={existingProposalFile.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Lihat file proposal sebelumnya
+                      </a>
+                    </div>
+                  )}
+                  {formMode === "edit" && !existingProposalFile.link && (
+                    <p className="text-xs text-gray-400">
+                      Belum ada file proposal tersimpan pada data ini.
+                    </p>
+                  )}
                 </div>
-                <p className="text-xs text-gray-500">Format: PDF</p>
-                {existingProposalFile.link && (
-                  <a
-                    href={existingProposalFile.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    Lihat file proposal sebelumnya
-                  </a>
-                )}
-                {formMode === "edit" && !existingProposalFile.link && (
-                  <p className="text-xs text-gray-500">
-                    Belum ada file proposal tersimpan pada data ini.
-                  </p>
-                )}
-              </div>
 
-              <div className="space-y-1">
-                <label className="text-sm text-gray-600">File RAB</label>
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <div className="flex items-center">
+                {/* File RAB */}
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-gray-700">
+                    File RAB<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center justify-between border border-dashed border-gray-300 rounded-xl bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
                     <label
                       htmlFor="rab-file-input"
-                      className="cursor-pointer border-r border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-3 cursor-pointer flex-1 py-1"
                     >
-                      Browse
+                      <Upload className="text-gray-400" size={18} />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-600">
+                          {formValues.rab_file?.name || existingRabFile.name ? (
+                            <span className="text-gray-900 truncate max-w-xs block">
+                              {formValues.rab_file?.name ||
+                                existingRabFile.name}
+                            </span>
+                          ) : (
+                            "Pilih file atau drag & drop"
+                          )}
+                        </p>
+                      </div>
                     </label>
-                    <p className="min-w-0 flex-1 px-3 py-2 text-sm text-gray-500">
-                      <span className="block truncate">
-                        {formValues.rab_file?.name ||
-                          existingRabFile.name ||
-                          "No file selected"}
-                      </span>
-                    </p>
+                    <span className="text-xs font-semibold text-gray-400 bg-white border border-gray-200 rounded px-2.5 py-1">
+                      PDF / Excel
+                    </span>
+                    <input
+                      id="rab-file-input"
+                      type="file"
+                      accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                      onChange={(e) => handleFileChange(e, "rab_file")}
+                      className="hidden"
+                    />
                   </div>
-                  <input
-                    id="rab-file-input"
-                    type="file"
-                    accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    onChange={(e) => handleFileChange(e, "rab_file")}
-                    className="hidden"
-                  />
+                  {existingRabFile.link && (
+                    <div className="mt-1">
+                      <a
+                        href={existingRabFile.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Lihat file RAB sebelumnya
+                      </a>
+                    </div>
+                  )}
+                  {formMode === "edit" && !existingRabFile.link && (
+                    <p className="text-xs text-gray-400">
+                      Belum ada file RAB tersimpan pada data ini.
+                    </p>
+                  )}
                 </div>
-                <p className="text-xs text-gray-500">Format: PDF atau Excel</p>
-                {existingRabFile.link && (
-                  <a
-                    href={existingRabFile.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    Lihat file RAB sebelumnya
-                  </a>
-                )}
-                {formMode === "edit" && !existingRabFile.link && (
-                  <p className="text-xs text-gray-500">
-                    Belum ada file RAB tersimpan pada data ini.
-                  </p>
-                )}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button type="button" variant="outline" onClick={closeForm}>
-                Batal
-              </Button>
+          {/* Tombol Aksi di Bagian Bawah */}
+          <div className="flex flex-wrap justify-end gap-3 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeForm}
+              className="h-10 px-5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer text-xs font-semibold"
+            >
+              <X size={15} />
+              Batal
+            </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                disabled={isSubmittingForm}
-                onClick={() => void handleSaveProposal(true)}
-              >
-                Simpan Draf
-              </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmittingForm}
+              onClick={() => void handleSaveProposal(true)}
+              className="h-10 px-5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer text-xs font-semibold"
+            >
+              <Calendar size={15} />
+              Simpan Draft
+            </Button>
 
-              <Button
-                type="button"
-                className="bg-red-600 text-white hover:bg-red-700"
-                disabled={isSubmittingForm}
-                onClick={() => void handleSaveProposal(false)}
-              >
-                {isSubmittingForm ? "Memproses..." : "Simpan & Submit"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <Button
+              type="button"
+              disabled={isSubmittingForm}
+              onClick={() => void handleSaveProposal(false)}
+              className="h-10 px-5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white flex items-center gap-2 cursor-pointer text-xs font-semibold border-0"
+            >
+              <Send size={15} />
+              {isSubmittingForm ? "Memproses..." : "Simpan & Submit"}
+            </Button>
+          </div>
+        </div>
       )}
 
       <Card>

@@ -61,7 +61,7 @@ export default function ReviewerEksternalDashboard() {
   };
 
   return (
-    <div className="p-8 min-h-screen bg-gray-50">
+    <div className="p-4 sm:p-8 min-h-screen bg-gray-50">
 
       {/* HEADER */}
       <div className="text-center mb-8">
@@ -76,18 +76,18 @@ export default function ReviewerEksternalDashboard() {
 
       {/* SEARCH */}
       <div className="flex justify-center mb-8">
-        <div className="flex items-center w-full max-w-2xl bg-white shadow-sm rounded-full px-4 py-2 border">
-          <Search className="text-gray-400 mr-2" size={18} />
+        <div className="flex items-center w-full max-w-2xl bg-white shadow-sm rounded-full px-4 py-2 border gap-2">
+          <Search className="text-gray-400 shrink-0" size={18} />
 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             type="text"
             placeholder="Cari judul penelitian, nama dosen, atau kata kunci..."
-            className="flex-1 outline-none text-sm"
+            className="flex-1 outline-none text-sm min-w-0"
           />
 
-          <button className="bg-red-600 text-white text-sm px-5 py-1.5 rounded-full">
+          <button className="bg-red-600 text-white text-sm px-5 py-1.5 rounded-full shrink-0 cursor-pointer">
             Cari
           </button>
         </div>
@@ -102,14 +102,14 @@ export default function ReviewerEksternalDashboard() {
         <div className="flex gap-4 text-xs">
           <button
             onClick={() => setActiveFilter("terpopuler")}
-            className={activeFilter === "terpopuler" ? "text-gray-800 font-medium" : "text-gray-400"}
+            className={`cursor-pointer ${activeFilter === "terpopuler" ? "text-gray-800 font-medium" : "text-gray-400"}`}
           >
             Terpopuler
           </button>
 
           <button
             onClick={() => setActiveFilter("terbaru")}
-            className={activeFilter === "terbaru" ? "text-red-600 font-medium" : "text-gray-400"}
+            className={`cursor-pointer ${activeFilter === "terbaru" ? "text-red-600 font-medium" : "text-gray-400"}`}
           >
             Terbaru
           </button>
@@ -122,15 +122,15 @@ export default function ReviewerEksternalDashboard() {
           filteredData.map((item) => (
             <div key={item.id} className="bg-white border rounded-xl p-5 shadow-sm">
 
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
 
                 {/* LEFT */}
-                <div>
+                <div className="min-w-0 flex-1">
                   <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-md">
                     {item.category}
                   </span>
 
-                  <h3 className="mt-2 text-base font-semibold text-gray-800">
+                  <h3 className="mt-2 text-base font-semibold text-gray-800 break-words">
                     {item.title}
                   </h3>
 
@@ -138,7 +138,7 @@ export default function ReviewerEksternalDashboard() {
                     {item.author} • {item.year}
                   </p>
 
-                  <p className="text-sm text-gray-500 mt-2 max-w-xl">
+                  <p className="text-sm text-gray-500 mt-2 max-w-xl break-words">
                     {item.description}
                   </p>
 
@@ -150,7 +150,7 @@ export default function ReviewerEksternalDashboard() {
                 {/* RIGHT */}
                 <button
                   onClick={() => handleDownload(item.pdfUrl, item.title)}
-                  className="flex items-center gap-1 text-xs border px-3 py-1.5 rounded-md hover:bg-gray-100"
+                  className="flex items-center gap-1 text-xs border px-3 py-1.5 rounded-md hover:bg-gray-100 shrink-0 self-start sm:self-auto cursor-pointer"
                 >
                   <FileText size={14} />
                   PDF

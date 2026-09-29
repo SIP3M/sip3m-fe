@@ -15,11 +15,13 @@ import {
 } from "lucide-react";
 import { Checkbox } from "radix-ui";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "@/features/auth/auth.store";
 import { Global } from "recharts";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const logout = useAuthStore((state) => state.logout);
 
   const menus = [
     {
@@ -30,24 +32,21 @@ export default function Sidebar() {
   ];
 
   const handleLogout = () => {
-    localStorage.clear(); // hapus semua data login
-    navigate("/login");
+    logout();
+    navigate("/", { replace: true });
   };
 
   return (
-    <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)]">
+    <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)] z-50 transition-transform duration-300 -translate-x-full peer-checked:translate-x-0 lg:translate-x-0">
       {/* TOP */}
       <div>
         {/* LOGO */}
-        <div className="flex items-center gap-3 px-6 py-5">
-          <div className="w-8 h-8 text-white flex items-center justify-center rounded font-bold">
-            <img src="/src/assets/images/logo.png" alt="" />
-          </div>
-
-          <div>
-            <p className="font-semibold text-sm">LPPM UMC</p>
-            <p className="text-xs text-gray-500">Research Management</p>
-          </div>
+        <div className="flex items-center gap-3 px-6 py-6">
+          <img
+            src="/src/assets/images/Logo LPPM UMC 2.png"
+            alt="Logo LPPM UMC"
+            className="h-14 w-auto object-contain"
+          />
         </div>
 
         {/* MENU */}

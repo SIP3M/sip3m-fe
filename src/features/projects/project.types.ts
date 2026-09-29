@@ -101,6 +101,15 @@ export interface GetMonitoringProjectDetailResponse {
   data: MonitoringProjectDetail;
 }
 
+export interface UpdatePengabdianProjectStatusPayload {
+  status: MonitoringStatusFilter | string;
+}
+
+export interface UpdatePengabdianProjectStatusResponse {
+  message: string;
+  data: MonitoringProjectDetail;
+}
+
 // ─── Pengabdian (Dosen) Types ─────────────────────────────────────────────────
 
 export type MilestoneStatus = "COMPLETED" | "ONGOING" | "PENDING";
@@ -160,4 +169,14 @@ export interface UploadMilestoneDocumentsResponse {
     status: string;
     project_overall_progress: number;
   };
+}
+
+export interface VerifyPengabdianDocumentPayload {
+  status: "APPROVED" | "REJECTED";
+  notes?: string;
+}
+
+export interface VerifyPengabdianDocumentResponse {
+  message: string;
+  data: MonitoringDocument;
 }

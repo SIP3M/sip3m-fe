@@ -34,6 +34,10 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // 🆕 State untuk toast sukses login (UI only, tidak menyentuh logic auth)
+  const [loginSuccess, setLoginSuccess] = useState(false);
+  const [loggedInName, setLoggedInName] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
@@ -68,7 +72,14 @@ const LoginPage = () => {
       setUser(user);
 
       const role = (user as User | undefined)?.roles?.roles;
-      navigate(getDashboardPathByRole(role));
+
+      // 🆕 Trigger toast sukses sebelum redirect (tidak mengubah role/logic)
+      setLoggedInName((user as User | undefined)?.name || "");
+      setLoginSuccess(true);
+
+      setTimeout(() => {
+        navigate(getDashboardPathByRole(role));
+      }, 1800);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const responseData = error.response?.data;
@@ -118,6 +129,8 @@ const LoginPage = () => {
           rememberMe={rememberMe}
           handleRememberMeChange={setRememberMe}
           isLoading={isLoading}
+          loginSuccess={loginSuccess}
+          userName={loggedInName}
         />
       </div>
 

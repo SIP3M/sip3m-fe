@@ -1,5 +1,5 @@
 import { api } from "@/services/api";
-import { LoginPayload, LoginResponse } from "./auth.types";
+import { LoginPayload, LoginResponse, MasterData } from "./auth.types";
 import {
   RegisterDosenPayload,
   RegisterReviewerPayload,
@@ -15,6 +15,16 @@ export const login = async (data: LoginPayload) => {
 export const registerDosen = async (data: RegisterDosenPayload) => {
   const res = await api.post<RegisterResponse>("/auth/register/dosen", data);
   return res.data;
+};
+
+export const getFakultas = async () => {
+  const res = await api.get<MasterData[]>("/fakultas");
+  return res.data.data || res.data;
+};
+
+export const getProdiByFakultas = async (fakultasId: number) => {
+  const res = await api.get<MasterData[]>(`/fakultas/${fakultasId}/program-studi`);
+  return res.data.data || res.data;
 };
 
 export const registerReviewer = async (data: RegisterReviewerPayload) => {
@@ -47,3 +57,5 @@ export const getCurrentUser = async () => {
   const res = await api.get<GetCurrentUserResponse>("/auth/me");
   return res.data;
 };
+export type { MasterData };
+
