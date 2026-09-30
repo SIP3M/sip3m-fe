@@ -27,7 +27,7 @@ import {
   ProposalFormValues,
 } from "./ProposalDosen.types";
 import { Button } from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUsers } from "@/features/users/Users.api";
 
@@ -39,6 +39,7 @@ const defaultFormValues: ProposalFormValues = {
   prodi: "",
   skema: "",
   sumber_data_penelitian: "",
+  detail_sumber_penelitian: "",
   instansi: "",
   dosen_terlibat: "",
   nidn_dosen_terlibat: "",
@@ -457,6 +458,7 @@ export default function ProposalDosen() {
       prodi: (proposal as any).prodi || "",
       skema: proposal.skema || "",
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
+      detail_sumber_penelitian: (proposal as any).detail_sumber_penelitian || "",
       instansi: proposal.instansi || "",
       dosen_terlibat: proposal.dosen_terlibat || "",
       nidn_dosen_terlibat: proposal.nidn_dosen_terlibat || "",
@@ -516,7 +518,7 @@ export default function ProposalDosen() {
                 return updated;
               });
             }
-          } catch {}
+          } catch { }
         })(nims[i], i);
       }
     }
@@ -566,6 +568,8 @@ export default function ProposalDosen() {
       skema: formValues.skema.trim() || undefined,
       sumber_data_penelitian:
         formValues.sumber_data_penelitian.trim() || undefined,
+      detail_sumber_penelitian:
+        formValues.detail_sumber_penelitian.trim() || undefined,
       instansi: formValues.instansi.trim() || undefined,
       dosen_terlibat: formValues.dosen_terlibat.trim() || undefined,
       nidn_dosen_terlibat: formValues.nidn_dosen_terlibat.trim() || undefined,
@@ -739,7 +743,7 @@ export default function ProposalDosen() {
 
               <div className="space-y-4">
                 {/* Judul Proposal */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Judul Proposal<span className="text-red-500">*</span>
                   </label>
@@ -748,10 +752,12 @@ export default function ProposalDosen() {
                     value={formValues.title}
                     onChange={handleInputChange}
                     placeholder="Masukkan judul proposal"
-                    className="h-11 rounded-xl"
+                    className="h-11 rounded-xl w-full border border-gray-300 px-4"
                   />
                 </div>
-                <div className="space-y-1.5">
+
+                {/* Fakultas/Bidang */}
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Fakultas/Bidang<span className="text-red-500">*</span>
                   </label>
@@ -760,12 +766,12 @@ export default function ProposalDosen() {
                     value={formValues.faculty}
                     onChange={handleInputChange}
                     placeholder="Masukkan Nama Fakultas"
-                    className="h-11 rounded-xl"
+                    className="h-11 rounded-xl w-full border border-gray-300 px-4"
                   />
                 </div>
 
                 {/* Sumber Data Penelitian */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Sumber Data Penelitian
                   </label>
@@ -774,22 +780,26 @@ export default function ProposalDosen() {
                     value={formValues.sumber_data_penelitian}
                     onChange={handleInputChange}
                     placeholder="Contoh: Data Primer, Observasi Lapangan, BPS, Dataset Internal"
-                    className="h-11 rounded-xl"
+                    className="h-11 rounded-xl w-full border border-gray-300 px-4"
                   />
                 </div>
 
                 {/* Detail Sumber Data Penelitian */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Detail Sumber Data Penelitian
                   </label>
                   <textarea
-                    name="sumber_data_penelitian"
-                    value={formValues.sumber_data_penelitian}
+                    name="detail_sumber_penelitian"
+                    value={formValues.detail_sumber_penelitian}
                     onChange={handleInputChange}
-                    placeholder="Jelaskan lebih detail mengenai sumber data yang akan digunakan dalam penelitian..."
+                    placeholder="Jelaskan secara detail tentang sumber data penelitian, metodologi pengumpulan data, karakteristik data, dan relevansinya dengan penelitian ini... (Maksimal 2000 karakter)"
                     className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    maxLength={2000}
                   />
+                  <div className={`text-xs font-medium ${formValues.detail_sumber_penelitian.length >= 1800 ? 'text-orange-500' : 'text-gray-400'}`}>
+                    {formValues.detail_sumber_penelitian.length}/2000 karakter
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -808,9 +818,11 @@ export default function ProposalDosen() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Sumber Pendanaan */}
-                <div className="space-y-1.5">
+              {/* Grid Utama 2 Kolom - CUKUP SATU SAJA */}
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+                {/* 1. Sumber Pendanaan */}
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Sumber Pendanaan
                   </label>
@@ -822,9 +834,7 @@ export default function ProposalDosen() {
                     >
                       <option value="Pilih">Pilih</option>
                       <option value="Internal Kampus">Internal Kampus</option>
-                      <option value="Kemendikbudristek">
-                        Kemendikbudristek
-                      </option>
+                      <option value="Kemendikbudristek">Kemendikbudristek</option>
                       <option value="Mandiri">Mandiri</option>
                       <option value="Lainnya">Lainnya</option>
                     </select>
@@ -845,8 +855,8 @@ export default function ProposalDosen() {
                   </div>
                 </div>
 
-                {/* Skema Penelitian / Hibah */}
-                <div className="space-y-1.5">
+                {/* 2. Skema Penelitian / Hibah */}
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Skema Penelitian / Hibah
                   </label>
@@ -881,8 +891,8 @@ export default function ProposalDosen() {
                   </div>
                 </div>
 
-                {/* Instansi Pemberi Dana */}
-                <div className="space-y-1.5">
+                {/* 3. Instansi Pemberi Dana */}
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
                     Instansi Pemberi Dana
                   </label>
@@ -891,15 +901,14 @@ export default function ProposalDosen() {
                     value={formValues.instansi}
                     onChange={handleInputChange}
                     placeholder="Contoh: LPPM UMC, Kemendikbudristek, ..."
-                    className="h-11 rounded-xl"
+                    className="h-11 w-full rounded-xl border border-gray-300 px-4"
                   />
                 </div>
 
-                {/* Nominal Pengajuan Dana */}
-                <div className="space-y-1.5">
+                {/* 4. Nominal Pengajuan Dana */}
+                <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Nominal Pengajuan Dana
-                    <span className="text-red-500">*</span>
+                    Nominal Pengajuan Dana <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-gray-500">
@@ -916,239 +925,207 @@ export default function ProposalDosen() {
                         }));
                       }}
                       placeholder="15.000.000"
-                      className="h-11 pl-12 rounded-xl"
+                      className="h-11 w-full pl-12 rounded-xl border border-gray-300"
                     />
                   </div>
                 </div>
+
               </div>
+
+
             </CardContent>
           </Card>
 
           {/* Card 3: Tim Dosen Peneliti */}
-          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-gray-800">
-                  Tim  Peneliti
-                </h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Dosen-dosen yang terlibat dalam penelitian atau pengabdian,
-                  dll.
-                </p>
-              </div>
+          <div className="space-y-6">
+            {/* Card 3: Tim Dosen Peneliti */}
+            <Card className="rounded-2xl border border-gray-200/80 bg-white shadow-xs">
+              <CardContent className="p-6 space-y-4">
+                <div className="border-b border-gray-100 pb-3">
+                  <h3 className="text-base font-bold text-gray-800">
+                    Tim Dosen Peneliti
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Dosen-dosen yang terlibat dalam penelitian atau pengabdian, dll.
+                  </p>
+                </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead>
-                    <tr className="text-xs font-semibold text-gray-500 border-b border-gray-100">
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "25%" }}
-                      >
-                        NIDN
-                      </th>
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "45%" }}
-                      >
-                        Nama Dosen
-                      </th>
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "25%" }}
-                      >
-                        Peran
-                      </th>
-                      <th
-                        className="pb-2 font-semibold text-center"
-                        style={{ width: "5%" }}
-                      >
-                        Aksi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {dosenRows.map((row, idx) => (
-                      <tr key={idx} className="align-middle">
-                        <td className="py-2.5 pr-2">
-                          <Input
-                            value={row.nidn}
-                            onChange={(e) =>
-                              handleDosenChange(idx, "nidn", e.target.value)
-                            }
-                            placeholder="Masukkan NIDN"
-                            className="h-10 text-xs rounded-lg min-h-[40px] bg-white border-gray-300"
-                          />
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <Input
-                            value={row.nama}
-                            onChange={(e) =>
-                              handleDosenChange(idx, "nama", e.target.value)
-                            }
-                            placeholder="Nama dosen otomatis muncul"
-                            className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
-                          />
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <div
-                            className={`h-10 w-full flex items-center rounded-lg border px-3 text-xs font-medium shadow-sm ${
-                              idx === 0
-                                ? "border-red-200 bg-red-50 text-red-700"
-                                : "border-blue-200 bg-blue-50 text-blue-700"
-                            }`}
-                          >
-                            {row.peran}
-                          </div>
-                        </td>
-                        <td className="py-2.5 text-center">
-                          <button
-                            type="button"
-                            disabled={idx === 0}
-                            onClick={() => removeDosenRow(idx)}
-                            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:hover:text-gray-400 cursor-pointer transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="text-xs font-semibold text-gray-500">
+                        <th className="pb-3 font-semibold" style={{ width: "22%" }}>
+                          NIDN
+                        </th>
+                        <th className="pb-3 font-semibold" style={{ width: "48%" }}>
+                          Nama Dosen
+                        </th>
+                        <th className="pb-3 font-semibold" style={{ width: "23%" }}>
+                          Peran
+                        </th>
+                        <th className="pb-3 font-semibold text-center" style={{ width: "7%" }}>
+                          Aksi
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {dosenRows.map((row, idx) => (
+                        <tr key={idx} className="align-middle">
+                          <td className="py-2 pr-2">
+                            <Input
+                              value={row.nidn}
+                              onChange={(e) =>
+                                handleDosenChange(idx, "nidn", e.target.value)
+                              }
+                              placeholder="Masukkan NIDN"
+                              className="w-full h-10 text-xs rounded-xl bg-white border border-gray-300 text-gray-800 focus:border-gray-400 focus:ring-0 shadow-none px-4"
+                            />
+                          </td>
+                          <td className="py-2 pr-2">
+                            <Input
+                              value={row.nama}
+                              onChange={(e) =>
+                                handleDosenChange(idx, "nama", e.target.value)
+                              }
+                              placeholder="Nama dosen otomatis muncul"
+                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                            />
+                          </td>
+                          <td className="py-2 pr-2">
+                            <div className="h-10 w-full flex items-center rounded-xl border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800 shadow-none">
+                              {row.peran}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => removeDosenRow(idx)}
+                              className="p-1.5 rounded-lg border border-transparent text-gray-300 hover:text-red-500 disabled:opacity-20 disabled:hover:text-gray-300 cursor-pointer transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addDosenRow}
-                  className="h-10 px-4 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus size={14} />
-                  Tambah Anggota
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addDosenRow}
+                    className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none"
+                  >
+                    <Plus size={14} />
+                    Tambah Dosen
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Card 4: Mahasiswa Terlibat */}
-          <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-gray-800">
-                  Mahasiswa Terlibat
-                </h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Daftar mahasiswa yang terlibat dalam penelitian. (Opsional)
-                </p>
-              </div>
+            {/* Card 4: Mahasiswa Terlibat */}
+            <Card className="rounded-2xl border border-gray-200/80 bg-white shadow-xs">
+              <CardContent className="p-6 space-y-4">
+                <div className="border-b border-gray-100 pb-3">
+                  <h3 className="text-base font-bold text-gray-800">
+                    Mahasiswa Terlibat
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Daftar mahasiswa yang terlibat dalam penelitian. (Opsional)
+                  </p>
+                </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead>
-                    <tr className="text-xs font-semibold text-gray-500 border-b border-gray-100">
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "20%" }}
-                      >
-                        NIM
-                      </th>
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "35%" }}
-                      >
-                        Nama Mahasiswa
-                      </th>
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "25%" }}
-                      >
-                        Program Studi
-                      </th>
-                      <th
-                        className="pb-2 font-semibold"
-                        style={{ width: "15%" }}
-                      >
-                        Peran
-                      </th>
-                      <th
-                        className="pb-2 font-semibold text-center"
-                        style={{ width: "5%" }}
-                      >
-                        Aksi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {mahasiswaRows.map((row, idx) => (
-                      <tr key={idx} className="align-middle">
-                        <td className="py-2.5 pr-2">
-                          <Input
-                            value={row.nim}
-                            onChange={(e) =>
-                              handleMahasiswaChange(idx, "nim", e.target.value)
-                            }
-                            placeholder="Masukkan NIM"
-                            className="h-10 text-xs rounded-lg min-h-[40px] bg-white border-gray-300"
-                          />
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <Input
-                            value={row.nama}
-                            onChange={(e) =>
-                              handleMahasiswaChange(idx, "nama", e.target.value)
-                            }
-                            placeholder="Nama mahasiswa otomatis muncul"
-                            className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
-                          />
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <Input
-                            value={row.prodi}
-                            onChange={(e) =>
-                              handleMahasiswaChange(
-                                idx,
-                                "prodi",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="Prodi otomatis muncul"
-                            className="h-10 text-xs rounded-lg min-h-[40px] bg-gray-50 border-gray-300 text-gray-600"
-                          />
-                        </td>
-                        <td className="py-2.5 pr-2">
-                          <div className="h-10 w-full flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-700 shadow-sm">
-                            {row.peran}
-                          </div>
-                        </td>
-                        <td className="py-2.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => removeMahasiswaRow(idx)}
-                            className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="text-xs font-semibold text-gray-500">
+                        <th className="pb-3 font-semibold" style={{ width: "20%" }}>
+                          NIM
+                        </th>
+                        <th className="pb-3 font-semibold" style={{ width: "35%" }}>
+                          Nama Mahasiswa
+                        </th>
+                        <th className="pb-3 font-semibold" style={{ width: "25%" }}>
+                          Program Studi
+                        </th>
+                        <th className="pb-3 font-semibold" style={{ width: "13%" }}>
+                          Peran
+                        </th>
+                        <th className="pb-3 font-semibold text-center" style={{ width: "7%" }}>
+                          Aksi
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {mahasiswaRows.map((row, idx) => (
+                        <tr key={idx} className="align-middle">
+                          <td className="py-2 pr-2">
+                            <Input
+                              value={row.nim}
+                              onChange={(e) =>
+                                handleMahasiswaChange(idx, "nim", e.target.value)
+                              }
+                              placeholder="Masukkan NIM"
+                              className="w-full h-10 text-xs rounded-xl bg-white border border-gray-300 text-gray-800 focus:border-gray-400 focus:ring-0 shadow-none px-4"
+                            />
+                          </td>
+                          <td className="py-2 pr-2">
+                            <Input
+                              value={row.nama}
+                              onChange={(e) =>
+                                handleMahasiswaChange(idx, "nama", e.target.value)
+                              }
+                              placeholder="Nama mahasiswa otomatis muncul"
+                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                            />
+                          </td>
+                          <td className="py-2 pr-2">
+                            <Input
+                              value={row.prodi}
+                              onChange={(e) =>
+                                handleMahasiswaChange(idx, "prodi", e.target.value)
+                              }
+                              placeholder="Prodi otomatis muncul"
+                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                            />
+                          </td>
+                          <td className="py-2 pr-2">
+                            <div className="h-10 w-full flex items-center rounded-xl border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800 shadow-none">
+                              {row.peran}
+                            </div>
+                          </td>
+                          <td className="py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeMahasiswaRow(idx)}
+                              className="p-1.5 rounded-lg border border-transparent text-gray-300 hover:text-red-500 cursor-pointer transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addMahasiswaRow}
-                  className="h-10 px-4 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus size={14} />
-                  Tambah Mahasiswa
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addMahasiswaRow}
+                    className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none"
+                  >
+                    <Plus size={14} />
+                    Tambah Mahasiswa
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Card 5: Upload Dokumen */}
           <Card className="rounded-xl border border-gray-100 bg-white shadow-xs">
@@ -1172,7 +1149,7 @@ export default function ProposalDosen() {
                       <div className="text-left">
                         <p className="text-sm font-medium text-gray-600">
                           {formValues.proposal_file?.name ||
-                          existingProposalFile.name ? (
+                            existingProposalFile.name ? (
                             <span className="text-gray-900 truncate max-w-xs block">
                               {formValues.proposal_file?.name ||
                                 existingProposalFile.name}
