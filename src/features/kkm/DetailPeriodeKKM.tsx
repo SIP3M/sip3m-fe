@@ -216,8 +216,10 @@ export default function DetailPeriodeKKM({ periode, onBack }: DetailPeriodeKKMPr
                   </p>
                   <p className="text-xs text-gray-400">{stat.subtitle}</p>
                 </div>
-                <div className={`bg-gradient-to-br ${stat.color} p-2.5 rounded-lg shadow-sm`}>
-                  <Icon size={18} className="text-white" />
+                <div className={`bg-gradient-to-br ${stat.color} p-2.5 rounded-lg shadow-sm flex items-center justify-center`}>
+                  <span style={{ color: 'white', display: 'flex' }}>
+                    <Icon size={18} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -243,8 +245,10 @@ export default function DetailPeriodeKKM({ periode, onBack }: DetailPeriodeKKMPr
                   </p>
                   <p className="text-xs text-gray-400">{stat.subtitle}</p>
                 </div>
-                <div className={`bg-gradient-to-br ${stat.color} p-2.5 rounded-lg shadow-sm`}>
-                  <Icon size={18} className="text-white" />
+                <div className={`bg-gradient-to-br ${stat.color} p-2.5 rounded-lg shadow-sm flex items-center justify-center`}>
+                  <span style={{ color: 'white', display: 'flex' }}>
+                    <Icon size={18} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -421,7 +425,9 @@ export default function DetailPeriodeKKM({ periode, onBack }: DetailPeriodeKKMPr
               <div key={index} className="flex items-start gap-3">
                 <div className="flex-shrink-0 mt-0.5">
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Icon size={16} className={item.color} />
+                    <span className={item.color} style={{ display: 'flex' }}>
+                      <Icon size={16} />
+                    </span>
                   </div>
                 </div>
                 <div className="flex-1">

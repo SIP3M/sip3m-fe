@@ -230,7 +230,7 @@ export default function PesertaKKM() {
   // Toggle select item
   const toggleSelectItem = (id: number) => {
     if (selectedItems.includes(id)) {
-      setSelectedItems(selectedItems.filter(item => item.id !== id));
+      setSelectedItems(selectedItems.filter(item => item !== id));
     } else {
       setSelectedItems([...selectedItems, id]);
     }

@@ -64,7 +64,7 @@ export default function GenerateKelompok() {
   ];
 
   // Section title with numbered red badge
-  const SectionTitle = ({ number, children }) => (
+  const SectionTitle = ({ number, children }: { number: number; children: React.ReactNode }) => (
     <div className="flex items-center gap-2 mb-4">
       <span className="w-6 h-6 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
         {number}
@@ -73,7 +73,7 @@ export default function GenerateKelompok() {
     </div>
   );
 
-  const ValidasiIcon = ({ type }) => {
+  const ValidasiIcon = ({ type }: { type: string }) => {
     if (type === 'ok') return <CheckCircle size={16} className="text-green-500 flex-shrink-0" />;
     if (type === 'warning') return <AlertTriangle size={16} className="text-yellow-500 flex-shrink-0" />;
     return <XCircle size={16} className="text-red-500 flex-shrink-0" />;

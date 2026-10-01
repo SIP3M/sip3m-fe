@@ -1,8 +1,10 @@
 import axios from "axios";
 import { getAccessToken } from "./storage";
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || "https://sip3m-be.vercel.app/api";
+
 export const api = axios.create({
-  baseURL: "https://sip3m-be.vercel.app/api",
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },
