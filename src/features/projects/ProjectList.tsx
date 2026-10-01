@@ -11,7 +11,7 @@ import {
 import { getMonitoringProjects } from "./project.api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input-temp";
+import { Input } from "@/components/ui/input";
 import Pagination from "@/components/common/Pagination";
 
 const EMPTY_SUMMARY: MonitoringProjectSummary = {
