@@ -27,7 +27,7 @@ import {
   ProposalFormValues,
 } from "./ProposalDosen.types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input-temp";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUsers } from "@/features/users/Users.api";
 

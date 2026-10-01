@@ -11,7 +11,7 @@ import { createUser } from "./Users.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input-temp";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -253,10 +253,10 @@ export default function AddUserPage() {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data as
           | {
-              message?: string;
-              errors?: Array<{ field?: string; message?: string }>;
-              error?: { code?: string; field?: string };
-            }
+            message?: string;
+            errors?: Array<{ field?: string; message?: string }>;
+            error?: { code?: string; field?: string };
+          }
           | undefined;
 
         const message = responseData?.message || err.message;
