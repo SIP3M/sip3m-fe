@@ -18,13 +18,13 @@ export const registerDosen = async (data: RegisterDosenPayload) => {
 };
 
 export const getFakultas = async () => {
-  const res = await api.get<MasterData[]>("/fakultas");
-  return res.data.data || res.data;
+  const res = await api.get<{ data: MasterData[] } | MasterData[]>("/fakultas");
+  return Array.isArray(res.data) ? res.data : res.data.data;
 };
 
 export const getProdiByFakultas = async (fakultasId: number) => {
-  const res = await api.get<MasterData[]>(`/fakultas/${fakultasId}/program-studi`);
-  return res.data.data || res.data;
+  const res = await api.get<{ data: MasterData[] } | MasterData[]>(`/fakultas/${fakultasId}/program-studi`);
+  return Array.isArray(res.data) ? res.data : res.data.data;
 };
 
 export const registerReviewer = async (data: RegisterReviewerPayload) => {
