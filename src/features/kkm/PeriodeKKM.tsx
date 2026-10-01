@@ -14,6 +14,8 @@ import {
   Filter,
   ChevronDown,
 } from 'lucide-react';
+import DetailPeriodeKKM from './DetailPeriodeKKM';
+import TambahPeriodeKKM from './TambahPeriodeKKM';
 
 
 // Type definitions

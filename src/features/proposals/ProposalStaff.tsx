@@ -8,6 +8,9 @@ import { Proposal } from "./proposal.types";
 
 const ITEMS_PER_PAGE = 5;
 
+type StatusFilterValue = "ALL" | "SUBMITTED";
+type ProposalStatusFilterValue = "SUBMITTED";
+
 const getErrorMessage = (err: unknown, fallback: string) => {
   if (axios.isAxiosError(err)) {
     return err.response?.data?.message || err.message || fallback;
