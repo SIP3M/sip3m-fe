@@ -253,10 +253,10 @@ export default function AddUserPage() {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data as
           | {
-              message?: string;
-              errors?: Array<{ field?: string; message?: string }>;
-              error?: { code?: string; field?: string };
-            }
+            message?: string;
+            errors?: Array<{ field?: string; message?: string }>;
+            error?: { code?: string; field?: string };
+          }
           | undefined;
 
         const message = responseData?.message || err.message;

@@ -7,7 +7,7 @@ import Pagination from "@/components/common/Pagination";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -45,8 +45,8 @@ export default function ProposalList() {
 
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message ||
-          err.message ||
-          "Gagal mengambil data proposal"
+        err.message ||
+        "Gagal mengambil data proposal"
         : err instanceof Error
           ? err.message
           : "Gagal mengambil data proposal";
@@ -99,50 +99,50 @@ export default function ProposalList() {
       {/* FILTER BAR */}
 
       {/* FILTER BAR */}
-<Card className="mb-6">
-  <CardContent className="p-4">
-    <div className="flex flex-wrap gap-4 md:flex-nowrap">
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-4 md:flex-nowrap">
 
-      {/* Skema */}
-      <Input
-        value={skemaQuery}
-        onChange={(e) => setSkemaQuery(e.target.value)}
-        className="w-52"
-        placeholder="Skema"
-      />
+            {/* Skema */}
+            <Input
+              value={skemaQuery}
+              onChange={(e) => setSkemaQuery(e.target.value)}
+              className="w-52"
+              placeholder="Skema"
+            />
 
-      {/* Status */}
-      <Input
-        value={statusQuery}
-        onChange={(e) => setStatusQuery(e.target.value)}
-        className="w-52"
-        placeholder="Status"
-      />
+            {/* Status */}
+            <Input
+              value={statusQuery}
+              onChange={(e) => setStatusQuery(e.target.value)}
+              className="w-52"
+              placeholder="Status"
+            />
 
-      {/* Tahun */}
-      <Input
-        value={tahunQuery}
-        onChange={(e) => setTahunQuery(e.target.value)}
-        className="w-52"
-        placeholder="Tahun"
-      />
+            {/* Tahun */}
+            <Input
+              value={tahunQuery}
+              onChange={(e) => setTahunQuery(e.target.value)}
+              className="w-52"
+              placeholder="Tahun"
+            />
 
-      {/* Search Button */}
-      <Button
-        type="button"
-        variant="outline"
-        className="gap-2 h-11 cursor-pointer"
-        onClick={() => {
-          setDebouncedSearch(searchQuery.trim());
-          setCurrentPage(1);
-        }}
-      >
-        <Search className="h-4 w-4" />
-        Search
-      </Button>
-    </div>
-  </CardContent>
-</Card>
+            {/* Search Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2 h-11 cursor-pointer"
+              onClick={() => {
+                setDebouncedSearch(searchQuery.trim());
+                setCurrentPage(1);
+              }}
+            >
+              <Search className="h-4 w-4" />
+              Search
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
