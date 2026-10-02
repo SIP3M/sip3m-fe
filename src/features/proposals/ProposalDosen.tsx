@@ -1093,8 +1093,9 @@ export default function ProposalDosen() {
                               onChange={(e) =>
                                 handleMahasiswaChange(idx, "nim", e.target.value)
                               }
-                              placeholder="Masukkan NIM"
-                              className="w-full h-10 text-xs rounded-xl bg-white border border-gray-300 text-gray-800 focus:border-gray-400 focus:ring-0 shadow-none px-4"
+                              placeholder="NIM otomatis muncul"
+                              disabled
+                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4 cursor-not-allowed"
                             />
                           </td>
                           <td className="py-2 pr-2">
@@ -1110,7 +1111,7 @@ export default function ProposalDosen() {
                                 handleMahasiswaChange(idx, "prodi", e.target.value)
                               }
                               placeholder="Prodi otomatis muncul"
-                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4 cursor-not-allowed"
                               disabled
                             />
                           </td>
