@@ -748,20 +748,38 @@ export default function ProposalDosen() {
                     value={formValues.title}
                     onChange={handleInputChange}
                     placeholder="Masukkan judul proposal"
-                    className="h-11 rounded-xl"
+                    className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold text-gray-700">
                     Fakultas/Bidang<span className="text-red-500">*</span>
                   </label>
-                  <Input
+                  <select
                     name="faculty"
                     value={formValues.faculty}
                     onChange={handleInputChange}
-                    placeholder="Masukkan Nama Fakultas"
-                    className="h-11 rounded-xl"
-                  />
+                    className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 cursor-pointer"
+                  >
+                    <option value="">Pilih Fakultas</option>
+                    <option value="Fakultas Teknik">Fakultas Teknik</option>
+                    <option value="Fakultas Ekonomi dan Bisnis">
+                      Fakultas Ekonomi dan Bisnis
+                    </option>
+                    <option value="Fakultas Keguruan dan Ilmu Pendidikan">
+                      Fakultas Keguruan dan Ilmu Pendidikan
+                    </option>
+                    <option value="Fakultas Ilmu Kesehatan">
+                      Fakultas Ilmu Kesehatan
+                    </option>
+                    <option value="Fakultas Hukum">Fakultas Hukum</option>
+                    <option value="Fakultas Ilmu Sosial dan Ilmu Politik">
+                      Fakultas Ilmu Sosial dan Ilmu Politik
+                    </option>
+                    <option value="Fakultas Agama Islam">
+                      Fakultas Agama Islam
+                    </option>
+                  </select>
                 </div>
 
                 {/* Sumber Data Penelitian */}
@@ -774,7 +792,7 @@ export default function ProposalDosen() {
                     value={formValues.sumber_data_penelitian}
                     onChange={handleInputChange}
                     placeholder="Contoh: Data Primer, Observasi Lapangan, BPS, Dataset Internal"
-                    className="h-11 rounded-xl"
+                    className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                   />
                 </div>
 
@@ -929,7 +947,7 @@ export default function ProposalDosen() {
             <CardContent className="p-6 space-y-4">
               <div>
                 <h3 className="text-base font-bold text-gray-800">
-                  Tim  Peneliti
+                  Tim Peneliti
                 </h3>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Dosen-dosen yang terlibat dalam penelitian atau pengabdian,
