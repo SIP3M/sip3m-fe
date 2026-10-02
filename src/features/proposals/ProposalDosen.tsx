@@ -9,6 +9,7 @@ import {
   X,
   Calendar,
   Upload,
+  AlertCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -18,6 +19,8 @@ import {
   getMyProposals,
   submitProposal,
   updateProposal,
+  Dosen,
+  Mahasiswa,
 } from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import {
@@ -28,6 +31,8 @@ import {
 } from "./ProposalDosen.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DosenAutocomplete from "./components/DosenAutocomplete";
+import MahasiswaAutocomplete from "./components/MahasiswaAutocomplete";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUsers } from "@/features/users/Users.api";
 
@@ -373,6 +378,29 @@ export default function ProposalDosen() {
     if (field === "nim") {
       void searchMahasiswaUser(value, index);
     }
+  };
+
+  const handleDosenAutocompleteSelect = (dosen: Dosen, index: number) => {
+    const next = [...dosenRows];
+    next[index] = {
+      ...next[index],
+      nama: dosen.name,
+      nidn: dosen.nidn,
+    };
+    setDosenRows(next);
+    syncDosenToForm(next);
+  };
+
+  const handleMahasiswaAutocompleteSelect = (mahasiswa: Mahasiswa, index: number) => {
+    const next = [...mahasiswaRows];
+    next[index] = {
+      ...next[index],
+      nama: mahasiswa.name,
+      nim: mahasiswa.nim,
+      prodi: mahasiswa.program_studi.nama,
+    };
+    setMahasiswaRows(next);
+    syncMahasiswaToForm(next);
   };
 
   const searchMahasiswaUser = async (nim: string, index: number) => {
@@ -982,13 +1010,9 @@ export default function ProposalDosen() {
                             />
                           </td>
                           <td className="py-2 pr-2">
-                            <Input
-                              value={row.nama}
-                              onChange={(e) =>
-                                handleDosenChange(idx, "nama", e.target.value)
-                              }
-                              placeholder="Nama dosen otomatis muncul"
-                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                            <DosenAutocomplete
+                              onSelect={(dosen) => handleDosenAutocompleteSelect(dosen, idx)}
+                              placeholder="Cari atau ketik nama dosen..."
                             />
                           </td>
                           <td className="py-2 pr-2">
@@ -1073,13 +1097,9 @@ export default function ProposalDosen() {
                             />
                           </td>
                           <td className="py-2 pr-2">
-                            <Input
-                              value={row.nama}
-                              onChange={(e) =>
-                                handleMahasiswaChange(idx, "nama", e.target.value)
-                              }
-                              placeholder="Nama mahasiswa otomatis muncul"
-                              className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                            <MahasiswaAutocomplete
+                              onSelect={(mahasiswa) => handleMahasiswaAutocompleteSelect(mahasiswa, idx)}
+                              placeholder="Cari atau ketik nama mahasiswa..."
                             />
                           </td>
                           <td className="py-2 pr-2">
@@ -1090,6 +1110,7 @@ export default function ProposalDosen() {
                               }
                               placeholder="Prodi otomatis muncul"
                               className="w-full h-10 text-xs rounded-xl bg-gray-50/80 border border-gray-200 text-gray-600 shadow-none px-4"
+                              disabled
                             />
                           </td>
                           <td className="py-2 pr-2">

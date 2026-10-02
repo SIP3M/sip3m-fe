@@ -220,3 +220,59 @@ export const submitProposal = async (
   );
   return res.data;
 };
+
+// Search Dosen
+export interface Dosen {
+  id: number;
+  name: string;
+  nidn: string;
+  email: string;
+  fakultas: {
+    id: number;
+    nama: string;
+  };
+}
+
+export interface SearchDosenResponse {
+  message: string;
+  data: Dosen[];
+}
+
+export const searchDosen = async (query: string): Promise<SearchDosenResponse> => {
+  if (!query.trim()) {
+    throw new Error("Query parameter 'q' tidak boleh kosong.");
+  }
+  
+  const res = await api.get<SearchDosenResponse>("/dosen/search", {
+    params: { q: query.trim() },
+  });
+  return res.data;
+};
+
+// Search Mahasiswa
+export interface Mahasiswa {
+  id: number;
+  name: string;
+  nim: string;
+  email: string;
+  program_studi: {
+    id: number;
+    nama: string;
+  };
+}
+
+export interface SearchMahasiswaResponse {
+  message: string;
+  data: Mahasiswa[];
+}
+
+export const searchMahasiswa = async (query: string): Promise<SearchMahasiswaResponse> => {
+  if (!query.trim()) {
+    throw new Error("Query parameter 'q' tidak boleh kosong.");
+  }
+  
+  const res = await api.get<SearchMahasiswaResponse>("/mahasiswa/search", {
+    params: { q: query.trim() },
+  });
+  return res.data;
+};
