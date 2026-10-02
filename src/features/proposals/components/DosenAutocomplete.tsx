@@ -2,6 +2,15 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Search, AlertCircle, Loader2 } from 'lucide-react';
 import { searchDosen, Dosen } from '../proposal.api';
 import { debounce } from 'lodash';
+import {
+  useFloating,
+  useClick,
+  useDismiss,
+  useInteractions,
+  autoUpdate,
+  flip,
+  shift,
+} from '@floating-ui/react';
 
 interface DosenAutocompleteProps {
   onSelect: (dosen: Dosen) => void;
@@ -10,14 +19,24 @@ interface DosenAutocompleteProps {
 
 export default function DosenAutocomplete({ 
   onSelect, 
-  placeholder = "Cari nama atau NIDN dosen..." 
+  placeholder = "Cari atau ketik nama dosen..." 
 }: DosenAutocompleteProps) {
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState<Dosen[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    middleware: [flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([click, dismiss]);
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -67,21 +86,9 @@ export default function DosenAutocomplete({
     onSelect(dosen);
   };
 
-  // Close dropdown saat click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   return (
-    <div ref={containerRef} className="relative w-full">
-      <div className="relative">
+    <div className="relative w-full">
+      <div ref={refs.setReference} className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
         <input
           type="text"
@@ -104,9 +111,14 @@ export default function DosenAutocomplete({
         </div>
       )}
 
-      {/* Dropdown suggestions */}
+      {/* Dropdown suggestions - using floating-ui */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+        <div
+          ref={refs.setFloating}
+          style={floatingStyles}
+          {...getFloatingProps()}
+          className="z-50 bg-white border border-gray-300 rounded-xl shadow-lg max-h-64 overflow-y-auto"
+        >
           {suggestions.length > 0 ? (
             <ul className="divide-y divide-gray-100">
               {suggestions.map((dosen) => (
