@@ -59,7 +59,7 @@ import MonitoringKKM from "@/features/kkm/MonitoringKKM";
 import KelompokKKM from "@/features/kkm/KelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
-import TambahPeriodeKkm from "@/features/kkm/TambahPeriodeKkm";
+import TambahPeriodeKKM from "@/features/kkm/TambahPeriodeKKM";
 import DetailPeriodeKKM from "@/features/kkm/DetailPeriodeKKM";
 // import ImportMahasiswaModal from "@/features/kkm/ImportmahasiswaModal";
 
@@ -168,7 +168,7 @@ export const router = createBrowserRouter([
     },
     {
       path:"/kkm/periode/tambah",
-      element:<TambahPeriodeKkm />,
+      element:<TambahPeriodeKKM />,
     },
     {
       path : "/kkm/periode/:id",

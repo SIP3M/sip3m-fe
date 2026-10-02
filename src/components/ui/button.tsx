@@ -1,10 +1,17 @@
 import React from "react";
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: string;
+  size?: string;
+  asChild?: boolean;
+}
 
 const Button: React.FC<ButtonProps> = ({
   className = "",
   children,
+  variant,
+  size,
+  asChild,
   ...props
 }) => {
   return (
@@ -14,4 +21,6 @@ const Button: React.FC<ButtonProps> = ({
   );
 };
 
+export { Button };
 export default Button;
+

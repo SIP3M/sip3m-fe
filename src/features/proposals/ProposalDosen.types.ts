@@ -8,6 +8,7 @@ export type ProposalFormValues = {
   prodi: string;
   skema: string;
   sumber_data_penelitian: string;
+  detail_sumber_penelitian: string;
   instansi: string;
   dosen_terlibat: string;
   nidn_dosen_terlibat: string;

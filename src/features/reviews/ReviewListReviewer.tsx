@@ -111,7 +111,7 @@ const fetchAssignedProposalsByStatus = async (
   const all = [...first.data];
 
   if (first.meta.totalPages > 1) {
-    const requests: Promise<ReturnType<typeof getAssignedProposals>>[] = [];
+    const requests: ReturnType<typeof getAssignedProposals>[] = [];
 
     for (let p = 2; p <= first.meta.totalPages; p++) {
       requests.push(getAssignedProposals({ page: p, search, status }));

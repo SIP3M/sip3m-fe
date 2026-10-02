@@ -18,7 +18,7 @@ import {
   UserCog,
   Download,
 } from 'lucide-react';
-import ImportMahasiswaModal from './ImportMahasiswaModal';
+import ImportMahasiswaModal from './Importmahasiswamodal';
 
 export default function PesertaKKM() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,7 +252,7 @@ export default function PesertaKKM() {
   // Toggle select item
   const toggleSelectItem = (id: number) => {
     if (selectedItems.includes(id)) {
-      setSelectedItems(selectedItems.filter(item => item.id !== id));
+      setSelectedItems(selectedItems.filter(item => item !== id));
     } else {
       setSelectedItems([...selectedItems, id]);
     }

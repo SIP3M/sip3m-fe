@@ -32,7 +32,7 @@ export default function Profile() {
   };
 
   const namaLengkap = user?.name || "-";
-  const nidn = user?.nidn_nip || "-";
+  const nidn = (user as any)?.nidn_nip || "-";
   const roleKey = user?.roles?.roles;
   const isDosen = roleKey === APP_ROLES.DOSEN;
 
@@ -48,7 +48,12 @@ export default function Profile() {
     jumlahKelompok: number;
     totalMahasiswa: number;
     statusAktif: boolean;
-  } | null = null;
+  } = {
+    periode: "-",
+    jumlahKelompok: 0,
+    totalMahasiswa: 0,
+    statusAktif: false,
+  };
 
   const isDplKkm = !!dplAssignment;
 

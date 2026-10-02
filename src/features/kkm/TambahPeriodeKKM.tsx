@@ -2,10 +2,10 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 
 interface TambahPeriodeKKMProps {
-  onBack?: () => void;
+  onBack: () => void;
 }
 
-export default function TambahPeriodeKKM({ onBack = () => window.history.back() }: TambahPeriodeKKMProps) {
+export default function TambahPeriodeKKM({ onBack }: TambahPeriodeKKMProps) {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <button

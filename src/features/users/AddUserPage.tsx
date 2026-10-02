@@ -10,8 +10,8 @@ import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
-import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -92,7 +92,7 @@ export default function AddUserPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false); 
+  const [toastVisible, setToastVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState<{
     name: string;
     email: string;
@@ -101,6 +101,7 @@ export default function AddUserPage() {
     email?: string;
     username?: string;
     nidn_nip?: string;
+    nomor_hp?: string;
   }>({});
 
   const [form, setForm] = useState({
@@ -138,7 +139,7 @@ export default function AddUserPage() {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    if (name === "email" || name === "username" || name === "nidn_nip") {
+    if (name === "email" || name === "username" || name === "nidn_nip" || name === "nomor_hp") {
       setFieldErrors((prev) => ({
         ...prev,
         [name]: undefined,
@@ -246,16 +247,16 @@ export default function AddUserPage() {
         name: form.name,
         email: form.email,
       });
-      setToastVisible(false);   // reset dulu
+      setToastVisible(false); // reset dulu
       setShowSuccess(true);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data as
           | {
-              message?: string;
-              errors?: Array<{ field?: string; message?: string }>;
-              error?: { code?: string; field?: string };
-            }
+            message?: string;
+            errors?: Array<{ field?: string; message?: string }>;
+            error?: { code?: string; field?: string };
+          }
           | undefined;
 
         const message = responseData?.message || err.message;
@@ -265,6 +266,7 @@ export default function AddUserPage() {
             email?: string;
             username?: string;
             nidn_nip?: string;
+            nomor_hp?: string;
           } = {};
 
           responseData.errors.forEach((item) => {
@@ -276,6 +278,9 @@ export default function AddUserPage() {
             }
             if (item.field === "nidn_nip") {
               nextFieldErrors.nidn_nip = item.message || "NIDN/NIP tidak valid";
+            }
+            if (item.field === "nomor_hp") {
+              nextFieldErrors.nomor_hp = item.message || "Nomor HP tidak valid";
             }
           });
 
@@ -335,20 +340,20 @@ export default function AddUserPage() {
   };
 
   useEffect(() => {
-  if (showSuccess) {
-    // trigger animasi masuk sedikit setelah mount
-    const enterTimer = setTimeout(() => setToastVisible(true), 50);
-    // redirect setelah beberapa detik
-    const redirectTimer = setTimeout(() => {
-      navigate("/users");
-    }, 2800);
+    if (showSuccess) {
+      // trigger animasi masuk sedikit setelah mount
+      const enterTimer = setTimeout(() => setToastVisible(true), 50);
+      // redirect setelah beberapa detik
+      const redirectTimer = setTimeout(() => {
+        navigate("/users");
+      }, 2800);
 
-    return () => {
-      clearTimeout(enterTimer);
-      clearTimeout(redirectTimer);
-    };
-  }
-}, [showSuccess, navigate]);
+      return () => {
+        clearTimeout(enterTimer);
+        clearTimeout(redirectTimer);
+      };
+    }
+  }, [showSuccess, navigate]);
 
   // if (showSuccess) {
   //   return (
@@ -380,63 +385,68 @@ export default function AddUserPage() {
 
   return (
     <div className="space-y-6 p-4 sm:p-8">
-    {/* TOAST NOTIFICATION — Modern Success Alert */}
-    {showSuccess && (
-      <div className="fixed top-6 right-6 z-[100] w-full max-w-sm">
-        <div
-          className={`flex items-start gap-3 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 p-4 pr-3 transition-all duration-300 ease-out
+      {/* TOAST NOTIFICATION — Modern Success Alert */}
+      {showSuccess && (
+        <div className="fixed top-6 right-6 z-[100] w-full max-w-sm">
+          <div
+            className={`flex items-start gap-3 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 p-4 pr-3 transition-all duration-300 ease-out
             ${toastVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}
-        >
-          {/* Icon */}
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle size={22} className="text-green-600" />
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0 pt-0.5">
-            <p className="text-sm font-semibold text-gray-800">
-              Pengguna berhasil disimpan!
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5 truncate">
-              {successMessage?.name}
-            </p>
-            <p className="text-xs text-gray-400 truncate">
-              {successMessage?.email}
-            </p>
-
-            {/* Progress bar auto-dismiss */}
-            <div className="mt-2.5 h-1 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-500 rounded-full"
-                style={{
-                  animation: "toastProgress 2.8s linear forwards",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Close button */}
-          <button
-            onClick={() => {
-              setToastVisible(false);
-              setTimeout(() => setShowSuccess(false), 200);
-            }}
-            className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors p-1 -mt-1 -mr-1"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
+            {/* Icon */}
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle size={22} className="text-green-600" />
+            </div>
 
-        <style>{`
+            {/* Content */}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="text-sm font-semibold text-gray-800">
+                Pengguna berhasil disimpan!
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                {successMessage?.name}
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {successMessage?.email}
+              </p>
+
+              {/* Progress bar auto-dismiss */}
+              <div className="mt-2.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 rounded-full"
+                  style={{
+                    animation: "toastProgress 2.8s linear forwards",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setToastVisible(false);
+                setTimeout(() => setShowSuccess(false), 200);
+              }}
+              className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors p-1 -mt-1 -mr-1"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M1 1L13 13M13 1L1 13"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <style>{`
           @keyframes toastProgress {
             from { width: 100%; }
             to { width: 0%; }
           }
         `}</style>
-      </div>
-    )}
+        </div>
+      )}
 
       {/* HEADER */}
       <div className="flex items-start gap-3 w-full max-w-3xl">
@@ -798,6 +808,11 @@ export default function AddUserPage() {
                     placeholder="081234567890"
                     className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                   />
+                  {fieldErrors.nomor_hp && (
+                    <p className="mt-1 text-xs text-red-600">
+                      {fieldErrors.nomor_hp}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

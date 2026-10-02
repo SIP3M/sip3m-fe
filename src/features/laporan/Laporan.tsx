@@ -128,7 +128,7 @@ export default function Laporan() {
       // TODO: aktifkan baris ini begitu backend menerima field dokumentasi
       // if (files.dokumentasi?.file) formData.append("dokumentasi", files.dokumentasi.file);
 
-      await uploadMilestoneDocuments(formData, (progressEvent) => {
+      await uploadMilestoneDocuments(selectedProject.id, activeMilestone.id, formData, (progressEvent) => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
 
         setFiles((prev) => {
