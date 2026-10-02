@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Search, AlertCircle, Loader2 } from 'lucide-react';
 import { searchMahasiswa, Mahasiswa } from '../proposal.api';
 import { debounce } from 'lodash';
@@ -11,6 +11,7 @@ import {
   flip,
   shift,
 } from '@floating-ui/react';
+import { createPortal } from 'react-dom';
 
 interface MahasiswaAutocompleteProps {
   onSelect: (mahasiswa: Mahasiswa) => void;
@@ -30,7 +31,7 @@ export default function MahasiswaAutocomplete({
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
-    middleware: [flip(), shift({ padding: 8 })],
+    middleware: [flip({ padding: 8 }), shift({ padding: 8 })],
     whileElementsMounted: autoUpdate,
   });
 
@@ -87,37 +88,39 @@ export default function MahasiswaAutocomplete({
   };
 
   return (
-    <div className="relative w-full">
-      <div ref={refs.setReference} className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-        <input
-          type="text"
-          value={input}
-          onChange={handleInputChange}
-          onFocus={() => input.length >= 2 && setIsOpen(true)}
-          placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all bg-white"
-        />
-        {loading && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 animate-spin" size={16} />
+    <>
+      <div className="relative w-full">
+        <div ref={refs.setReference} className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+          <input
+            type="text"
+            value={input}
+            onChange={handleInputChange}
+            onFocus={() => input.length >= 2 && setIsOpen(true)}
+            placeholder={placeholder}
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all bg-white"
+          />
+          {loading && (
+            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 animate-spin" size={16} />
+          )}
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="mt-2 flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+            <p className="text-xs text-red-600">{error}</p>
+          </div>
         )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <div className="mt-2 flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-          <p className="text-xs text-red-600">{error}</p>
-        </div>
-      )}
-
-      {/* Dropdown suggestions - using floating-ui */}
-      {isOpen && (
+      {/* Dropdown suggestions - using Portal to escape overflow containers */}
+      {isOpen && createPortal(
         <div
           ref={refs.setFloating}
           style={floatingStyles}
           {...getFloatingProps()}
-          className="z-50 bg-white border border-gray-300 rounded-xl shadow-lg max-h-64 overflow-y-auto"
+          className="z-[9999] bg-white border border-gray-300 rounded-xl shadow-2xl max-h-64 overflow-y-auto"
         >
           {suggestions.length > 0 ? (
             <ul className="divide-y divide-gray-100">
@@ -146,8 +149,9 @@ export default function MahasiswaAutocomplete({
               </div>
             )
           )}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
