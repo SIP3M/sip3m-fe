@@ -276,3 +276,18 @@ export const searchMahasiswa = async (query: string): Promise<SearchMahasiswaRes
   });
   return res.data;
 };
+
+// Get list fakultas
+export interface Fakultas {
+  id: number;
+  nama: string;
+}
+
+export interface GetFakultasResponse {
+  data: Fakultas[];
+}
+
+export const getFakultasList = async (): Promise<GetFakultasResponse> => {
+  const res = await api.get<GetFakultasResponse>("/fakultas");
+  return res.data;
+};

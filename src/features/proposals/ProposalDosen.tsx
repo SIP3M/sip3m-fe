@@ -21,6 +21,8 @@ import {
   updateProposal,
   Dosen,
   Mahasiswa,
+  getFakultasList,
+  Fakultas,
 } from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import {
@@ -225,6 +227,8 @@ export default function ProposalDosen() {
     { nim: "", nama: "", prodi: "", peran: "Anggota" },
   ]);
   const [sumberPendanaan, setSumberPendanaan] = useState("Pilih");
+  const [fakultasList, setFakultasList] = useState<Fakultas[]>([]);
+  const [fakultasLoading, setFakultasLoading] = useState(true);
 
   const editingProposal = useMemo(
     () => data.find((item) => item.id === editingProposalId) || null,
@@ -248,6 +252,23 @@ export default function ProposalDosen() {
       ),
     [editingProposal],
   );
+
+  useEffect(() => {
+    const fetchFakultas = async () => {
+      try {
+        setFakultasLoading(true);
+        const response = await getFakultasList();
+        setFakultasList(response.data || []);
+      } catch (err) {
+        console.error("Gagal memuat daftar fakultas:", err);
+        setFakultasList([]);
+      } finally {
+        setFakultasLoading(false);
+      }
+    };
+
+    fetchFakultas();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -789,13 +810,26 @@ export default function ProposalDosen() {
                   <label className="text-sm font-semibold text-gray-700">
                     Fakultas/Bidang<span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    name="faculty"
-                    value={formValues.faculty}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Nama Fakultas"
-                    className="h-11 rounded-xl w-full border border-gray-300 px-4"
-                  />
+                  {fakultasLoading ? (
+                    <div className="h-11 rounded-xl w-full border border-gray-300 px-4 flex items-center text-gray-500">
+                      Loading...
+                    </div>
+                  ) : (
+                    <select
+                      name="faculty"
+                      value={formValues.faculty}
+                      onChange={handleInputChange}
+                      className="h-11 rounded-xl w-full border border-gray-300 px-4 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all"
+                      required
+                    >
+                      <option value="">-- Pilih Fakultas --</option>
+                      {fakultasList.map((fak) => (
+                        <option key={fak.id} value={fak.nama}>
+                          {fak.nama}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 {/* Sumber Data Penelitian */}
