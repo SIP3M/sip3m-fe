@@ -376,8 +376,9 @@ export default function ProposalDetail() {
             <p className="text-xs text-gray-400">Ketua Peneliti</p>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-gray-800">
               <User size={14} className="text-gray-400" />
-              {proposal.user?.name ||
-                `ID Peneliti: ${proposal.lead_researcher_id}`}
+              {proposal.dosen_terlibat
+                ? proposal.dosen_terlibat.split("\n")[0].trim()
+                : `ID Peneliti: ${proposal.lead_researcher_id}`}
             </p>
           </div>
 
@@ -442,11 +443,14 @@ export default function ProposalDetail() {
                   Ketua Peneliti
                 </p>
                 <p className="mt-1 font-medium text-gray-800">
-                  {proposal.user?.name ||
-                    `ID Peneliti: ${proposal.lead_researcher_id}`}
+                  {proposal.dosen_terlibat
+                    ? proposal.dosen_terlibat.split("\n")[0].trim()
+                    : `ID Peneliti: ${proposal.lead_researcher_id}`}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  NIDN/NIP: {proposal.user?.nidn_nip || "-"}
+                  NIDN/NIP: {proposal.nidn_dosen_terlibat
+                    ? proposal.nidn_dosen_terlibat.split("\n")[0].trim()
+                    : "-"}
                 </p>
               </div>
 
