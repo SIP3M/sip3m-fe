@@ -13,7 +13,7 @@ const statusText = {
   DISBURSED: "Tercairkan"
 }
 
-export default function FinanceRow({ data }: { data: Finance }) {
+export default function FinanceRow({ data, onDetail }: { data: Finance; onDetail?: () => void }) {
 
   return (
     <tr className="hover:bg-gray-50">
@@ -72,7 +72,10 @@ export default function FinanceRow({ data }: { data: Finance }) {
           </>
         )}
 
-        <button className="text-sm text-gray-600 hover:text-blue-600">
+        <button
+          className="text-sm text-gray-600 hover:text-blue-600"
+          onClick={onDetail}
+        >
           Detail
         </button>
 
