@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { ChevronDown, Download, Filter, Search } from "lucide-react";
 import ProposalRow from "./components/ProposalRow";
 import { Proposal } from "./proposal.types";
 import { getAllProposals } from "./proposal.api";
@@ -18,7 +18,7 @@ export default function ProposalList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [skemaQuery, setSkemaQuery] = useState("");
   const [statusQuery, setStatusQuery] = useState("");
-  const [tahunQuery, setTahunQuery] = useState("");
+  const [tahunQuery, setTahunQuery] = useState("2023");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,33 +101,63 @@ export default function ProposalList() {
       {/* FILTER BAR */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 md:flex-nowrap">
+          <div className="flex flex-wrap gap-4 md:flex-nowrap items-center">
+
+            {/* Search */}
+            <div className="relative flex-1 min-w-[280px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-11 w-full"
+                placeholder="Cari judul atau nama peneliti..."
+              />
+            </div>
 
             {/* Skema */}
-            <Input
-              value={skemaQuery}
-              onChange={(e) => setSkemaQuery(e.target.value)}
-              className="w-52"
-              placeholder="Skema"
-            />
-
-            {/* Status */}
-            <Input
-              value={statusQuery}
-              onChange={(e) => setStatusQuery(e.target.value)}
-              className="w-52"
-              placeholder="Status"
-            />
+            <div className="relative">
+              <select
+                value={skemaQuery}
+                onChange={(e) => setSkemaQuery(e.target.value)}
+                className="appearance-none w-44 h-11 pl-4 pr-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="">Semua Skema</option>
+                <option value="Penelitian Dasar">Penelitian Dasar</option>
+                <option value="Pengabdian">Pengabdian</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+            </div>
 
             {/* Tahun */}
-            <Input
-              value={tahunQuery}
-              onChange={(e) => setTahunQuery(e.target.value)}
-              className="w-52"
-              placeholder="Tahun"
-            />
+            <div className="relative">
+              <select
+                value={tahunQuery}
+                onChange={(e) => setTahunQuery(e.target.value)}
+                className="appearance-none w-44 h-11 pl-4 pr-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="2023">Tahun 2023</option>
+                <option value="2024">Tahun 2024</option>
+                <option value="2025">Tahun 2025</option>
+                <option value="2026">Tahun 2026</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+            </div>
 
-            {/* Search Button */}
+            {/* Status */}
+            <div className="relative">
+              <select
+                value={statusQuery}
+                onChange={(e) => setStatusQuery(e.target.value)}
+                className="appearance-none w-44 h-11 pl-4 pr-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="">Semua status</option>
+                <option value="Review">Review</option>
+                <option value="Disetujui">Disetujui</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+            </div>
+
+            {/* Filter Button */}
             <Button
               type="button"
               variant="outline"
@@ -137,8 +167,8 @@ export default function ProposalList() {
                 setCurrentPage(1);
               }}
             >
-              <Search className="h-4 w-4" />
-              Search
+              <Filter className="h-4 w-4" />
+              Filter
             </Button>
           </div>
         </CardContent>

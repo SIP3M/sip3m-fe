@@ -1,4 +1,4 @@
-import { Search, Filter } from "lucide-react"
+import { Search, Filter, ChevronDown } from "lucide-react"
 import LogRow from "./components/LogRow"
 import { Log } from "./log.types"
 
@@ -87,10 +87,17 @@ export default function LogsPage() {
 
           </div>
 
-          <input
-            className="border rounded-lg px-3 py-2 text-sm"
-            placeholder="Tanggal"
-          />
+          <div className="relative">
+            <select className="appearance-none border rounded-lg px-3 pr-9 py-2 text-sm bg-white text-gray-700">
+              <option value="">Semua Role</option>
+              <option value="ADMIN_LPPM">ADMIN_LPPM</option>
+              <option value="STAFF_LPPM">STAFF_LPPM</option>
+              <option value="DOSEN">DOSEN</option>
+              <option value="REVIEWER">REVIEWER</option>
+              <option value="REVIEWER_EKSTERNAL">REVIEWER_EKSTERNAL</option>
+            </select>
+            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
 
           <button className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm">
 

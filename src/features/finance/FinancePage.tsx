@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DisbursementForm from "./components/DisbursementForm";
+import FinanceDetail from "./components/FinanceDetail";
 import FinanceRow from "./components/FinanceRow";
 import { Finance } from "./finance.types";
 
@@ -35,6 +36,7 @@ const finances: Finance[] = [
 
 export default function FinancePage() {
   const [openForm, setOpenForm] = useState(false);
+  const [detailId, setDetailId] = useState<number | null>(null);
 
   return (
     <>
@@ -113,7 +115,7 @@ export default function FinancePage() {
 
             <tbody>
               {finances.map((f) => (
-                <FinanceRow key={f.id} data={f} />
+                <FinanceRow key={f.id} data={f} onDetail={() => setDetailId(f.id)} />
               ))}
             </tbody>
           </table>
@@ -123,6 +125,10 @@ export default function FinancePage() {
       {/* ✅ FORM (HARUS DI SINI) */}
       {openForm && (
         <DisbursementForm onClose={() => setOpenForm(false)} />
+      )}
+
+      {detailId !== null && (
+        <FinanceDetail onClose={() => setDetailId(null)} />
       )}
     </>
   );

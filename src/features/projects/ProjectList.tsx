@@ -173,7 +173,7 @@ export default function ProjectList() {
             </h2>
 
             <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
-              <div className="relative w-full md:w-80">
+              <div className="relative w-full md:w-[450px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   value={searchQuery}
