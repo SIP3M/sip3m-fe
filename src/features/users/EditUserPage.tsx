@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, ChevronDown } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,13 +203,13 @@ export default function EditUserPage() {
   return (
     <div className="space-y-6 p-4 sm:p-8">
       <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="icon"
+        <button
+          type="button"
           onClick={() => navigate("/users")}
+          className="flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm border border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </button>
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">
             Edit Pengguna
@@ -236,25 +236,25 @@ export default function EditUserPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Nama Lengkap
               </label>
               <Input
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="mt-2 bg-gray-50"
+                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Email</label>
               <Input
                 name="email"
                 value={form.email}
                 onChange={handleChange}
                 aria-invalid={Boolean(fieldErrors.email)}
-                className="mt-2 bg-gray-50"
+                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
               />
               {fieldErrors.email && (
                 <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
@@ -262,7 +262,7 @@ export default function EditUserPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Username
               </label>
               <Input
@@ -270,7 +270,7 @@ export default function EditUserPage() {
                 value={form.username}
                 onChange={handleChange}
                 aria-invalid={Boolean(fieldErrors.username)}
-                className="mt-2 bg-gray-50"
+                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
               />
               {fieldErrors.username && (
                 <p className="mt-1 text-xs text-red-600">
@@ -280,7 +280,7 @@ export default function EditUserPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Password Baru
               </label>
               <Input
@@ -288,31 +288,37 @@ export default function EditUserPage() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                className="mt-2 bg-gray-50"
+                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                 placeholder="Kosongkan jika tidak diubah"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Role</label>
-              <select
-                name="roles"
-                value={form.roles}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm"
-              >
-                <option value="">Pilih Role</option>
-                {ROLE_OPTIONS.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Role</label>
+              <div className="relative">
+                <select
+                  name="roles"
+                  value={form.roles}
+                  onChange={handleChange}
+                  className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                >
+                  <option value="">Pilih Role</option>
+                  {ROLE_OPTIONS.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   NIDN / NIP
                 </label>
                 <Input
@@ -320,7 +326,7 @@ export default function EditUserPage() {
                   value={form.nidn_nip}
                   onChange={handleChange}
                   aria-invalid={Boolean(fieldErrors.nidn_nip)}
-                  className="mt-2 bg-gray-50"
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                 />
                 {fieldErrors.nidn_nip && (
                   <p className="mt-1 text-xs text-red-600">
@@ -329,23 +335,29 @@ export default function EditUserPage() {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Status Akun
                 </label>
-                <select
-                  name="is_active"
-                  value={form.is_active ? "true" : "false"}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      is_active: e.target.value === "true",
-                    }))
-                  }
-                  className="mt-2 w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                <div className="relative">
+                  <select
+                    name="is_active"
+                    value={form.is_active ? "true" : "false"}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        is_active: e.target.value === "true",
+                      }))
+                    }
+                    className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  >
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
+                </div>
               </div>
             </div>
 
@@ -355,13 +367,14 @@ export default function EditUserPage() {
                 variant="secondary"
                 onClick={() => navigate("/users")}
                 disabled={isSaving}
+                className="bg-gray-100 text-gray-700 rounded-xl px-6"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-6"
               >
                 <Save className="h-4 w-4" />{" "}
                 {isSaving ? "Menyimpan..." : "Simpan Perubahan"}

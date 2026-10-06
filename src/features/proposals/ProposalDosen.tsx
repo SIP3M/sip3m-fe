@@ -10,6 +10,7 @@ import {
   Calendar,
   Upload,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -772,6 +773,15 @@ export default function ProposalDosen() {
 
       {isFormOpen && (
         <div className="space-y-6">
+          <button
+            type="button"
+            onClick={closeForm}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+            Kembali
+          </button>
+
           {/* Banner Header Merah Muda */}
           <div className="rounded-xl border border-red-100 bg-[#FEF2F2] p-5 shadow-xs">
             <h2 className="text-base font-bold text-[#DC2626]">

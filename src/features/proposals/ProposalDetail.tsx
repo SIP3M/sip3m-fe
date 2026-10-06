@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   AlertCircle,
-  ArrowLeft,
+  ChevronLeft,
+  Clock,
+  Download,
   FileText,
+  Info,
   Loader2,
-  User,
-  Calendar,
   DollarSign,
   Users2,
 } from "lucide-react";
@@ -25,7 +26,7 @@ type FeedbackState = {
   message: string;
 } | null;
 
-type TabKey = "informasi" | "dokumen" | "review" | "riwayat";
+type TabKey = "informasi" | "tim" | "dokumen" | "riwayat" | "review";
 
 const formatCurrencyIDR = (amount: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -89,11 +90,19 @@ const formatSkemaLabel = (value?: string | null) => {
     .join(" ");
 };
 
+const formatDateISO = (value?: string | null) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toISOString().split("T")[0];
+};
+
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "informasi", label: "Informasi Umum" },
+  { key: "informasi", label: "Informasi Proposal" },
+  { key: "tim", label: "Tim Peneliti" },
   { key: "dokumen", label: "Dokumen Proposal" },
-  { key: "review", label: "Proses Review" },
   { key: "riwayat", label: "Riwayat Status" },
+  { key: "review", label: "Catatan Reviewer" },
 ];
 
 export default function ProposalDetail() {
@@ -148,6 +157,7 @@ export default function ProposalDetail() {
   const isDraft = statusKey === "DRAFT";
   const isDosen = user?.roles?.roles === APP_ROLES.DOSEN;
   const canEditRevise = isDosen && (isDraft || isRevision);
+  const isUnderReview = statusKey === "REVIEW" || statusKey === "UNDER_REVIEW";
 
   const latestReview = useMemo(
     () =>
@@ -281,23 +291,23 @@ export default function ProposalDetail() {
     .filter(Boolean);
   const anggotaRows = Math.max(anggotaNames.length, anggotaNims.length);
 
+  const proposalCode = `PROP-${String(proposal.id).padStart(3, "0")}`;
+
   return (
     <div className="space-y-6 p-8">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 cursor-pointer"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Detail Proposal</h1>
-          <p className="text-sm text-gray-500">
-            Informasi lengkap dan status proposal
-          </p>
+      {isUnderReview && (
+        <div className="flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50 px-5 py-4">
+          <Clock size={18} className="mt-0.5 flex-shrink-0 text-yellow-600" />
+          <div>
+            <h3 className="text-sm font-bold text-yellow-800">
+              Sedang Direview oleh Reviewer LPPM
+            </h3>
+            <p className="mt-0.5 text-xs text-yellow-700">
+              Proposal tidak dapat diedit selama proses review berlangsung.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {isRevision && latestReview && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
@@ -364,61 +374,100 @@ export default function ProposalDetail() {
       )}
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Judul Proposal
-        </p>
-        <h2 className="mt-1 text-xl font-bold text-gray-900">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {getStatusLabel(proposal.status).toUpperCase()}
+            </span>
+            <span className="text-xs text-gray-400">{proposalCode}</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={proposal.proposal_file_path || "#"}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
+                proposal.proposal_file_path
+                  ? "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
+              }`}
+            >
+              <Download size={14} />
+              Download Proposal
+            </a>
+
+            <a
+              href={proposal.rab_file_path || "#"}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
+                proposal.rab_file_path
+                  ? "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
+              }`}
+            >
+              <Download size={14} />
+              Download RAB
+            </a>
+          </div>
+        </div>
+
+        <h2 className="mt-4 text-xl font-bold text-gray-900">
           {proposal.title}
         </h2>
 
-        <div className="mt-5 grid grid-cols-2 gap-y-4 border-t border-gray-100 pt-5 md:grid-cols-5">
+        <div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-gray-100 pt-5 sm:grid-cols-2 md:grid-cols-3">
           <div>
-            <p className="text-xs text-gray-400">Ketua Peneliti</p>
-            <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-gray-800">
-              <User size={14} className="text-gray-400" />
-              {proposal.dosen_terlibat
-                ? proposal.dosen_terlibat.split("\n")[0].trim()
-                : `ID Peneliti: ${proposal.lead_researcher_id}`}
+            <p className="text-xs text-gray-400">Nomor Proposal</p>
+            <p className="mt-1 text-sm font-semibold text-gray-800">
+              {proposalCode}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-400">Skema</p>
+            <p className="text-xs text-gray-400">Tanggal Pengajuan</p>
+            <p className="mt-1 text-sm font-semibold text-gray-800">
+              {formatDateISO(proposal.submitted_at)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-400">Skema Penelitian</p>
             <p className="mt-1 text-sm font-semibold text-gray-800">
               {formatSkemaLabel(proposal.skema)}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-400">Tahun</p>
-            <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-gray-800">
-              <Calendar size={14} className="text-gray-400" />
-              {tahunProposal}
+            <p className="text-xs text-gray-400">Sumber Pendanaan</p>
+            <p className="mt-1 text-sm font-semibold text-gray-800">
+              {proposal.sumber_pendanaan || "-"}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-400">Total Anggaran</p>
+            <p className="text-xs text-gray-400">Nominal Pengajuan</p>
             <p className="mt-1 text-sm font-semibold text-gray-800">
               {formatCurrencyIDR(proposal.funding_request_amount || 0)}
             </p>
           </div>
 
           <div>
-            <p className="text-xs text-gray-400">Status Proposal</p>
-            <span
-              className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"
-              }`}
-            >
-              {getStatusLabel(proposal.status)}
-            </span>
+            <p className="text-xs text-gray-400">Tahun Anggaran</p>
+            <p className="mt-1 text-sm font-semibold text-gray-800">
+              {tahunProposal}
+            </p>
           </div>
         </div>
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div className="mb-5 inline-flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
+        <div className="inline-flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -435,327 +484,363 @@ export default function ProposalDetail() {
           ))}
         </div>
 
-        {activeTab === "informasi" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">
-                  Ketua Peneliti
-                </p>
-                <p className="mt-1 font-medium text-gray-800">
-                  {proposal.dosen_terlibat
-                    ? proposal.dosen_terlibat.split("\n")[0].trim()
-                    : `ID Peneliti: ${proposal.lead_researcher_id}`}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  NIDN/NIP: {proposal.nidn_dosen_terlibat
-                    ? proposal.nidn_dosen_terlibat.split("\n")[0].trim()
-                    : "-"}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">
-                  Fakultas &amp; Skema
-                </p>
-                <p className="mt-1 font-medium text-gray-800">
-                  {proposal.faculty || "-"} &bull; {formatSkemaLabel(proposal.skema)}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">
-                  Sumber Data Penelitian
-                </p>
-                <p className="mt-1 font-medium text-gray-800">
-                  {proposal.sumber_data_penelitian || "-"}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">Instansi</p>
-                <p className="mt-1 font-medium text-gray-800">
-                  {proposal.instansi || "-"}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">
-                  Dana Diajukan
-                </p>
-                <p className="mt-1 font-medium text-gray-800">
-                  {formatCurrencyIDR(proposal.funding_request_amount || 0)}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <p className="text-xs uppercase text-gray-400">
-                  Diajukan Pada
-                </p>
-                <p className="mt-1 font-medium text-gray-800">
-                  {proposal.submitted_at
-                    ? new Date(proposal.submitted_at).toLocaleString("id-ID")
-                    : "-"}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-gray-100 bg-white p-4">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
-                <Users2 size={16} className="text-gray-400" />
-                Kelompok Dosen Terlibat
-              </h3>
-
-              {dosenRows === 0 ? (
-                <p className="text-sm text-gray-500">
-                  Tidak ada data dosen terlibat.
-                </p>
-              ) : (
-                <div className="overflow-x-auto rounded-xl border border-gray-100">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">No</th>
-                        <th className="px-4 py-3 font-medium">NIDN</th>
-                        <th className="px-4 py-3 font-medium">Nama Dosen</th>
-                        <th className="px-4 py-3 text-right font-medium">
-                          Peran
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: dosenRows }).map((_, i) => (
-                        <tr key={i} className="border-t border-gray-100">
-                          <td className="px-4 py-3 text-gray-500">{i + 1}</td>
-                          <td className="px-4 py-3 text-gray-500">
-                            {dosenNidns[i] || "-"}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-gray-800">
-                            {dosenNames[i] || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-right text-gray-500">
-                            {i === 0 ? "Ketua Peneliti" : "Anggota Peneliti"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        <div className="mt-6">
+          {activeTab === "informasi" && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-5 border-b border-gray-100 pb-5 md:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Judul Proposal
+                  </p>
+                  <p className="mt-1 text-sm text-gray-800">{proposal.title}</p>
                 </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-gray-100 bg-white p-4">
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
-                <Users2 size={16} className="text-gray-400" />
-                Kelompok Anggota / Mahasiswa
-              </h3>
-
-              {anggotaRows === 0 ? (
-                <p className="text-sm text-gray-500">
-                  Tidak ada data anggota.
-                </p>
-              ) : (
-                <div className="overflow-x-auto rounded-xl border border-gray-100">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">No</th>
-                        <th className="px-4 py-3 font-medium">NIM</th>
-                        <th className="px-4 py-3 font-medium">
-                          Nama Anggota
-                        </th>
-                        <th className="px-4 py-3 text-right font-medium">
-                          Peran
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: anggotaRows }).map((_, i) => (
-                        <tr key={i} className="border-t border-gray-100">
-                          <td className="px-4 py-3 text-gray-500">{i + 1}</td>
-                          <td className="px-4 py-3 text-gray-500">
-                            {anggotaNims[i] || "-"}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-gray-800">
-                            {anggotaNames[i] || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-right text-gray-500">
-                            Anggota Mahasiswa
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Skema Penelitian / Hibah
+                  </p>
+                  <p className="mt-1 text-sm text-gray-800">
+                    {formatSkemaLabel(proposal.skema)}
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+              </div>
 
-        {activeTab === "dokumen" && (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <a
-              href={proposal.proposal_file_path || "#"}
-              target="_blank"
-              rel="noreferrer"
-              className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
-                proposal.proposal_file_path
-                  ? "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
-              }`}
-            >
-              <FileText size={16} />
-              Lihat/Download Proposal
-            </a>
+              <div className="grid grid-cols-1 gap-5 border-b border-gray-100 pb-5 md:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Sumber Pendanaan
+                  </p>
+                  <p className="mt-1 text-sm text-gray-800">
+                    {proposal.sumber_pendanaan || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Instansi Pemberi Dana
+                  </p>
+                  <p className="mt-1 text-sm text-gray-800">
+                    {proposal.instansi || "-"}
+                  </p>
+                </div>
+              </div>
 
-            <a
-              href={proposal.rab_file_path || "#"}
-              target="_blank"
-              rel="noreferrer"
-              className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
-                proposal.rab_file_path
-                  ? "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
-              }`}
-            >
-              <FileText size={16} />
-              Lihat/Download RAB
-            </a>
-          </div>
-        )}
+              <div className="grid grid-cols-1 gap-5 border-b border-gray-100 pb-5 md:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Nominal Pengajuan Dana
+                  </p>
+                  <p className="mt-1 text-sm text-gray-800">
+                    {formatCurrencyIDR(proposal.funding_request_amount || 0)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Sumber Data Penelitian
+                  </p>
+                  <p className="mt-1 text-sm text-gray-800">
+                    {proposal.sumber_data_penelitian || "-"}
+                  </p>
+                </div>
+              </div>
 
-        {activeTab === "review" && (
-          <div>
-            {latestReview ? (
-              <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4 text-sm text-gray-700">
-                <p className="text-xs font-medium text-gray-400">
-                  Reviewer: {latestReview.reviewer?.name || "Tim Reviewer"}
+              <div className="border-b border-gray-100 pb-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Abstrak / Deskripsi Penelitian
                 </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
+                  {proposal.abstrak || "-"}
+                </p>
+              </div>
 
-                {latestReview.rekomendasi_akhir && (
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      Rekomendasi Akhir:
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                      {latestReview.rekomendasi_akhir}
-                    </p>
-                  </div>
-                )}
+              <div className="border-b border-gray-100 pb-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Tujuan Penelitian
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
+                  {proposal.tujuan_penelitian || "-"}
+                </p>
+              </div>
 
-                {latestReview.kelemahan_proposal && (
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      Catatan Perbaikan / Kelemahan:
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                      {latestReview.kelemahan_proposal}
-                    </p>
-                  </div>
-                )}
+              <div className="border-b border-gray-100 pb-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Metode Penelitian
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
+                  {proposal.metode_penelitian || "-"}
+                </p>
+              </div>
 
-                {latestReview.notes && (
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      Catatan Tambahan:
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                      {latestReview.notes}
-                    </p>
+              <div className="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+                <Info size={16} className="mt-0.5 flex-shrink-0 text-blue-600" />
+                <p className="text-xs text-blue-700">
+                  Data ditampilkan sesuai proposal yang telah diajukan. Hubungi
+                  LPPM jika ada ketidaksesuaian.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "tim" && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <Users2 size={16} className="text-gray-400" />
+                  Kelompok Dosen Terlibat
+                </h3>
+
+                {dosenRows === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Tidak ada data dosen terlibat.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-gray-100">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">No</th>
+                          <th className="px-4 py-3 font-medium">NIDN</th>
+                          <th className="px-4 py-3 font-medium">Nama Dosen</th>
+                          <th className="px-4 py-3 text-right font-medium">
+                            Peran
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.from({ length: dosenRows }).map((_, i) => (
+                          <tr key={i} className="border-t border-gray-100">
+                            <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+                            <td className="px-4 py-3 text-gray-500">
+                              {dosenNidns[i] || "-"}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-gray-800">
+                              {dosenNames[i] || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-right text-gray-500">
+                              {i === 0 ? "Ketua Peneliti" : "Anggota Peneliti"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
-            ) : (
-              <p className="text-sm text-gray-500">
-                Belum ada proses review untuk proposal ini.
-              </p>
-            )}
-          </div>
-        )}
 
-        {activeTab === "riwayat" && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <Users2 size={16} className="text-gray-400" />
+                  Kelompok Anggota / Mahasiswa
+                </h3>
+
+                {anggotaRows === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Tidak ada data anggota.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-gray-100">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">No</th>
+                          <th className="px-4 py-3 font-medium">NIM</th>
+                          <th className="px-4 py-3 font-medium">
+                            Nama Anggota
+                          </th>
+                          <th className="px-4 py-3 text-right font-medium">
+                            Peran
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.from({ length: anggotaRows }).map((_, i) => (
+                          <tr key={i} className="border-t border-gray-100">
+                            <td className="px-4 py-3 text-gray-500">{i + 1}</td>
+                            <td className="px-4 py-3 text-gray-500">
+                              {anggotaNims[i] || "-"}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-gray-800">
+                              {anggotaNames[i] || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-right text-gray-500">
+                              Anggota Mahasiswa
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "dokumen" && (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <a
+                href={proposal.proposal_file_path || "#"}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
+                  proposal.proposal_file_path
+                    ? "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
                 }`}
               >
-                {getStatusLabel(proposal.status)}
-              </span>
-              <p className="text-sm text-gray-600">
-                Status proposal saat ini
-                {proposal.submitted_at &&
-                  ` — diperbarui pada ${new Date(
-                    proposal.submitted_at,
-                  ).toLocaleString("id-ID")}`}
-                .
+                <FileText size={16} />
+                Lihat/Download Proposal
+              </a>
+
+              <a
+                href={proposal.rab_file_path || "#"}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
+                  proposal.rab_file_path
+                    ? "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
+                }`}
+              >
+                <FileText size={16} />
+                Lihat/Download RAB
+              </a>
+            </div>
+          )}
+
+          {activeTab === "review" && (
+            <div>
+              {latestReview ? (
+                <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4 text-sm text-gray-700">
+                  <p className="text-xs font-medium text-gray-400">
+                    Reviewer: {latestReview.reviewer?.name || "Tim Reviewer"}
+                  </p>
+
+                  {latestReview.rekomendasi_akhir && (
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        Rekomendasi Akhir:
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                        {latestReview.rekomendasi_akhir}
+                      </p>
+                    </div>
+                  )}
+
+                  {latestReview.kelemahan_proposal && (
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        Catatan Perbaikan / Kelemahan:
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                        {latestReview.kelemahan_proposal}
+                      </p>
+                    </div>
+                  )}
+
+                  {latestReview.notes && (
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        Catatan Tambahan:
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
+                        {latestReview.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Belum ada proses review untuk proposal ini.
+                </p>
+              )}
+            </div>
+          )}
+
+          {activeTab === "riwayat" && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {getStatusLabel(proposal.status)}
+                </span>
+                <p className="text-sm text-gray-600">
+                  Status proposal saat ini
+                  {proposal.submitted_at &&
+                    ` — diperbarui pada ${new Date(
+                      proposal.submitted_at,
+                    ).toLocaleString("id-ID")}`}
+                  .
+                </p>
+              </div>
+              <p className="text-xs text-gray-400">
+                Riwayat perubahan status lengkap belum tersedia pada sistem ini.
               </p>
             </div>
-            <p className="text-xs text-gray-400">
-              Riwayat perubahan status lengkap belum tersedia pada sistem ini.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
         >
-          Kembali ke Daftar Proposal
+          <ChevronLeft size={16} />
+          Kembali ke Proposal Saya
         </button>
 
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
-        >
-          <DollarSign size={16} />
-          Lihat Keuangan
-        </button>
-
-        {isDosen && canEditRevise && (
-          <>
-            <button
-              type="button"
-              onClick={handleEditProposal}
-              disabled={isSubmittingProposal}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Edit Proposal
-            </button>
-
-            <button
-              type="button"
-              onClick={() => void handleSubmitProposal()}
-              disabled={isSubmittingProposal}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
-            >
-              {isSubmittingProposal && (
-                <Loader2 size={14} className="animate-spin" />
-              )}
-              {isSubmittingProposal ? "Memproses..." : "Submit Ulang Proposal"}
-            </button>
-          </>
-        )}
-
-        {isAdmin && (
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate("/plotting-reviewer")}
-            disabled={isAssigning || !isSubmitted}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-              isAssigning || !isSubmitted
-                ? "cursor-not-allowed bg-red-200 text-white"
-                : "bg-red-600 text-white hover:bg-red-700"
-            }`}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
           >
-            {isAssigning && <Loader2 size={14} className="animate-spin" />}
-            {isAssigning ? "Memproses..." : "Plotting Reviewer"}
+            <DollarSign size={16} />
+            Lihat Keuangan
           </button>
-        )}
+
+          {isDosen && canEditRevise && (
+            <>
+              <button
+                type="button"
+                onClick={handleEditProposal}
+                disabled={isSubmittingProposal}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Edit Proposal
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleSubmitProposal()}
+                disabled={isSubmittingProposal}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              >
+                {isSubmittingProposal && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}
+                {isSubmittingProposal ? "Memproses..." : "Submit Ulang Proposal"}
+              </button>
+            </>
+          )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => navigate("/plotting-reviewer")}
+              disabled={isAssigning || !isSubmitted}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
+                isAssigning || !isSubmitted
+                  ? "cursor-not-allowed bg-red-200 text-white"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }`}
+            >
+              {isAssigning && <Loader2 size={14} className="animate-spin" />}
+              {isAssigning ? "Memproses..." : "Plotting Reviewer"}
+            </button>
+          )}
+        </div>
       </div>
 
       {isDosen && canEditRevise && isRevision && (

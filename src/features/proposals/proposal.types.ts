@@ -21,6 +21,10 @@ export interface Proposal {
   skema: string;
   sumber_data_penelitian?: string | null;
   instansi?: string | null;
+  sumber_pendanaan?: string | null;
+  abstrak?: string | null;
+  tujuan_penelitian?: string | null;
+  metode_penelitian?: string | null;
   dosen_terlibat?: string | null;
   nidn_dosen_terlibat?: string | null;
   nama_anggota?: string | null;
