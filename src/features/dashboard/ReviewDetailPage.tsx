@@ -463,6 +463,7 @@ export default function ReviewDetailPage() {
     try {
       const payload: EvaluatePayloadFinal = {
         is_draft: false,
+        decision: decisionOption as "APPROVED" | "REJECTED" | "REVISION_MINOR" | "REVISION_MAJOR",
         status: decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : decisionOption as ReviewDecision,
         score_perumusan: scores.score_perumusan,
         score_tinjauan: scores.score_tinjauan,

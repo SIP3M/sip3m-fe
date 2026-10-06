@@ -62,6 +62,7 @@ export interface EvaluatePayloadDraft {
 
 export interface EvaluatePayloadFinal {
   is_draft: false;
+  decision: "APPROVED" | "REJECTED" | "REVISION_MINOR" | "REVISION_MAJOR";
   status: ReviewDecision;
   score_perumusan: number;
   score_tinjauan: number;
