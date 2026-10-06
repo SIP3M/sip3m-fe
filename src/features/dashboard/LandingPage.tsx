@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Logo from "@/assets/images/logo.png";
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay } from "swiper/modules";
 import {
   FileText,
   Search,
@@ -10,29 +10,17 @@ import {
   Download,
   UploadCloud,
   CheckCircle,
-  PlayCircle,
-  FileCheck,
-  ArrowLeftIcon,
-  ArrowBigRightDashIcon,
-  ArrowRightIcon,
-  ArrowRightSquare,
-  ArrowRightFromLine,
-  ArrowUpRightFromSquare,
-  ArrowRightSquareIcon,
-  ArrowRightToLine,
   LogIn,
   Send,
   Medal,
-  BookAIcon,
   Library,
   Archive,
   CalendarDays,
-} from "lucide-react";
-import {
+  ChevronLeft,
+  ChevronRight,
   Eye,
   BarChart3,
   Wallet,
-  FolderOpen,
   LayoutDashboard,
   Clock,
   Award,
@@ -46,20 +34,114 @@ import {
   Youtube,
   Twitter,
 } from "lucide-react";
+import type { Swiper as SwiperType } from "swiper";
 
-import hero1 from "@/assets/images/hero1.jpg";
-import hero2 from "@/assets/images/hero2.jpg";
-import hero3 from "@/assets/images/hero3.jpg";
+// Background gedung universitas (sama untuk semua slide).
+import heroBuilding from "@/assets/images/hero1.jpg";
+// Gambar visual kanan per slide (ilustrasi/foto). Ganti file sesuai desain.
+import heroKkm from "@/assets/images/hero3.jpg";
 
 import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
 
 export default function LPPMLandingPage() {
   const navigate = useNavigate();
-  const heroImages = [hero1, hero2, hero3];
+  const swiperRef = useRef<SwiperType | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
   const aboutImage =
     "https://images.unsplash.com/photo-1523240795612-9a054b0db644";
+
+  // ============================================================
+  // KONTEN SLIDER (teks asli, bukan bagian dari gambar)
+  // - image  : gambar visual kanan (ilustrasi 3D / foto). Samakan
+  //            nama file pada import di atas.
+  // - primary / secondary : tombol. `to` = route internal,
+  //            `href` / `anchor` = tautan. Ganti sesuai kebutuhan.
+  // ============================================================
+  const heroSlides = [
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "PENELITIAN",
+      subtitle: "Dorong Penelitian Berkualitas melalui Sistem Terintegrasi",
+      description:
+        "Ajukan proposal penelitian, ikuti proses review, pantau perkembangan kegiatan, dan kelola laporan penelitian secara lebih terstruktur.",
+      image: heroBuilding,
+      imageType: "illustration" as const,
+      primary: { label: "Ajukan Proposal", icon: "FileText", to: "/login" },
+      secondary: {
+        label: "Lihat Panduan",
+        icon: "BookOpen",
+        href: "#tentang",
+      },
+    },
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "PUBLIKASI & REPOSITORY",
+      subtitle: "Temukan dan Kelola Hasil Penelitian & Pengabdian",
+      description:
+        "Simpan, kelola, dan temukan hasil penelitian, pengabdian, publikasi, laporan, serta luaran kegiatan dalam repository LPPM.",
+      image: heroBuilding,
+      imageType: "illustration" as const,
+      primary: {
+        label: "Jelajahi Repository",
+        icon: "Library",
+        href: "#",
+      },
+      secondary: { label: "Lihat Publikasi", icon: "FileText", href: "#" },
+    },
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "SISTEM INFORMASI LPPM",
+      subtitle: "Satu Sistem untuk Mengelola Seluruh Kegiatan LPPM",
+      description:
+        "Hubungkan proposal, review, pelaksanaan, monitoring, pelaporan, publikasi, dan berbagai layanan LPPM dalam satu platform digital.",
+      image: heroBuilding,
+      imageType: "photo" as const,
+      primary: { label: "Masuk ke Sistem", icon: "LogIn", to: "/login" },
+      secondary: { label: "Jelajahi Layanan", icon: "BookOpen", href: "#" },
+    },
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "KULIAH KERJA MAHASISWA (KKM)",
+      subtitle: "Kelola KKM Secara Digital dan Terpadu",
+      description:
+        "Mulai dari pembentukan kelompok, proposal, program kerja, logbook, monitoring, hingga laporan KKM dapat dikelola secara digital melalui Sistem LPPM.",
+      image: heroKkm,
+      imageType: "photo" as const,
+      primary: { label: "Masuk Modul KKM", icon: "LogIn", to: "/login" },
+      secondary: { label: "Pelajari KKM", icon: "BookOpen", href: "#" },
+    },
+  ];
+
+  // Ikon untuk tombol CTA (string -> komponen)
+  const ctaIcons: Record<string, React.ReactNode> = {
+    FileText: <FileText size={18} className="shrink-0" />,
+    BookOpen: <BookOpen size={18} className="shrink-0" />,
+    Library: <Library size={18} className="shrink-0" />,
+    LogIn: <LogIn size={18} className="shrink-0" />,
+  };
+
+  // Menjalankan aksi tombol: prioritas route internal, lalu href/anchor.
+  const handleCta = (target: {
+    to?: string;
+    href?: string;
+    anchor?: string;
+  }) => {
+    if (target.to) {
+      navigate(target.to);
+    } else if (target.href) {
+      if (target.href.startsWith("#")) {
+        document
+          .querySelector(target.href)
+          ?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.open(target.href, "_self");
+      }
+    } else if (target.anchor) {
+      document
+        .querySelector(target.anchor)
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="font-sans text-gray-800">
@@ -132,60 +214,139 @@ export default function LPPMLandingPage() {
       </nav>
 
       {/* HERO SLIDER */}
-      <section id="beranda" className="h-162.5">
+      <section id="beranda" className="relative h-162.5 overflow-hidden">
+        {/* Background gedung universitas (sama untuk semua slide) */}
+        <img
+          src={heroBuilding}
+          alt="Universitas Muhammadiyah Cirebon"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Overlay merah transparan */}
+        <div className="absolute inset-0 bg-linear-to-r from-red-700/95 via-red-600/80 to-red-500/60" />
+
         <Swiper
-  modules={[Autoplay, Navigation, Pagination]}
-  autoplay={{ delay: 4000, disableOnInteraction: false }}
-  loop
-  navigation
-  pagination={{ clickable: true }}
-  className="h-full custom-swiper"
->
-          {heroImages.map((img, i) => (
+          modules={[Autoplay]}
+          onSwiper={(swiper) => {
+            swiperRef.current = swiper;
+          }}
+          onSlideChange={(swiper) => setActiveSlide(swiper.realIndex)}
+          autoplay={{ delay: 6000, disableOnInteraction: false }}
+          loop
+          speed={700}
+          className="h-full"
+        >
+          {heroSlides.map((slide, i) => (
             <SwiperSlide key={i}>
-              <div className="relative h-full group">
-                {/* Background Image */}
-                <img
-                  src={img}
-                  className="absolute w-full h-full object-cover scale-100 group-hover:scale-105 transition duration-700"
-                />
+              <div className="relative h-full grid md:grid-cols-2 items-center gap-8 px-12 md:px-16">
+                {/* KONTEN KIRI */}
+                <div className="text-white max-w-xl pt-24 md:pt-0">
+                  {/* Badge */}
+                  <span className="inline-flex items-center gap-2 bg-white/15 border border-white/30 backdrop-blur-sm text-white text-xs font-medium px-4 py-1.5 rounded-full">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                    {slide.badge}
+                  </span>
 
-                {/* Gradient Overlay (lebih elegan dari merah solid) */}
-                <div className="absolute w-full h-full bg-linear-to-r from-black/70 via-red-600/50 to-transparent" />
-
-                {/* Content */}
-                <div className="relative z-10 px-12 py-32 text-white max-w-2xl">
                   {/* Title */}
-                  <h1 className="text-5xl font-bold leading-tight drop-shadow-lg">
-                    Pengajuan Hibah Penelitian 2026 Telah Dibuka
+                  <h1 className="mt-5 text-4xl md:text-5xl font-extrabold uppercase leading-tight drop-shadow-md">
+                    {slide.title}
                   </h1>
 
                   {/* Subtitle */}
-                  <p className="mt-4 text-sm text-gray-200">
-                    Sistem LPPM online, transparan, dan terstruktur.
+                  <h2 className="mt-3 text-2xl md:text-3xl font-semibold leading-snug drop-shadow">
+                    {slide.subtitle}
+                  </h2>
+
+                  {/* Description */}
+                  <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-lg">
+                    {slide.description}
                   </p>
 
-                  {/* Button */}
-                  <button
-                    className="mt-6 border border-white/70 px-6 py-3 rounded-xl flex items-center gap-2 leading-none cursor-pointer 
-                    backdrop-blur-sm bg-white/10 text-white
-                    transition-all duration-300 ease-out
-                  hover:bg-red-700 hover:text-white hover:shadow-lg hover:scale-105 active:scale-95 hover:border-none"
-                  >
-                    <FileText
-                      size={18}
-                      className="shrink-0 transition-transform duration-300 "
-                    />
+                  {/* Buttons */}
+                  <div className="mt-7 flex flex-wrap items-center gap-4">
+                    <button
+                      onClick={() => handleCta(slide.primary)}
+                      className="group inline-flex items-center gap-2 border border-white/70 px-6 py-3 rounded-xl font-medium leading-none cursor-pointer
+                        backdrop-blur-sm bg-white/10 text-white transition-all duration-300 ease-out
+                        hover:bg-red-700 hover:border-red-700 hover:shadow-lg hover:scale-105 active:scale-95"
+                    >
+                      {ctaIcons[slide.primary.icon]}
+                      <span className="tracking-wide">{slide.primary.label}</span>
+                    </button>
 
-                    <span className="flex items-center font-medium tracking-wide">
-                      Ajukan Proposal
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => handleCta(slide.secondary)}
+                      className="group inline-flex items-center gap-2 border border-white/70 px-6 py-3 rounded-xl font-medium leading-none cursor-pointer
+                        backdrop-blur-sm bg-white/10 text-white transition-all duration-300 ease-out
+                        hover:bg-red-700 hover:border-red-700 hover:shadow-lg hover:scale-105 active:scale-95"
+                    >
+                      {ctaIcons[slide.secondary.icon]}
+                      <span className="tracking-wide">
+                        {slide.secondary.label}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* VISUAL KANAN */}
+                <div className="relative hidden md:flex items-center justify-center">
+                  {slide.imageType === "illustration" ? (
+                    // Ilustrasi 3D: tampil menyatu tanpa bingkai
+                    <img
+                      src={slide.image}
+                      alt={slide.title}
+                      className="max-h-96 w-auto object-contain drop-shadow-2xl"
+                    />
+                  ) : (
+                    // Foto: tampil dalam bingkai putih membulat
+                    <div className="bg-white p-2.5 rounded-[28px] shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
+                      <img
+                        src={slide.image}
+                        alt={slide.title}
+                        className="w-full max-w-md h-80 object-cover rounded-[20px]"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </SwiperSlide>
           ))}
         </Swiper>
+
+        {/* NAVIGASI SLIDE: panah + dots di tengah bawah */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6">
+          <button
+            aria-label="Slide sebelumnya"
+            onClick={() => swiperRef.current?.slidePrev()}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-white/50 text-white/80
+              bg-white/5 hover:bg-white/20 hover:text-white transition cursor-pointer"
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          <div className="flex items-center gap-2">
+            {heroSlides.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Ke slide ${i + 1}`}
+                onClick={() => swiperRef.current?.slideToLoop(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  activeSlide === i
+                    ? "w-6 bg-white"
+                    : "w-2 bg-white/50 hover:bg-white/75"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            aria-label="Slide berikutnya"
+            onClick={() => swiperRef.current?.slideNext()}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-white/50 text-white/80
+              bg-white/5 hover:bg-white/20 hover:text-white transition cursor-pointer"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </section>
 
       {/* SHORTCUT */}
