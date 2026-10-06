@@ -54,6 +54,10 @@ const getErrorMessage = (err: unknown, fallback: string) => {
 export default function ReviewList() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [selectedProposals, setSelectedProposals] = useState<Proposal[]>([]);
+  const [allSubmittedProposals, setAllSubmittedProposals] = useState<
+    Proposal[]
+  >([]);
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
 
   const [isLoadingProposals, setIsLoadingProposals] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -67,22 +71,27 @@ export default function ReviewList() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("ALL");
 
-  const loadAllProposalPages = useCallback(async (search = "") => {
-    const firstPage = await getAllProposals({ page: 1, search });
-    const all = [...firstPage.data];
+  const loadAllProposalPages = useCallback(
+    async (search = "", status: StatusFilterValue = "ALL") => {
+      const statusParam: ProposalStatusFilterValue | undefined =
+        status === "ALL" ? undefined : status;
+      const firstPage = await getAllProposals({ page: 1, search, status: statusParam });
+      const all = [...firstPage.data];
 
-    if (firstPage.meta.totalPages > 1) {
-      const requests: ReturnType<typeof getAllProposals>[] = [];
-      for (let page = 2; page <= firstPage.meta.totalPages; page++) {
-        requests.push(getAllProposals({ page, search }));
+      if (firstPage.meta.totalPages > 1) {
+        const requests: ReturnType<typeof getAllProposals>[] = [];
+        for (let page = 2; page <= firstPage.meta.totalPages; page++) {
+          requests.push(getAllProposals({ page, search, status: statusParam }));
+        }
+
+        const rest = await Promise.all(requests);
+        rest.forEach((res) => all.push(...res.data));
       }
 
-      const rest = await Promise.all(requests);
-      rest.forEach((res) => all.push(...res.data));
-    }
-
-    return all;
-  }, []);
+      return all;
+    },
+    [],
+  );
 
   const loadProposals = useCallback(
     async (page = 1, search = "", status: StatusFilterValue = "ALL") => {
@@ -156,19 +165,12 @@ export default function ReviewList() {
 
   useEffect(() => {
     setSelectedProposals([]);
+    setAllSubmittedProposals([]);
   }, [debouncedSearch, statusFilter]);
 
   useEffect(() => {
     void loadProposals(currentPage, debouncedSearch, statusFilter);
   }, [currentPage, debouncedSearch, statusFilter, loadProposals]);
-
-  const submittedProposalsOnPage = useMemo(
-    () =>
-      proposals.filter(
-        (proposal) => normalizeStatus(proposal.status) === "SUBMITTED",
-      ),
-    [proposals],
-  );
 
   const selectedIds = useMemo(
     () => new Set(selectedProposals.map((proposal) => proposal.id)),
@@ -176,8 +178,8 @@ export default function ReviewList() {
   );
 
   const allSubmittedSelected =
-    submittedProposalsOnPage.length > 0 &&
-    submittedProposalsOnPage.every((proposal) => selectedIds.has(proposal.id));
+    allSubmittedProposals.length > 0 &&
+    allSubmittedProposals.every((proposal) => selectedIds.has(proposal.id));
 
   const toggleProposalSelection = (proposal: Proposal) => {
     if (normalizeStatus(proposal.status) !== "SUBMITTED") return;
@@ -194,28 +196,47 @@ export default function ReviewList() {
     setWarningMessage(null);
   };
 
-  const toggleSelectAllOnPage = () => {
-    setSelectedProposals((prev) => {
-      const currentSubmittedIds = new Set(
-        submittedProposalsOnPage.map((proposal) => proposal.id),
-      );
+  const toggleSelectAll = async () => {
+    if (allSubmittedSelected) {
+      setSelectedProposals([]);
+      setAllSubmittedProposals([]);
+      setSuccessMessage(null);
+      setError(null);
+      setWarningMessage(null);
+      return;
+    }
 
-      if (allSubmittedSelected) {
-        return prev.filter((proposal) => !currentSubmittedIds.has(proposal.id));
-      }
-
-      const merged = [...prev];
-      submittedProposalsOnPage.forEach((proposal) => {
-        if (!merged.some((item) => item.id === proposal.id)) {
-          merged.push(proposal);
-        }
-      });
-      return merged;
-    });
-
+    setIsSelectingAll(true);
     setSuccessMessage(null);
     setError(null);
     setWarningMessage(null);
+
+    try {
+      const allItems = await loadAllProposalPages(
+        debouncedSearch,
+        statusFilter,
+      );
+      const submittedItems = allItems.filter(
+        (item) => normalizeStatus(item.status) === "SUBMITTED",
+      );
+
+      if (submittedItems.length === 0) {
+        setWarningMessage(
+          "Tidak ada proposal berstatus SUBMITTED untuk dipilih.",
+        );
+        setAllSubmittedProposals([]);
+        return;
+      }
+
+      setAllSubmittedProposals(submittedItems);
+      setSelectedProposals(submittedItems);
+    } catch (err: unknown) {
+      setError(
+        getErrorMessage(err, "Gagal mengambil semua proposal untuk dipilih."),
+      );
+    } finally {
+      setIsSelectingAll(false);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -257,6 +278,7 @@ export default function ReviewList() {
       await loadProposals(currentPage, debouncedSearch, statusFilter);
 
       setSelectedProposals([]);
+      setAllSubmittedProposals([]);
     } catch (err: unknown) {
       setError(
         getErrorMessage(
@@ -333,10 +355,14 @@ export default function ReviewList() {
               <input
                 type="checkbox"
                 checked={allSubmittedSelected}
-                onChange={toggleSelectAllOnPage}
-                disabled={submittedProposalsOnPage.length === 0 || isAssigning}
+                onChange={() => void toggleSelectAll()}
+                disabled={isAssigning || isSelectingAll}
               />
-              <span>Pilih semua proposal SUBMITTED pada halaman ini</span>
+              <span>
+                {isSelectingAll
+                  ? "Memuat semua proposal SUBMITTED..."
+                  : "Pilih semua proposal SUBMITTED (semua halaman)"}
+              </span>
             </label>
 
             <span className="font-medium text-gray-500">
