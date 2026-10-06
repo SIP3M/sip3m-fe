@@ -2,12 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
   ChevronLeft,
   Clock,
   Download,
   FileText,
   Info,
+  ListChecks,
   Loader2,
+  MessageSquare,
   DollarSign,
   Users2,
 } from "lucide-react";
@@ -96,6 +100,77 @@ const formatDateISO = (value?: string | null) => {
   if (Number.isNaN(d.getTime())) return "-";
   return d.toISOString().split("T")[0];
 };
+
+// ─── Review notes parser (mirrors ReviewDetailPage serialize/deserialize) ───────
+type ParsedReviewNotes = {
+  comments: {
+    perumusan: string;
+    tinjauan: string;
+    metode: string;
+    anggaran: string;
+    luaran: string;
+  };
+  decisionOpt: "APPROVED" | "REVISION_MINOR" | "REVISION_MAJOR" | "REJECTED" | "";
+  generalNotes: string;
+};
+
+const parseReviewNotes = (serialized: string | null | undefined): ParsedReviewNotes => {
+  const result: ParsedReviewNotes = {
+    comments: { perumusan: "", tinjauan: "", metode: "", anggaran: "", luaran: "" },
+    decisionOpt: "",
+    generalNotes: "",
+  };
+  if (!serialized) return result;
+  const parts = serialized.split(/^--- (CATATAN INDIKATOR|KEPUTUSAN OPTION|CATATAN TAMBAHAN REVIEWER) ---$/m);
+  for (let i = 1; i < parts.length; i += 2) {
+    const name = parts[i];
+    const content = parts[i + 1] ? parts[i + 1].trim() : "";
+    if (name === "CATATAN INDIKATOR") {
+      const pick = (label: string) => {
+        const m = content.match(new RegExp(`${label}:\\s*(.*)`));
+        if (!m) return "";
+        const v = m[1].trim();
+        return v === "-" ? "" : v;
+      };
+      result.comments.perumusan = pick("Perumusan Masalah");
+      result.comments.tinjauan = pick("Tinjauan Pustaka");
+      result.comments.metode = pick("Metode Penelitian");
+      result.comments.anggaran = pick("Kelayakan Anggaran");
+      result.comments.luaran = pick("Luaran & Kontribusi");
+    } else if (name === "KEPUTUSAN OPTION") {
+      if (
+        content === "ACCEPTED" ||
+        content === "APPROVED" ||
+        content === "REVISION_MINOR" ||
+        content === "REVISION_MAJOR" ||
+        content === "REJECTED"
+      ) {
+        result.decisionOpt = (content === "ACCEPTED" ? "APPROVED" : content) as ParsedReviewNotes["decisionOpt"];
+      }
+    } else if (name === "CATATAN TAMBAHAN REVIEWER") {
+      result.generalNotes = content;
+    }
+  }
+  if (parts.length <= 1) result.generalNotes = serialized.trim();
+  return result;
+};
+
+const getRekomCardStyle = (decision: string) => {
+  const d = decision.toUpperCase();
+  if (d === "APPROVED" || d === "ACCEPTED") return "bg-green-50 border-green-200 text-green-800";
+  if (d === "REJECTED") return "bg-red-50 border-red-200 text-red-800";
+  if (d === "REVISION_MAJOR") return "bg-orange-50 border-orange-200 text-orange-800";
+  // REVISION_MINOR default — matches screenshot mint green
+  return "bg-[#e8f5e9] border-[#c8e6c9] text-green-900";
+};
+
+const INDICATOR_ROWS: { key: keyof ParsedReviewNotes["comments"]; label: string }[] = [
+  { key: "perumusan", label: "Perumusan Masalah" },
+  { key: "tinjauan", label: "Tinjauan Pustaka" },
+  { key: "metode", label: "Metode Penelitian" },
+  { key: "anggaran", label: "Kelayakan Anggaran" },
+  { key: "luaran", label: "Luaran & Kontribusi" },
+];
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "informasi", label: "Informasi Proposal" },
@@ -305,58 +380,6 @@ export default function ProposalDetail() {
             <p className="mt-0.5 text-xs text-yellow-700">
               Proposal tidak dapat diedit selama proses review berlangsung.
             </p>
-          </div>
-        </div>
-      )}
-
-      {isRevision && latestReview && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-4">
-          <div className="mb-3 flex items-start gap-3">
-            <AlertCircle
-              size={20}
-              className="mt-0.5 flex-shrink-0 text-amber-600"
-            />
-            <div>
-              <h3 className="font-semibold text-amber-900">
-                Catatan Revisi dari Reviewer
-              </h3>
-              <p className="mt-1 text-xs text-amber-700">
-                Reviewer: {latestReview.reviewer?.name || "Tim Reviewer"}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3 rounded-md bg-white px-3 py-3 text-sm text-gray-700">
-            {latestReview.rekomendasi_akhir && (
-              <div>
-                <p className="font-semibold text-gray-900">
-                  Rekomendasi Akhir:
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                  {latestReview.rekomendasi_akhir}
-                </p>
-              </div>
-            )}
-
-            {latestReview.kelemahan_proposal && (
-              <div>
-                <p className="font-semibold text-gray-900">
-                  Catatan Perbaikan / Kelemahan:
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                  {latestReview.kelemahan_proposal}
-                </p>
-              </div>
-            )}
-
-            {latestReview.notes && (
-              <div>
-                <p className="font-semibold text-gray-900">Catatan Tambahan:</p>
-                <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                  {latestReview.notes}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -708,44 +731,150 @@ export default function ProposalDetail() {
           {activeTab === "review" && (
             <div>
               {latestReview ? (
-                <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4 text-sm text-gray-700">
-                  <p className="text-xs font-medium text-gray-400">
-                    Reviewer: {latestReview.reviewer?.name || "Tim Reviewer"}
-                  </p>
+                (() => {
+                  const parsed = parseReviewNotes(latestReview.notes);
+                  const decisionLabel =
+                    parsed.decisionOpt ||
+                    (latestReview.status === "ACCEPTED"
+                      ? "APPROVED"
+                      : latestReview.status) ||
+                    "-";
+                  const rekomStyle = getRekomCardStyle(decisionLabel);
+                  const generalNotesText =
+                    parsed.generalNotes?.trim() || "-";
+                  const hasIndicator = INDICATOR_ROWS.some(
+                    (r) => parsed.comments[r.key]?.trim(),
+                  );
 
-                  {latestReview.rekomendasi_akhir && (
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        Rekomendasi Akhir:
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-xs text-gray-500">
+                        <span className="font-medium text-gray-400">Reviewer:</span>{" "}
+                        <span className="font-semibold text-gray-700">
+                          {latestReview.reviewer?.name || "Tim Reviewer"}
+                        </span>
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                        {latestReview.rekomendasi_akhir}
-                      </p>
-                    </div>
-                  )}
 
-                  {latestReview.kelemahan_proposal && (
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        Catatan Perbaikan / Kelemahan:
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                        {latestReview.kelemahan_proposal}
-                      </p>
-                    </div>
-                  )}
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        {/* ── Left column ── */}
+                        <div className="space-y-4">
+                          {/* Rekomendasi Akhir */}
+                          <div
+                            className={`rounded-xl border p-4 shadow-sm ${rekomStyle}`}
+                          >
+                            <p className="text-xs font-bold uppercase tracking-wide opacity-80">
+                              Rekomendasi Akhir
+                            </p>
+                            <p className="mt-2 text-sm font-extrabold tracking-tight">
+                              {decisionLabel}
+                            </p>
+                            {latestReview.rekomendasi_akhir && (
+                              <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed opacity-80">
+                                {latestReview.rekomendasi_akhir}
+                              </p>
+                            )}
+                          </div>
 
-                  {latestReview.notes && (
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        Catatan Tambahan:
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                        {latestReview.notes}
-                      </p>
+                          {/* Catatan Perbaikan / Kelemahan */}
+                          <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-50">
+                                <AlertTriangle
+                                  size={14}
+                                  className="text-amber-600"
+                                />
+                              </span>
+                              <p className="text-xs font-bold uppercase tracking-wide text-gray-700">
+                                Catatan Perbaikan / Kelemahan
+                              </p>
+                            </div>
+                            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-600">
+                              {latestReview.kelemahan_proposal?.trim() || "-"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* ── Right column ── */}
+                        <div className="space-y-4">
+                          {/* Catatan Indikator */}
+                          <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <ListChecks
+                                size={16}
+                                className="text-gray-400"
+                              />
+                              <p className="text-xs font-bold uppercase tracking-wide text-gray-700">
+                                Catatan Indikator
+                              </p>
+                            </div>
+                            <div className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-100">
+                              {INDICATOR_ROWS.map((row) => {
+                                const val =
+                                  parsed.comments[row.key]?.trim() || "-";
+                                const isEmpty = val === "-";
+                                return (
+                                  <div
+                                    key={row.key}
+                                    className="flex items-center justify-between gap-3 px-3 py-2.5"
+                                  >
+                                    <span className="flex items-center gap-2 text-xs text-gray-500">
+                                      <span
+                                        className={`flex h-3.5 w-3.5 items-center justify-center rounded-full border ${
+                                          isEmpty
+                                            ? "border-gray-200 bg-white"
+                                            : "border-green-200 bg-green-50"
+                                        }`}
+                                      >
+                                        {!isEmpty && (
+                                          <CheckCircle2
+                                            size={10}
+                                            className="text-green-600"
+                                          />
+                                        )}
+                                      </span>
+                                      {row.label}
+                                    </span>
+                                    <span
+                                      className={`max-w-[52%] truncate text-right text-xs font-medium ${
+                                        isEmpty
+                                          ? "text-gray-400"
+                                          : "text-gray-700"
+                                      }`}
+                                      title={val}
+                                    >
+                                      {val}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                              {!hasIndicator && (
+                                <p className="px-3 py-2 text-xs text-gray-400">
+                                  Tidak ada catatan indikator.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Catatan Tambahan Reviewer */}
+                          <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare
+                                size={16}
+                                className="text-gray-400"
+                              />
+                              <p className="text-xs font-bold uppercase tracking-wide text-gray-700">
+                                Catatan Tambahan Reviewer
+                              </p>
+                            </div>
+                            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-600">
+                              {generalNotesText}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })()
               ) : (
                 <p className="text-sm text-gray-500">
                   Belum ada proses review untuk proposal ini.

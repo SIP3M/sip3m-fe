@@ -105,7 +105,7 @@ const deserializeNotes = (serialized: string) => {
       anggaran: "",
       luaran: "",
     },
-    decisionOpt: "" as "ACCEPTED" | "REVISION_MINOR" | "REVISION_MAJOR" | "REJECTED" | "",
+    decisionOpt: "" as "APPROVED" | "REVISION_MINOR" | "REVISION_MAJOR" | "REJECTED" | "",
     generalNotes: "",
   };
 
@@ -133,11 +133,13 @@ const deserializeNotes = (serialized: string) => {
     } else if (sectionName === "KEPUTUSAN OPTION") {
       if (
         sectionContent === "ACCEPTED" ||
+        sectionContent === "APPROVED" ||
         sectionContent === "REVISION_MINOR" ||
         sectionContent === "REVISION_MAJOR" ||
         sectionContent === "REJECTED"
       ) {
-        result.decisionOpt = sectionContent;
+        // backward-compat: ACCEPTED -> APPROVED for decision
+        result.decisionOpt = (sectionContent === "ACCEPTED" ? "APPROVED" : sectionContent) as typeof result.decisionOpt;
       }
     } else if (sectionName === "CATATAN TAMBAHAN REVIEWER") {
       result.generalNotes = sectionContent;
@@ -232,7 +234,7 @@ export default function ReviewDetailPage() {
   const [kelemahan, setKelemahan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [notes, setNotes] = useState("");
-  const [decisionOption, setDecisionOption] = useState<"ACCEPTED" | "REVISION_MINOR" | "REVISION_MAJOR" | "REJECTED">("ACCEPTED");
+  const [decisionOption, setDecisionOption] = useState<"APPROVED" | "REVISION_MINOR" | "REVISION_MAJOR" | "REJECTED">("APPROVED");
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [isSaving, setIsSaving] = useState(false);
@@ -309,7 +311,7 @@ export default function ReviewDetailPage() {
             decisionOption,
             notes
           ),
-          status: decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : decisionOption as ReviewDecision,
+          status: decisionOption === "APPROVED" ? "ACCEPTED" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
         };
         await evaluateProposal(proposalId, payload);
         setDraftSaved(true);
@@ -400,8 +402,10 @@ export default function ReviewDetailPage() {
           const stat = myLatestReview.status;
           if (stat === "REVISION") {
             setDecisionOption("REVISION_MINOR");
+          } else if (stat === "ACCEPTED") {
+            setDecisionOption("APPROVED");
           } else {
-            setDecisionOption(stat as "ACCEPTED" | "REJECTED");
+            setDecisionOption(stat as "APPROVED" | "REJECTED");
           }
         }
 
@@ -441,7 +445,7 @@ export default function ReviewDetailPage() {
           decisionOption,
           notes
         ),
-        status: decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : decisionOption as ReviewDecision,
+        status: decisionOption === "APPROVED" ? "ACCEPTED" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
       };
       await evaluateProposal(proposalId, payload);
       setDraftSaved(true);
@@ -464,7 +468,7 @@ export default function ReviewDetailPage() {
       const payload: EvaluatePayloadFinal = {
         is_draft: false,
         decision: decisionOption as "APPROVED" | "REJECTED" | "REVISION_MINOR" | "REVISION_MAJOR",
-        status: decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : decisionOption as ReviewDecision,
+        status: decisionOption === "APPROVED" ? "ACCEPTED" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
         score_perumusan: scores.score_perumusan,
         score_tinjauan: scores.score_tinjauan,
         score_metode: scores.score_metode,
@@ -1019,7 +1023,7 @@ export default function ReviewDetailPage() {
               <div className="space-y-3">
                 {[
                   {
-                    val: "ACCEPTED" as const,
+                    val: "APPROVED" as const,
                     label: "Diterima",
                     desc: "Proposal dapat langsung dilanjutkan tanpa revisi.",
                     activeColor: "ring-2 ring-green-500 border-green-500 bg-green-50/20 shadow-xs",
