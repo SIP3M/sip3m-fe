@@ -110,14 +110,14 @@ const LoginPage = () => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
+      className="relative min-h-dvh flex flex-col items-center justify-center bg-cover bg-center px-4 py-8 sm:px-6"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="absolute inset-0 backdrop-blur-xxs z-0"></div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 w-full max-w-md lg:max-w-4xl xl:max-w-5xl">
         {errorMessage && (
-          <div className="mb-4 mx-4 p-3 bg-red-100 text-red-600 border border-red-300 rounded text-sm text-center font-medium">
+          <div className="mb-4 p-3 bg-red-100 text-red-600 border border-red-300 rounded-xl text-sm text-center font-medium">
             {errorMessage}
           </div>
         )}
@@ -134,7 +134,7 @@ const LoginPage = () => {
         />
       </div>
 
-      <p className="absolute bottom-2 text-[11px] text-gray-600">
+      <p className="relative z-10 mt-6 px-4 text-center text-[11px] text-gray-600">
         © 2026 Universitas Muhammadiyah Cirebon. All rights reserved.
       </p>
     </motion.div>

@@ -53,24 +53,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="
-        w-180 h-130
-        bg-white
-        rounded-4xl
+      className="relative w-full bg-white rounded-2xl sm:rounded-3xl lg:rounded-4xl
         shadow-[0_30px_80px_rgba(0,0,0,0.15)]
-        flex
-        overflow-hidden
-        relative
-      "
+        flex flex-col lg:flex-row overflow-hidden"
     >
       {/* TOAST — Login Berhasil */}
       {loginSuccess && (
-        <div className="fixed top-6 right-6 z-[100] w-full max-w-sm">
+        <div className="fixed top-4 inset-x-4 sm:inset-x-auto sm:right-6 sm:top-6 z-[100] w-auto sm:w-full sm:max-w-sm">
           <div
             className={`flex items-start gap-3 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 p-4 pr-3 transition-all duration-300 ease-out
               ${toastVisible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}
           >
-            {/* Icon */}
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path
@@ -83,16 +76,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
               </svg>
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="text-sm font-semibold text-gray-800">
                 Login berhasil!
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {userName ? `Selamat datang, ${userName}` : "Mengalihkan ke dashboard..."}
+                {userName
+                  ? `Selamat datang, ${userName}`
+                  : "Mengalihkan ke dashboard..."}
               </p>
 
-              {/* Progress bar auto-dismiss */}
               <div className="mt-2.5 h-1 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#e10600] rounded-full"
@@ -111,39 +104,40 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </div>
       )}
 
-      {/* ================= LEFT ================= */}
-      <div className="max-w-1/2 relative p-4 flex">
-        <div className="w-80 h-full rounded-4xl overflow-hidden shadow-md">
-          <img src={kampus} alt="Kampus" className="w-80 h-full object-cover" />
+      {/* ================= LEFT (desktop) ================= */}
+      <div className="hidden lg:flex relative w-[46%] xl:w-1/2 p-4 shrink-0">
+        <div className="w-full h-full min-h-[480px] rounded-3xl xl:rounded-4xl overflow-hidden shadow-md">
+          <img
+            src={kampus}
+            alt="Kampus"
+            className="w-full h-full object-cover"
+          />
         </div>
 
         <img
           src={mumar}
           alt="Maskot"
-          className="absolute bottom-0 w-62 -translate-x-20 top-64"
+          className="absolute bottom-0 left-0 w-44 xl:w-56 pointer-events-none select-none"
         />
       </div>
 
       {/* ================= RIGHT ================= */}
-      <div className="w-1/2 flex flex-col justify-center px-6 py-2 scale-[0.95]">
-        {/* LOGO */}
-        <div className="flex flex-col items-center mb-2">
-          <img src={logo} alt="Logo" className="w-16" />
+      <div className="w-full lg:flex-1 flex flex-col justify-center px-5 py-7 sm:px-8 sm:py-8 lg:px-8 lg:py-6">
+        <div className="flex flex-col items-center mb-5 sm:mb-6">
+          <img src={logo} alt="Logo" className="w-14 sm:w-16" />
 
-          <h1 className="text-[24px] font-semibold text-center leading-8 text-gray-800 mt-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-center leading-snug text-gray-800 mt-2">
             Sistem Informasi <br /> LPPM UMC
           </h1>
 
-          <p className="text-[13px] text-gray-500 mt-1 text-center">
+          <p className="text-xs sm:text-[13px] text-gray-500 mt-1 text-center">
             Universitas Muhammadiyah Cirebon
           </p>
         </div>
 
-        {/* FORM */}
-        <form onSubmit={handleLogin} className="space-y-1">
-          {/* EMAIL */}
+        <form onSubmit={handleLogin} className="space-y-3">
           <div>
-            <label className="block text-[12px] text-gray-600 mb-2">
+            <label className="block text-xs text-gray-600 mb-1.5">
               Email / NIDN / NIP
             </label>
 
@@ -153,13 +147,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
               value={form.email}
               onChange={handleChange}
               placeholder="Masukkan Email / NIDN / NIP"
-              className="w-full h-10 px-4 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
+              className="w-full h-11 px-4 text-sm bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
             />
           </div>
 
-          {/* PASSWORD */}
-          <div className="mt-1">
-            <label className="block text-[12px] text-gray-600 mb-2">
+          <div>
+            <label className="block text-xs text-gray-600 mb-1.5">
               Password
             </label>
 
@@ -174,61 +167,59 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 data-1p-ignore="true"
                 data-bwignore="true"
                 placeholder="Masukkan Password"
-                className="w-full h-10 px-4 pr-12 text-[13px] bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600] outline-none"
+                className="w-full h-11 px-4 pr-12 text-sm bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600] outline-none"
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 inset-y-0 flex items-center text-gray-500 hover:text-gray-700"
+                className="absolute right-4 inset-y-0 flex items-center text-gray-500 hover:text-gray-700 cursor-pointer"
+                aria-label={
+                  showPassword ? "Sembunyikan password" : "Tampilkan password"
+                }
               >
                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
             </div>
           </div>
 
-          {/* REMEMBER */}
-          <div className="flex justify-between items-center text-[12px] mt-2">
-            <label className="flex items-center gap-2 text-gray-500">
+          <div className="flex justify-between items-center gap-3 text-xs">
+            <label className="flex items-center gap-2 text-gray-500 cursor-pointer">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => handleRememberMeChange(e.target.checked)}
-                className="w-4 h-3"
+                className="w-4 h-4 accent-[#e10600]"
               />
               Ingat saya
             </label>
 
-            <span className="text-[#e10600] cursor-pointer hover:underline">
+            <span className="text-[#e10600] cursor-pointer hover:underline shrink-0">
               Lupa password?
             </span>
           </div>
 
-          {/* BUTTON */}
-          <motion.div whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}>
+          <motion.div whileTap={{ scale: 0.97 }} className="sm:hover:scale-[1.02] transition-transform">
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-10 bg-[#e10600] hover:bg-[#c50500] text-white rounded-[14px] text-[15px] font-medium transition"
+              className="w-full h-11 bg-[#e10600] hover:bg-[#c50500] text-white rounded-[14px] text-[15px] font-medium transition cursor-pointer"
             >
               {isLoading ? "Memproses..." : "Masuk"}
             </Button>
           </motion.div>
 
-          {/* DIVIDER */}
-          <div className="flex items-center gap-3 my-1">
+          <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-[#dddddd]"></div>
             <span className="text-[11px] text-gray-400">atau</span>
             <div className="flex-1 h-px bg-[#dddddd]"></div>
           </div>
 
-          {/* GOOGLE BUTTON */}
           <Button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full h-10 my-1 bg-white border border-[#dddddd] rounded-[14px] text-[13px] text-gray-700 hover:bg-gray-50 transition flex items-center justify-center gap-3"
+            className="w-full h-11 bg-white border border-[#dddddd] rounded-[14px] text-[13px] text-gray-700 hover:bg-gray-50 transition flex items-center justify-center gap-3 cursor-pointer"
           >
-            {/* SVG tetap */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 48 48"
@@ -255,8 +246,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <span>Sign in with Google</span>
           </Button>
 
-          {/* REGISTER */}
-          <p className="text-center text-[12px] mt-5 text-gray-500">
+          <p className="text-center text-xs pt-2 text-gray-500">
             Belum punya akun?{" "}
             <span
               onClick={() => navigate("/register")}

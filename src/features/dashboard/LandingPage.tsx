@@ -33,6 +33,8 @@ import {
   Instagram,
   Youtube,
   Twitter,
+  Menu,
+  X,
 } from "lucide-react";
 import type { Swiper as SwiperType } from "swiper";
 
@@ -43,12 +45,33 @@ import heroKkm from "@/assets/images/hero3.jpg";
 
 import "swiper/css";
 
+// Padding horizontal konsisten untuk semua section:
+// 16px (mobile) -> 24px (tablet) -> 48px (desktop)
+const PX = "px-4 sm:px-6 lg:px-12";
+
+// Gaya tombol hero (dipakai primary & secondary)
+const HERO_BTN =
+  "group inline-flex items-center justify-center gap-2 w-full sm:w-auto border border-white/70 px-5 sm:px-6 py-3 rounded-xl font-medium leading-none cursor-pointer " +
+  "backdrop-blur-sm bg-white/10 text-white transition-all duration-300 ease-out " +
+  "hover:bg-red-700 hover:border-red-700 hover:shadow-lg sm:hover:scale-105 active:scale-95";
+
 export default function LPPMLandingPage() {
   const navigate = useNavigate();
   const swiperRef = useRef<SwiperType | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const aboutImage =
     "https://images.unsplash.com/photo-1523240795612-9a054b0db644";
+
+  const navItems = [
+    { label: "Beranda", href: "#beranda" },
+    { label: "Tentang", href: "#tentang" },
+    { label: "Penelitian", href: "#" },
+    { label: "Pengabdian", href: "#" },
+    { label: "Publikasi", href: "#" },
+    { label: "Berita", href: "#" },
+    { label: "Kontak", href: "#" },
+  ];
 
   // ============================================================
   // KONTEN SLIDER (teks asli, bukan bagian dari gambar)
@@ -130,9 +153,11 @@ export default function LPPMLandingPage() {
       navigate(target.to);
     } else if (target.href) {
       if (target.href.startsWith("#")) {
-        document
-          .querySelector(target.href)
-          ?.scrollIntoView({ behavior: "smooth" });
+        if (target.href.length > 1) {
+          document
+            .querySelector(target.href)
+            ?.scrollIntoView({ behavior: "smooth" });
+        }
       } else {
         window.open(target.href, "_self");
       }
@@ -144,77 +169,147 @@ export default function LPPMLandingPage() {
   };
 
   return (
-    <div className="font-sans text-gray-800">
+    // overflow-x-clip (bukan hidden) agar sticky navbar tetap berfungsi
+    <div className="font-sans text-gray-800 overflow-x-clip">
       {/* TOP BAR */}
-      <div className="bg-[#d60000] text-white text-xs text-center py-2">
-        Pengajuan Hibah Penelitian Internal UMC Tahun 2026 Telah Dibuka
-        <button className="ml-3 bg-white text-[#d60000] px-3 py-1 rounded-full text-[11px]">
+      <div className="bg-[#d60000] text-white text-[11px] sm:text-xs text-center py-2 px-4 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3">
+        <span>Pengajuan Hibah Penelitian Internal UMC Tahun 2026 Telah Dibuka</span>
+        <button className="bg-white text-[#d60000] px-3 py-1 rounded-full text-[11px] cursor-pointer">
           Lihat Panduan
         </button>
       </div>
 
       {/* NAVBAR MODERN */}
       <nav className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex items-center justify-between px-12 py-3">
+        <div className={`flex items-center justify-between ${PX} py-3`}>
           {/* LOGO */}
-          <div className="flex items-center gap-3">
-            <img src={Logo} className="w-10 h-10 object-contain" />
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <img
+              src={Logo}
+              alt="Logo LPPM UMC"
+              className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"
+            />
 
-            <div className="leading-tight">
+            <div className="leading-tight min-w-0">
               <h1 className="font-bold text-sm">
                 LPPM <span className="text-red-600">UMC</span>
               </h1>
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-gray-400 hidden min-[400px]:block truncate">
                 Universitas Muhammadiyah Cirebon
               </p>
             </div>
           </div>
 
-          {/* MENU */}
-          <div className="hidden md:flex items-center gap-8 text-sm">
-            <a
-              href="#beranda"
-              className="text-red-600 font-semibold border-b-2 border-red-600 pb-1"
-            >
-              Beranda
-            </a>
-
-            <a href="#tentang" className="hover:text-red-600 transition">
-              Tentang
-            </a>
-
-            {/* DROPDOWN STYLE */}
-            <div className="flex items-center gap-1 cursor-pointer hover:text-red-600">
-              Penelitian
-              <span className="text-xs">▾</span>
-            </div>
-
-            <a className="hover:text-red-600 transition">Pengabdian</a>
-            <a className="hover:text-red-600 transition">Publikasi</a>
-            <a className="hover:text-red-600 transition">Berita</a>
-            <a className="hover:text-red-600 transition">Kontak</a>
+          {/* MENU DESKTOP */}
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm">
+            {navItems.map((item, i) => {
+              if (i === 0) {
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-red-600 font-semibold border-b-2 border-red-600 pb-1"
+                  >
+                    {item.label}
+                  </a>
+                );
+              }
+              if (item.label === "Penelitian") {
+                return (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-1 cursor-pointer hover:text-red-600"
+                  >
+                    {item.label}
+                    <span className="text-xs">▾</span>
+                  </div>
+                );
+              }
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="hover:text-red-600 transition"
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </div>
 
           {/* RIGHT SIDE */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {/* SEARCH ICON */}
-            <Search className="w-5 h-5 text-gray-500 cursor-pointer hover:text-red-600" />
+            <button
+              aria-label="Cari"
+              className="p-1.5 text-gray-500 hover:text-red-600 cursor-pointer"
+            >
+              <Search className="w-5 h-5" />
+            </button>
 
-            {/* BUTTON */}
+            {/* BUTTON — hanya desktop; di mobile pindah ke menu hamburger */}
             <button
               onClick={() => navigate("/login")}
-              className="bg-red-600 text-white px-3 py-1.5 text-sm rounded-full flex items-center gap-1.5 
-  hover:bg-red-700 transition cursor-pointer"
+              aria-label="Masuk Sistem"
+              className="hidden lg:flex bg-red-600 text-white px-3 py-1.5 text-sm rounded-full items-center gap-1.5
+                hover:bg-red-700 transition cursor-pointer"
             >
               <LogIn size={16} />
               <span>Masuk Sistem</span>
             </button>
+
+            {/* HAMBURGER */}
+            <button
+              aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+              className="lg:hidden p-1.5 text-gray-700 hover:text-red-600 cursor-pointer"
+            >
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
           </div>
         </div>
-      </nav>
+
+        {/* MENU MOBILE */}
+{menuOpen && (
+  <div className="lg:hidden border-t border-gray-100 bg-white px-4 sm:px-6 py-2 flex flex-col text-sm shadow-md">
+    {navItems.map((item, i) => (
+      <a
+        key={item.label}
+        href={item.href}
+        onClick={() => setMenuOpen(false)}
+        className={`py-3 border-b border-gray-100 ${
+          i === 0
+            ? "text-red-600 font-semibold"
+            : "text-gray-700 hover:text-red-600"
+        }`}
+      >
+        {item.label}
+      </a>
+    ))}
+
+    {/* BUTTON MASUK SISTEM (mobile) */}
+    <button
+      onClick={() => {
+        setMenuOpen(false);
+        navigate("/login");
+      }}
+      aria-label="Masuk Sistem"
+      className="my-3 w-full bg-red-600 text-white px-4 py-3 text-sm font-medium rounded-xl
+        flex items-center justify-center gap-2 hover:bg-red-700 active:scale-95 transition cursor-pointer"
+    >
+      <LogIn size={16} />
+      <span>Masuk Sistem</span>
+    </button>
+  </div>
+)}
+</nav>
 
       {/* HERO SLIDER */}
-      <section id="beranda" className="relative h-162.5 overflow-hidden">
+      <section
+        id="beranda"
+        className="relative h-175 sm:h-160 md:h-162.5 overflow-hidden"
+      >
         {/* Background gedung universitas (sama untuk semua slide) */}
         <img
           src={heroBuilding}
@@ -237,47 +332,46 @@ export default function LPPMLandingPage() {
         >
           {heroSlides.map((slide, i) => (
             <SwiperSlide key={i}>
-              <div className="relative h-full grid md:grid-cols-2 items-center gap-8 px-12 md:px-16">
+              {/* pb-24 / pb-28 = ruang untuk panah & dots di bawah */}
+              <div className="relative h-full grid md:grid-cols-2 items-center gap-8 px-4 sm:px-8 md:px-12 lg:px-16 pt-8 pb-24 sm:pb-28 md:py-0">
                 {/* KONTEN KIRI */}
-                <div className="text-white max-w-xl pt-24 md:pt-0">
+                <div className="text-white max-w-xl">
                   {/* Badge */}
-                  <span className="inline-flex items-center gap-2 bg-white/15 border border-white/30 backdrop-blur-sm text-white text-xs font-medium px-4 py-1.5 rounded-full">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                    {slide.badge}
+                  <span className="inline-flex items-center gap-2 bg-white/15 border border-white/30 backdrop-blur-sm text-white text-[11px] sm:text-xs font-medium px-3 sm:px-4 py-1.5 rounded-full max-w-full">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
+                    <span className="truncate">{slide.badge}</span>
                   </span>
 
                   {/* Title */}
-                  <h1 className="mt-5 text-4xl md:text-5xl font-extrabold uppercase leading-tight drop-shadow-md">
+                  <h1 className="mt-4 sm:mt-5 text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase leading-tight drop-shadow-md wrap-break-word">
                     {slide.title}
                   </h1>
 
                   {/* Subtitle */}
-                  <h2 className="mt-3 text-2xl md:text-3xl font-semibold leading-snug drop-shadow">
+                  <h2 className="mt-3 text-lg sm:text-2xl lg:text-3xl font-semibold leading-snug drop-shadow">
                     {slide.subtitle}
                   </h2>
 
                   {/* Description */}
-                  <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-lg">
+                  <p className="mt-3 sm:mt-4 text-sm lg:text-base text-white/90 leading-relaxed max-w-lg line-clamp-4 sm:line-clamp-none">
                     {slide.description}
                   </p>
 
                   {/* Buttons */}
-                  <div className="mt-7 flex flex-wrap items-center gap-4">
+                  <div className="mt-6 sm:mt-7 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
                     <button
                       onClick={() => handleCta(slide.primary)}
-                      className="group inline-flex items-center gap-2 border border-white/70 px-6 py-3 rounded-xl font-medium leading-none cursor-pointer
-                        backdrop-blur-sm bg-white/10 text-white transition-all duration-300 ease-out
-                        hover:bg-red-700 hover:border-red-700 hover:shadow-lg hover:scale-105 active:scale-95"
+                      className={HERO_BTN}
                     >
                       {ctaIcons[slide.primary.icon]}
-                      <span className="tracking-wide">{slide.primary.label}</span>
+                      <span className="tracking-wide">
+                        {slide.primary.label}
+                      </span>
                     </button>
 
                     <button
                       onClick={() => handleCta(slide.secondary)}
-                      className="group inline-flex items-center gap-2 border border-white/70 px-6 py-3 rounded-xl font-medium leading-none cursor-pointer
-                        backdrop-blur-sm bg-white/10 text-white transition-all duration-300 ease-out
-                        hover:bg-red-700 hover:border-red-700 hover:shadow-lg hover:scale-105 active:scale-95"
+                      className={HERO_BTN}
                     >
                       {ctaIcons[slide.secondary.icon]}
                       <span className="tracking-wide">
@@ -287,22 +381,22 @@ export default function LPPMLandingPage() {
                   </div>
                 </div>
 
-                {/* VISUAL KANAN */}
+                {/* VISUAL KANAN (disembunyikan di mobile) */}
                 <div className="relative hidden md:flex items-center justify-center">
                   {slide.imageType === "illustration" ? (
                     // Ilustrasi 3D: tampil menyatu tanpa bingkai
                     <img
                       src={slide.image}
                       alt={slide.title}
-                      className="max-h-96 w-auto object-contain drop-shadow-2xl"
+                      className="max-h-72 lg:max-h-96 w-auto max-w-full object-contain drop-shadow-2xl"
                     />
                   ) : (
                     // Foto: tampil dalam bingkai putih membulat
-                    <div className="bg-white p-2.5 rounded-[28px] shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
+                    <div className="bg-white p-2.5 rounded-[28px] shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500 max-w-full">
                       <img
                         src={slide.image}
                         alt={slide.title}
-                        className="w-full max-w-md h-80 object-cover rounded-[20px]"
+                        className="w-full max-w-md h-64 lg:h-80 object-cover rounded-[20px]"
                       />
                     </div>
                   )}
@@ -313,7 +407,7 @@ export default function LPPMLandingPage() {
         </Swiper>
 
         {/* NAVIGASI SLIDE: panah + dots di tengah bawah */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-6">
+        <div className="absolute bottom-5 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 sm:gap-6">
           <button
             aria-label="Slide sebelumnya"
             onClick={() => swiperRef.current?.slidePrev()}
@@ -350,7 +444,9 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* SHORTCUT */}
-      <section className="bg-gray-100 py-12 px-12 grid md:grid-cols-4 gap-6">
+      <section
+        className={`bg-gray-100 py-8 sm:py-12 ${PX} grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6`}
+      >
         {[
           {
             title: "Ajukan Proposal",
@@ -379,33 +475,38 @@ export default function LPPMLandingPage() {
         ].map((item, i) => (
           <div
             key={i}
-            className="bg-white p-6 rounded-2xl text-center shadow hover:shadow-lg transition duration-300 hover:-translate-y-1"
+            className="bg-white p-4 sm:p-6 rounded-2xl text-center shadow hover:shadow-lg transition duration-300 hover:-translate-y-1"
           >
             <div
-              className={`w-12 h-12 flex items-center justify-center mx-auto mb-3 rounded-full ${item.bg} ${item.text}`}
+              className={`w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center mx-auto mb-2 sm:mb-3 rounded-full ${item.bg} ${item.text}`}
             >
               {item.icon}
             </div>
 
-            <p className="font-medium text-gray-700">{item.title}</p>
+            <p className="font-medium text-gray-700 text-sm sm:text-base">
+              {item.title}
+            </p>
           </div>
         ))}
       </section>
 
       {/* TENTANG */}
-      <section id="tentang" className="px-12 py-20 bg-[#f8f8f8]">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section
+        id="tentang"
+        className={`${PX} py-14 sm:py-20 bg-[#f8f8f8] scroll-mt-16`}
+      >
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-12 items-center">
           {/* LEFT TEXT */}
           <div>
             <span className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full font-medium">
               Tentang Kami
             </span>
 
-            <h2 className="text-4xl font-bold mt-4 leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-bold mt-4 leading-snug">
               Tentang LPPM UMC
             </h2>
 
-            <p className="text-gray-500 mt-4 text-sm leading-relaxed max-w-md">
+            <p className="text-gray-500 mt-4 text-sm leading-relaxed max-w-md lg:max-w-lg">
               Lembaga Penelitian dan Pengabdian kepada Masyarakat (LPPM)
               Universitas Muhammadiyah Cirebon merupakan unit yang bertanggung
               jawab dalam mengelola, mengembangkan, dan memfasilitasi kegiatan
@@ -413,7 +514,7 @@ export default function LPPMLandingPage() {
             </p>
 
             {/* STATS */}
-            <div className="flex gap-8 mt-6 text-sm">
+            <div className="flex flex-wrap gap-x-8 gap-y-4 mt-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-red-100 flex items-center justify-center rounded-lg text-red-600">
                   <Medal />
@@ -447,24 +548,29 @@ export default function LPPMLandingPage() {
               </div>
             </div>
 
-            <button className="mt-8 bg-red-600 text-white px-6 py-3 rounded-xl shadow hover:bg-red-700 transition">
+            <button className="mt-8 w-full sm:w-auto bg-red-600 text-white px-6 py-3 rounded-xl shadow hover:bg-red-700 transition cursor-pointer">
               Selengkapnya →
             </button>
           </div>
 
           {/* RIGHT IMAGE */}
-          <div className="relative">
+          {/* mb-8 agar float card (-bottom-6) tidak menimpa section berikutnya */}
+          <div className="relative mb-8 lg:mb-0">
             {/* MAIN IMAGE */}
-            <img src={aboutImage} className="rounded-2xl shadow-lg" />
+            <img
+              src={aboutImage}
+              alt="Kegiatan akademik LPPM UMC"
+              className="rounded-2xl shadow-lg w-full h-64 sm:h-80 lg:h-auto lg:max-h-130 object-cover"
+            />
 
             {/* BADGE TOP RIGHT */}
-            <div className="absolute top-4 right-4 bg-white px-4 py-2 rounded-xl shadow text-sm flex items-center gap-2">
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white px-3 sm:px-4 py-2 rounded-xl shadow text-xs sm:text-sm flex items-center gap-2">
               <span className="text-green-500">✔</span>
               Terakreditasi
             </div>
 
             {/* FLOAT CARD */}
-            <div className="absolute -bottom-6 left-6 bg-white px-6 py-4 rounded-xl shadow flex items-center gap-3">
+            <div className="absolute -bottom-6 left-3 sm:left-6 bg-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl shadow flex items-center gap-3">
               <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-lg">
                 <Medal />
               </div>
@@ -478,7 +584,7 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* FITUR UTAMA */}
-      <section className="bg-[#f5f5f7] py-24 px-12 text-center">
+      <section className={`bg-[#f5f5f7] py-14 sm:py-24 ${PX} text-center`}>
         {/* LABEL */}
         <div className="mb-4">
           <span className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full font-medium">
@@ -487,7 +593,9 @@ export default function LPPMLandingPage() {
         </div>
 
         {/* TITLE */}
-        <h2 className="text-3xl font-bold">Fitur Utama Sistem LPPM</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold">
+          Fitur Utama Sistem LPPM
+        </h2>
 
         {/* SUBTITLE */}
         <p className="text-gray-500 text-sm mt-3 max-w-xl mx-auto">
@@ -496,8 +604,7 @@ export default function LPPMLandingPage() {
         </p>
 
         {/* GRID */}
-        <div className="grid md:grid-cols-3 gap-8 mt-16">
-          {/* ITEM */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-10 sm:mt-16">
           {[
             {
               icon: <FileText size={20} />,
@@ -532,7 +639,7 @@ export default function LPPMLandingPage() {
           ].map((item, i) => (
             <div
               key={i}
-              className="bg-white p-8 rounded-2xl shadow-sm text-left hover:shadow-md transition"
+              className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm text-left hover:shadow-md transition"
             >
               {/* ICON */}
               <div className="w-12 h-12 flex items-center justify-center bg-red-100 text-red-600 rounded-xl mb-4">
@@ -552,24 +659,28 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* ALUR SISTEM */}
-      <section className="py-24 bg-[#f9f9f9] text-center px-12">
+      <section className={`py-14 sm:py-24 bg-[#f9f9f9] text-center ${PX}`}>
         {/* LABEL */}
         <span className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full">
           Alur Sistem
         </span>
 
         {/* TITLE */}
-        <h2 className="text-4xl font-bold mt-4">Alur Sistem Penelitian</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold mt-4">
+          Alur Sistem Penelitian
+        </h2>
 
-        <p className="text-gray-500 mt-3 text-sm">
+        <p className="text-gray-500 mt-3 text-sm max-w-xl mx-auto">
           Proses pengajuan hingga publikasi penelitian yang terstruktur dan
           transparan.
         </p>
 
-        {/* FLOW */}
-        <div className="relative mt-16 flex justify-between max-w-5xl mx-auto">
-          {/* GARIS */}
-          <div className="absolute left-8 right-8 h-0.5 bg-gray-300 top-8 z-0"></div>
+        {/* FLOW: vertikal di mobile, horizontal mulai md */}
+        <div className="relative mt-10 sm:mt-16 flex flex-col md:flex-row md:justify-between gap-8 md:gap-2 max-w-5xl mx-auto text-left md:text-center">
+          {/* GARIS VERTIKAL (mobile) */}
+          <div className="md:hidden absolute left-8 -translate-x-1/2 top-8 bottom-8 w-0.5 bg-gray-300 z-0" />
+          {/* GARIS HORIZONTAL (md+): dari pusat step pertama ke pusat step terakhir */}
+          <div className="hidden md:block absolute left-[10%] right-[10%] top-8 h-0.5 bg-gray-300 z-0" />
 
           {[
             {
@@ -600,11 +711,10 @@ export default function LPPMLandingPage() {
           ].map((step, i) => (
             <div
               key={i}
-              className="relative z-10 flex flex-col items-center w-40"
+              className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-0 md:flex-1 md:min-w-0"
             >
               {/* BOX ICON */}
-              <div className="w-16 h-16 bg-red-600 rounded-xl flex flex-col items-center justify-center text-white shadow-md">
-                {/* ICON */}
+              <div className="w-16 h-16 shrink-0 bg-red-600 rounded-xl flex flex-col items-center justify-center text-white shadow-md">
                 {step.icon}
 
                 {/* NUMBER DI DALAM */}
@@ -614,17 +724,18 @@ export default function LPPMLandingPage() {
               </div>
 
               {/* TEXT */}
-              <h4 className="mt-4 font-semibold text-sm">{step.title}</h4>
-
-              <p className="text-gray-400 text-xs mt-1">{step.desc}</p>
+              <div className="md:px-1">
+                <h4 className="md:mt-4 font-semibold text-sm">{step.title}</h4>
+                <p className="text-gray-400 text-xs mt-1">{step.desc}</p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* STATS MERAH */}
-      <section className="bg-red-700 text-white py-20 px-12">
-        <div className="grid md:grid-cols-4 gap-10 text-center">
+      <section className={`bg-red-700 text-white py-12 sm:py-20 ${PX}`}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 sm:gap-10 text-center">
           {[
             {
               icon: <FileText size={20} />,
@@ -649,22 +760,24 @@ export default function LPPMLandingPage() {
           ].map((item, i) => (
             <div key={i}>
               {/* ICON BOX */}
-              <div className="w-12 h-12 mx-auto mb-4 bg-white/20 flex items-center justify-center rounded-xl">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 bg-white/20 flex items-center justify-center rounded-xl">
                 {item.icon}
               </div>
 
               {/* VALUE */}
-              <h3 className="text-4xl font-bold">{item.value}</h3>
+              <h3 className="text-3xl sm:text-4xl font-bold">{item.value}</h3>
 
               {/* LABEL */}
-              <p className="text-sm text-white/80 mt-2">{item.label}</p>
+              <p className="text-xs sm:text-sm text-white/80 mt-1 sm:mt-2">
+                {item.label}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
       {/* BERITA & INFORMASI */}
-      <section className="py-24 px-12 bg-[#f9f9f9]">
+      <section className={`py-14 sm:py-24 ${PX} bg-[#f9f9f9]`}>
         {/* LABEL */}
         <div className="text-center mb-4">
           <span className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full">
@@ -673,7 +786,9 @@ export default function LPPMLandingPage() {
         </div>
 
         {/* TITLE */}
-        <h2 className="text-4xl font-bold text-center">Berita & Informasi</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-center">
+          Berita & Informasi
+        </h2>
 
         <p className="text-gray-500 text-sm text-center mt-3 max-w-xl mx-auto">
           Informasi terkini seputar kegiatan penelitian dan pengabdian di LPPM
@@ -681,7 +796,7 @@ export default function LPPMLandingPage() {
         </p>
 
         {/* GRID */}
-        <div className="grid md:grid-cols-3 gap-8 mt-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8 mt-10 sm:mt-16">
           {[
             {
               category: "Penelitian",
@@ -713,11 +828,22 @@ export default function LPPMLandingPage() {
           ].map((item, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition"
+              // kartu ke-3 melebar penuh di tablet (2 kolom) agar grid tidak bolong
+              className={`bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition flex flex-col ${
+                i === 2 ? "sm:col-span-2 lg:col-span-1" : ""
+              }`}
             >
               {/* IMAGE */}
-              <div className="relative h-52">
-                <img src={item.image} className="w-full h-full object-cover" />
+              <div
+                className={`relative h-48 sm:h-52 ${
+                  i === 2 ? "sm:h-64 lg:h-52" : ""
+                }`}
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
 
                 {/* BADGE */}
                 <span
@@ -728,7 +854,7 @@ export default function LPPMLandingPage() {
               </div>
 
               {/* CONTENT */}
-              <div className="p-6">
+              <div className="p-5 sm:p-6 flex flex-col flex-1">
                 {/* DATE */}
                 <p className="flex items-center gap-1 text-[11px] text-gray-400">
                   <CalendarDays size={12} className="opacity-70" />
@@ -736,7 +862,7 @@ export default function LPPMLandingPage() {
                 </p>
 
                 {/* TITLE */}
-                <h3 className="font-semibold text-base leading-snug">
+                <h3 className="mt-2 font-semibold text-base leading-snug">
                   {item.title}
                 </h3>
 
@@ -746,7 +872,7 @@ export default function LPPMLandingPage() {
                 </p>
 
                 {/* LINK */}
-                <button className="text-red-600 text-sm mt-4 flex items-center gap-1 hover:underline">
+                <button className="text-red-600 text-sm mt-4 flex items-center gap-1 hover:underline cursor-pointer">
                   Baca Selengkapnya →
                 </button>
               </div>
@@ -756,7 +882,7 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* KEPERCAYAAN & KOLABORASI */}
-      <section className="py-24 px-12 bg-[#f9f9f9] text-center">
+      <section className={`py-14 sm:py-24 ${PX} bg-[#f9f9f9] text-center`}>
         {/* LABEL */}
         <div className="mb-4">
           <span className="bg-red-100 text-red-600 text-xs px-4 py-1 rounded-full">
@@ -765,7 +891,9 @@ export default function LPPMLandingPage() {
         </div>
 
         {/* TITLE */}
-        <h2 className="text-4xl font-bold">Kepercayaan & Kolaborasi</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold">
+          Kepercayaan & Kolaborasi
+        </h2>
 
         {/* SUBTITLE */}
         <p className="text-gray-500 text-sm mt-3 max-w-xl mx-auto">
@@ -774,7 +902,7 @@ export default function LPPMLandingPage() {
         </p>
 
         {/* MITRA */}
-        <div className="flex flex-wrap justify-center gap-4 mt-8 text-xs text-gray-500">
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-8 text-xs text-gray-500">
           {[
             "Kemenristekdikti",
             "LLDIKTI Wilayah IV",
@@ -783,14 +911,14 @@ export default function LPPMLandingPage() {
             "BRIN",
             "Dikti",
           ].map((item, i) => (
-            <div key={i} className="px-4 py-2 bg-gray-100 rounded-full">
+            <div key={i} className="px-3 sm:px-4 py-2 bg-gray-100 rounded-full">
               {item}
             </div>
           ))}
         </div>
 
         {/* TESTIMONI */}
-        <div className="grid md:grid-cols-3 gap-8 mt-16 text-left">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8 mt-10 sm:mt-16 text-left">
           {[
             {
               name: "Dr. Ahmad Fauzi, M.Si.",
@@ -813,7 +941,9 @@ export default function LPPMLandingPage() {
           ].map((item, i) => (
             <div
               key={i}
-              className="bg-white p-6 rounded-2xl shadow-sm relative"
+              className={`bg-white p-5 sm:p-6 rounded-2xl shadow-sm relative ${
+                i === 2 ? "sm:col-span-2 lg:col-span-1" : ""
+              }`}
             >
               {/* BINTANG */}
               <div className="text-yellow-400 text-sm mb-4">★★★★★</div>
@@ -824,19 +954,19 @@ export default function LPPMLandingPage() {
               </p>
 
               {/* QUOTE ICON */}
-              <div className="absolute top-6 right-6 text-gray-200 text-5xl">
+              <div className="absolute top-5 right-5 sm:top-6 sm:right-6 text-gray-200 text-5xl leading-none">
                 ”
               </div>
 
               {/* USER */}
               <div className="flex items-center gap-3 mt-6">
                 {/* AVATAR */}
-                <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full text-sm font-semibold">
+                <div className="w-10 h-10 shrink-0 bg-red-600 text-white flex items-center justify-center rounded-full text-sm font-semibold">
                   {item.initial}
                 </div>
 
                 {/* NAME */}
-                <div>
+                <div className="min-w-0">
                   <p className="font-semibold text-sm">{item.name}</p>
                   <span className="text-gray-400 text-xs">{item.role}</span>
                 </div>
@@ -847,24 +977,24 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* CTA MODERN */}
-      <section className="px-12 py-24 bg-[#f9f9f9]">
-        <div className="relative bg-linear-to-br from-red-600 to-red-700 text-white rounded-[30px] py-20 px-6 text-center overflow-hidden">
+      <section className={`${PX} py-14 sm:py-24 bg-[#f9f9f9]`}>
+        <div className="relative bg-linear-to-br from-red-600 to-red-700 text-white rounded-3xl sm:rounded-[30px] py-12 sm:py-20 px-5 sm:px-6 text-center overflow-hidden">
           {/* DEKORASI BULAT */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/10 rounded-full"></div>
+          <div className="absolute -top-10 -right-10 w-32 h-32 sm:w-40 sm:h-40 bg-white/10 rounded-full"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 sm:w-40 sm:h-40 bg-white/10 rounded-full"></div>
 
           {/* ICON ATAS */}
-          <div className="w-14 h-14 mx-auto mb-6 bg-white/20 rounded-xl flex items-center justify-center text-white text-xl">
+          <div className="relative w-14 h-14 mx-auto mb-6 bg-white/20 rounded-xl flex items-center justify-center text-white text-xl">
             <LogIn />
           </div>
 
           {/* TITLE */}
-          <h2 className="text-4xl md:text-5xl font-bold leading-tight">
-            Siap Memulai Penelitian <br /> Anda?
+          <h2 className="relative text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+            Siap Memulai Penelitian <br className="hidden sm:block" /> Anda?
           </h2>
 
           {/* SUBTITLE */}
-          <p className="text-white/80 text-sm mt-4 max-w-xl mx-auto">
+          <p className="relative text-white/80 text-sm mt-4 max-w-xl mx-auto">
             Gunakan Sistem Informasi LPPM untuk pengelolaan penelitian yang
             lebih mudah, cepat, dan terintegrasi.
           </p>
@@ -872,7 +1002,7 @@ export default function LPPMLandingPage() {
           {/* BUTTON */}
           <button
             onClick={() => navigate("/login")}
-            className="mt-8 bg-white text-red-600 px-8 py-4 rounded-xl font-semibold flex items-center gap-2 mx-auto hover:scale-105 transition hover:cursor-pointer"
+            className="relative mt-8 w-full sm:w-auto justify-center bg-white text-red-600 px-8 py-4 rounded-xl font-semibold flex items-center gap-2 mx-auto sm:hover:scale-105 transition cursor-pointer"
           >
             → Masuk Sistem Sekarang
           </button>
@@ -880,9 +1010,9 @@ export default function LPPMLandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#0b0b0b] text-gray-300 pt-16 pb-6 px-12">
+      <footer className={`bg-[#0b0b0b] text-gray-300 pt-12 sm:pt-16 pb-6 ${PX}`}>
         {/* GRID */}
-        <div className="grid md:grid-cols-4 gap-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
           {/* KOLOM 1 */}
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -946,17 +1076,17 @@ export default function LPPMLandingPage() {
 
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
-                <MapPin size={16} className="text-red-500 mt-1" />
+                <MapPin size={16} className="text-red-500 mt-1 shrink-0" />
                 <p>Jl. Fatahillah No. 40, Cirebon, Jawa Barat 45153</p>
               </div>
 
               <div className="flex items-center gap-2">
-                <Mail size={16} className="text-red-500" />
-                <p>lppm@umc.ac.id</p>
+                <Mail size={16} className="text-red-500 shrink-0" />
+                <p className="break-all">lppm@umc.ac.id</p>
               </div>
 
               <div className="flex items-center gap-2">
-                <Phone size={16} className="text-red-500" />
+                <Phone size={16} className="text-red-500 shrink-0" />
                 <p>(0231) 123456</p>
               </div>
             </div>
@@ -976,12 +1106,12 @@ export default function LPPMLandingPage() {
         </div>
 
         {/* GARIS */}
-        <div className="border-t border-gray-800 mt-12 pt-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
+        <div className="border-t border-gray-800 mt-10 sm:mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0 text-xs text-gray-500 text-center md:text-left">
           <p>
             © 2026 LPPM Universitas Muhammadiyah Cirebon. All rights reserved.
           </p>
 
-          <div className="flex gap-6 mt-4 md:mt-0">
+          <div className="flex gap-4 sm:gap-6">
             <span>Kebijakan Privasi</span>
             <span>Syarat & Ketentuan</span>
           </div>
