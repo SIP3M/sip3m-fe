@@ -51,6 +51,9 @@ import EditProposalDosen from "@/features/proposals/EditProposalDosen";
 import SystemSettings from "@/features/settings/SystemSettings";
 
 import PeriodeKKM from "@/features/kkm/PeriodeKKM";
+import DetailPeriodeKKM from "@/features/kkm/DetailPeriodeKKM";
+import TambahPeriodeKKM from "@/features/kkm/TambahPeriodeKKM";
+import KkmPeriodForm from "@/features/kkm/KkmPeriodForm";
 import PesertaKKM from "@/features/kkm/PesertaKKM";
 import LokasiKKM from "@/features/kkm/LokasiKKM";
 import DPLKKM from "@/features/kkm/DPLKKM";
@@ -161,6 +164,18 @@ export const router = createBrowserRouter([
     {
       path: "admin-dashboard/kkm/periode",
       element: <PeriodeKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/periode/new",
+      element: <TambahPeriodeKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/periode/:id",
+      element: <DetailPeriodeKKM />,
+    },
+    {
+      path: "admin-dashboard/kkm/periode/:id/edit",
+      element: <KkmPeriodForm mode="edit" />,
     },
     {
       path: "admin-dashboard/kkm/peserta",
