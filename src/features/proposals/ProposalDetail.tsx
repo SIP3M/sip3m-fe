@@ -24,6 +24,7 @@ import {
 import { Proposal } from "./proposal.types";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";
+import { getKetuaNama, getKetuaNidn, isKetuaDiffFromUploader } from "@/utils/proposal";
 
 type FeedbackState = {
   type: "success" | "error";
@@ -367,6 +368,9 @@ export default function ProposalDetail() {
   const anggotaRows = Math.max(anggotaNames.length, anggotaNims.length);
 
   const proposalCode = `PROP-${String(proposal.id).padStart(3, "0")}`;
+  const ketuaNama = getKetuaNama(proposal as unknown as { nama_ketua?: string | null; nidn_ketua?: string | null; user?: { name: string; nidn_nip?: string | null } | null });
+  const ketuaNidn = getKetuaNidn(proposal as unknown as { nama_ketua?: string | null; nidn_ketua?: string | null; user?: { name: string; nidn_nip?: string | null } | null });
+  const ketuaDiff = isKetuaDiffFromUploader(proposal as unknown as { nama_ketua?: string | null; nidn_ketua?: string | null; user?: { name: string; nidn_nip?: string | null } | null });
 
   return (
     <div className="space-y-6 p-8">
@@ -471,6 +475,16 @@ export default function ProposalDetail() {
             <p className="mt-1 text-sm font-semibold text-gray-800">
               {proposal.sumber_pendanaan || "-"}
             </p>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-400">Ketua Peneliti</p>
+            <p className="mt-1 text-sm font-semibold text-gray-800" title={ketuaDiff ? `Pengusul akun: ${proposal.user?.name ?? "-"}` : undefined}>
+              {ketuaNama} <span className="font-normal text-gray-500">({ketuaNidn})</span>
+            </p>
+            {ketuaDiff && (
+              <p className="text-[11px] text-gray-400">Pengusul akun: {proposal.user?.name ?? "-"}</p>
+            )}
           </div>
 
           <div>

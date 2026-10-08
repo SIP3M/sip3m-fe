@@ -16,6 +16,9 @@ export interface AssignedProposal {
   id: number;
   title: string;
   lead_researcher_id: number;
+  // Opsi B: ketua eksplisit per Peran, nullable untuk proposal lama
+  nama_ketua?: string | null;
+  nidn_ketua?: string | null;
   user: {
     name: string;
     nidn_nip: string;

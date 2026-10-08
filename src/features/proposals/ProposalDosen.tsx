@@ -31,7 +31,10 @@ import {
   ProposalApiError,
   ProposalFormMode,
   ProposalFormValues,
+  SumberPendanaanValue,
 } from "./ProposalDosen.types";
+import { SUMBER_PENDANAAN_OPTIONS } from "./proposal.types";
+import { normalizeNama, normalizeNidn, normalizeNim, splitList } from "@/utils/proposal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DosenAutocomplete from "./components/DosenAutocomplete";
@@ -159,6 +162,16 @@ const isRabFileAllowed = (file: File) => {
   return extension === "pdf" || extension === "xls" || extension === "xlsx";
 };
 
+const mapBeFieldKey = (k: string): string => {
+  if (k === "dosen_terlibat") return "dosen_terlibat";
+  if (k === "nidn_dosen_terlibat") return "nidn_dosen_terlibat";
+  if (k === "nama_anggota") return "nama_anggota";
+  if (k === "nim_anggota") return "nim_anggota";
+  if (k === "nama_ketua") return "nama_ketua";
+  if (k === "nidn_ketua") return "nidn_ketua";
+  return k;
+};
+
 const getErrorMessage = (err: unknown, fallback: string) => {
   if (axios.isAxiosError(err)) {
     const responseData = err.response?.data as ProposalApiError | undefined;
@@ -227,9 +240,33 @@ export default function ProposalDosen() {
   const [mahasiswaRows, setMahasiswaRows] = useState<MahasiswaRow[]>([
     { nim: "", nama: "", prodi: "", peran: "Anggota" },
   ]);
-  const [sumberPendanaan, setSumberPendanaan] = useState("Pilih");
+  const [sumberPendanaan, setSumberPendanaan] =
+    useState<SumberPendanaanValue>("Pilih");
   const [fakultasList, setFakultasList] = useState<Fakultas[]>([]);
   const [fakultasLoading, setFakultasLoading] = useState(true);
+
+  // ── Anti-double inline errors (BE f0be231) ───────────────────────────────
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const setFieldErrorsFromBe = (errors: Record<string, string[] | string>) => {
+    const mapped: Record<string, string> = {};
+    for (const [k, v] of Object.entries(errors)) {
+      const msg = Array.isArray(v) ? v[0] : String(v);
+      mapped[mapBeFieldKey(k)] = msg;
+    }
+    setFieldErrors(mapped);
+  };
+  const hasAntiDoubleError = useMemo(
+    () =>
+      Boolean(
+        fieldErrors.dosen_terlibat ||
+          fieldErrors.nidn_dosen_terlibat ||
+          fieldErrors.nama_ketua ||
+          fieldErrors.nidn_ketua ||
+          fieldErrors.nama_anggota ||
+          fieldErrors.nim_anggota,
+      ),
+    [fieldErrors],
+  );
 
   const editingProposal = useMemo(
     () => data.find((item) => item.id === editingProposalId) || null,
@@ -336,12 +373,163 @@ export default function ProposalDosen() {
     setFormMode("create");
   };
 
+  const validateTimDosenClient = (rows: DosenRow[]): { ok: boolean; errors: Record<string, string> } => {
+    const errors: Record<string, string> = {};
+    // BE splits by , ; \n — flatten each row's value via splitList to catch "A, A" inside one row
+    const allNamaTokens: string[] = [];
+    const allNidnTokens: string[] = [];
+    for (const r of rows) {
+      allNamaTokens.push(...splitList(r.nama));
+      allNidnTokens.push(...splitList(r.nidn));
+    }
+    // Include also whole-row normalized fallback for single-value rows without separators
+    if (allNamaTokens.length === 0) {
+      for (const r of rows) {
+        const k = normalizeNama(r.nama);
+        if (k) allNamaTokens.push(r.nama.trim());
+      }
+    }
+    if (allNidnTokens.length === 0) {
+      for (const r of rows) {
+        const k = normalizeNidn(r.nidn);
+        if (k) allNidnTokens.push(r.nidn.trim());
+      }
+    }
+
+    const seenNama = new Set<string>();
+    let dupNama: string | null = null;
+    for (const raw of allNamaTokens) {
+      const k = normalizeNama(raw);
+      if (!k) continue;
+      if (seenNama.has(k)) {
+        dupNama = raw.trim();
+        break;
+      }
+      seenNama.add(k);
+    }
+    if (dupNama) {
+      errors.dosen_terlibat = `Nama dosen "${dupNama}" duplikat di daftar anggota. Tiap dosen hanya boleh 1 kali.`;
+    }
+
+    const seenNidn = new Set<string>();
+    let dupNidn: string | null = null;
+    for (const raw of allNidnTokens) {
+      const k = normalizeNidn(raw);
+      if (!k) continue;
+      if (seenNidn.has(k)) {
+        dupNidn = raw.trim();
+        break;
+      }
+      seenNidn.add(k);
+    }
+    if (dupNidn) {
+      errors.nidn_dosen_terlibat = `NIDN "${dupNidn}" duplikat di daftar anggota.`;
+    }
+
+    return { ok: Object.keys(errors).length === 0, errors };
+  };
+
+  const validateMahasiswaClient = (rows: MahasiswaRow[]): { ok: boolean; errors: Record<string, string> } => {
+    const errors: Record<string, string> = {};
+    const allNama: string[] = [];
+    const allNim: string[] = [];
+    for (const r of rows) {
+      allNama.push(...splitList(r.nama));
+      allNim.push(...splitList(r.nim));
+    }
+    if (allNama.length === 0) {
+      for (const r of rows) {
+        const k = normalizeNama(r.nama);
+        if (k) allNama.push(r.nama.trim());
+      }
+    }
+    if (allNim.length === 0) {
+      for (const r of rows) {
+        const k = normalizeNim(r.nim);
+        if (k) allNim.push(r.nim.trim());
+      }
+    }
+
+    const seenNama = new Set<string>();
+    let dupNama: string | null = null;
+    for (const raw of allNama) {
+      const k = normalizeNama(raw);
+      if (!k) continue;
+      if (seenNama.has(k)) {
+        dupNama = raw.trim();
+        break;
+      }
+      seenNama.add(k);
+    }
+    if (dupNama) errors.nama_anggota = `Nama mahasiswa "${dupNama}" duplikat di daftar anggota.`;
+
+    const seenNim = new Set<string>();
+    let dupNim: string | null = null;
+    for (const raw of allNim) {
+      const k = normalizeNim(raw);
+      if (!k) continue;
+      if (seenNim.has(k)) {
+        dupNim = raw.trim();
+        break;
+      }
+      seenNim.add(k);
+    }
+    if (dupNim) errors.nim_anggota = `NIM "${dupNim}" duplikat di daftar anggota.`;
+
+    return { ok: Object.keys(errors).length === 0, errors };
+  };
+
   const syncDosenToForm = (rows: DosenRow[]) => {
     setFormValues((prev) => ({
       ...prev,
       nidn_dosen_terlibat: rows.map((r) => r.nidn.trim()).join("\n"),
       dosen_terlibat: rows.map((r) => r.nama.trim()).join("\n"),
     }));
+    // Live anti-double validation for UX (inline error + disable save/add)
+    const v = validateTimDosenClient(rows);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (v.errors.dosen_terlibat) next.dosen_terlibat = v.errors.dosen_terlibat;
+      else delete next.dosen_terlibat;
+      if (v.errors.nidn_dosen_terlibat) next.nidn_dosen_terlibat = v.errors.nidn_dosen_terlibat;
+      else delete next.nidn_dosen_terlibat;
+      // Also re-check ketua vs anggota when dosen list changes
+      const ketuaRow = rows.find((r) => r.peran === "Ketua Peneliti") || null;
+      const ketuaNama = ketuaRow?.nama?.trim() || "";
+      const ketuaNidn = ketuaRow?.nidn?.trim() || "";
+      if (ketuaNama) {
+        const lowerKetua = normalizeNama(ketuaNama);
+        const inDosenNama = rows
+          .filter((r) => r.peran !== "Ketua Peneliti")
+          .some((r) => normalizeNama(r.nama) === lowerKetua && normalizeNama(r.nama) !== "");
+        // Also check ketua duplicate within dosen (if user typed same ketua name twice)
+        const countKetuaName = rows.filter((r) => normalizeNama(r.nama) === lowerKetua).length;
+        if (countKetuaName > 1) {
+          next.nama_ketua = `Ketua peneliti "${ketuaNama}" sudah ada di daftar anggota dosen. Tidak boleh double.`;
+        } else if (inDosenNama) {
+          next.nama_ketua = `Ketua peneliti "${ketuaNama}" sudah ada di daftar anggota dosen. Tidak boleh double.`;
+        } else {
+          delete next.nama_ketua;
+        }
+      } else {
+        delete next.nama_ketua;
+      }
+      if (ketuaNidn) {
+        const lowerNidn = normalizeNidn(ketuaNidn);
+        const inDosenNidn = rows
+          .filter((r) => r.peran !== "Ketua Peneliti")
+          .some((r) => normalizeNidn(r.nidn) === lowerNidn && normalizeNidn(r.nidn) !== "");
+        const countNidn = rows.filter((r) => normalizeNidn(r.nidn) === lowerNidn).length;
+        if (countNidn > 1 || inDosenNidn) {
+          next.nidn_ketua = `NIDN ketua "${ketuaNidn}" sudah ada di daftar anggota.`;
+        } else {
+          delete next.nidn_ketua;
+        }
+      } else {
+        delete next.nidn_ketua;
+      }
+      return next;
+    });
   };
 
   const syncMahasiswaToForm = (rows: MahasiswaRow[]) => {
@@ -350,6 +538,15 @@ export default function ProposalDosen() {
       nim_anggota: rows.map((r) => r.nim.trim()).join("\n"),
       nama_anggota: rows.map((r) => r.nama.trim()).join("\n"),
     }));
+    const v = validateMahasiswaClient(rows);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (v.errors.nama_anggota) next.nama_anggota = v.errors.nama_anggota;
+      else delete next.nama_anggota;
+      if (v.errors.nim_anggota) next.nim_anggota = v.errors.nim_anggota;
+      else delete next.nim_anggota;
+      return next;
+    });
   };
 
   const handleDosenChange = (
@@ -403,6 +600,22 @@ export default function ProposalDosen() {
   };
 
   const handleDosenAutocompleteSelect = (dosen: Dosen, index: number) => {
+    // Client guard: reject if selecting this dosen would duplicate
+    const candidateRows = dosenRows.map((r, i) =>
+      i === index ? { ...r, nama: dosen.name, nidn: dosen.nidn } : r,
+    );
+    const v = validateTimDosenClient(candidateRows);
+    if (!v.ok) {
+      setFieldErrors((prev) => ({ ...prev, ...v.errors }));
+      // Still allow but show inline error; do not block autocomplete — user can change peran/nama
+    } else {
+      setFieldErrors((prev) => {
+        const n = { ...prev };
+        delete n.dosen_terlibat;
+        delete n.nidn_dosen_terlibat;
+        return n;
+      });
+    }
     const next = [...dosenRows];
     next[index] = {
       ...next[index],
@@ -414,6 +627,11 @@ export default function ProposalDosen() {
   };
 
   const handleMahasiswaAutocompleteSelect = (mahasiswa: Mahasiswa, index: number) => {
+    const candidate = mahasiswaRows.map((r, i) =>
+      i === index ? { ...r, nama: mahasiswa.name, nim: mahasiswa.nim } : r,
+    );
+    const v = validateMahasiswaClient(candidate);
+    if (!v.ok) setFieldErrors((prev) => ({ ...prev, ...v.errors }));
     const next = [...mahasiswaRows];
     next[index] = {
       ...next[index],
@@ -484,7 +702,8 @@ export default function ProposalDosen() {
     resetForm();
     setDosenRows([{ nidn: "", nama: "", peran: "Ketua Peneliti" }]);
     setMahasiswaRows([{ nim: "", nama: "", prodi: "", peran: "Anggota" }]);
-    setSumberPendanaan("Pilih");
+    setSumberPendanaan("Pilih" as SumberPendanaanValue);
+    setFieldErrors({});
     setFeedback(null);
     setError(null);
     setIsFormOpen(true);
@@ -518,9 +737,15 @@ export default function ProposalDosen() {
       proposal_file: null,
       rab_file: null,
     });
-    setSumberPendanaan("Pilih");
+    const rawSumber = (proposal.sumber_pendanaan as string | null) ?? null;
+    const isValidSumber = (SUMBER_PENDANAAN_OPTIONS as string[]).includes(
+      rawSumber ?? "",
+    );
+    setSumberPendanaan(
+      isValidSumber ? (rawSumber as SumberPendanaanValue) : "Pilih",
+    );
 
-    // PARSE DOSEN
+    // PARSE DOSEN — Opsi B: cocokan nama_ketua/nidn_ketua untuk tentukan Peran
     const nidns = proposal.nidn_dosen_terlibat
       ? proposal.nidn_dosen_terlibat.split("\n")
       : [];
@@ -528,13 +753,34 @@ export default function ProposalDosen() {
       ? proposal.dosen_terlibat.split("\n")
       : [];
     const length = Math.max(nidns.length, namas.length, 1);
+    const ketuaNamaNorm = (proposal.nama_ketua ?? "").trim().toLowerCase();
+    const ketuaNidnNorm = (proposal.nidn_ketua ?? "").trim();
     const parsedDosen: DosenRow[] = [];
+    let ketuaAssigned = false;
     for (let i = 0; i < length; i++) {
+      const nm = (namas[i] || "").trim();
+      const nid = (nidns[i] || "").trim();
+      const isKetua =
+        !ketuaAssigned &&
+        ketuaNamaNorm &&
+        nm.toLowerCase() === ketuaNamaNorm &&
+        (!ketuaNidnNorm || nid === ketuaNidnNorm);
+      // Fallback proposal lama (nama_ketua null): tetap baris 0 = Ketua agar tidak kosong
+      const peran = isKetua
+        ? "Ketua Peneliti"
+        : !ketuaNamaNorm && i === 0
+          ? "Ketua Peneliti"
+          : "Anggota Peneliti";
+      if (isKetua) ketuaAssigned = true;
       parsedDosen.push({
         nidn: nidns[i] || "",
         nama: namas[i] || "",
-        peran: i === 0 ? "Ketua Peneliti" : "Anggota Peneliti",
+        peran,
       });
+    }
+    // Jika proposal punya nama_ketua tapi tidak match baris mana pun (data berbeda), pastikan tetap ada 1 Ketua
+    if (ketuaNamaNorm && !ketuaAssigned && parsedDosen.length > 0) {
+      parsedDosen[0].peran = "Ketua Peneliti";
     }
     setDosenRows(parsedDosen);
 
@@ -574,11 +820,13 @@ export default function ProposalDosen() {
     }
     setMahasiswaRows(parsedMhs);
 
+    setFieldErrors({});
     setIsFormOpen(true);
   };
 
   const closeForm = () => {
     setIsFormOpen(false);
+    setFieldErrors({});
     resetForm();
   };
 
@@ -611,7 +859,23 @@ export default function ProposalDosen() {
   };
 
   const buildPayload = (isDraft: boolean) => {
-    const payload = {
+    const sumberPendanaanValue =
+      sumberPendanaan !== "Pilih" ? sumberPendanaan : undefined;
+
+    // Opsi B: ketua dari baris Peran === "Ketua Peneliti" (exact, case-sensitive)
+    const ketuaRow = dosenRows.find((r) => r.peran === "Ketua Peneliti") || null;
+    const ketuaNamaRaw = ketuaRow?.nama?.trim() || "";
+    const ketuaNidnRaw = ketuaRow?.nidn?.trim() || "";
+    // Omit jika tidak ada ketua / field kosong -> BE akan simpan null; jangan kirim ""
+    const namaKetuaValue = ketuaNamaRaw ? ketuaNamaRaw : undefined;
+    const nidnKetuaValue = ketuaNidnRaw ? ketuaNidnRaw : undefined;
+
+    const payload: Record<string, unknown> & {
+      title: string;
+      is_draft: boolean;
+      proposal_file?: File;
+      rab_file?: File;
+    } = {
       title: formValues.title.trim(),
       faculty: formValues.faculty.trim() || undefined,
       prodi: formValues.prodi.trim() || undefined,
@@ -632,10 +896,57 @@ export default function ProposalDosen() {
       rab_file: formValues.rab_file || undefined,
     };
 
-    return payload;
+    if (sumberPendanaanValue) {
+      (payload as Record<string, unknown>).sumber_pendanaan =
+        sumberPendanaanValue;
+    }
+    if (namaKetuaValue !== undefined) {
+      (payload as Record<string, unknown>).nama_ketua = namaKetuaValue;
+    }
+    if (nidnKetuaValue !== undefined) {
+      (payload as Record<string, unknown>).nidn_ketua = nidnKetuaValue;
+    }
+
+    return payload as Parameters<typeof createProposal>[0];
   };
 
   const handleSaveProposal = async (isDraft: boolean) => {
+    // Client-side anti-double (BE f0be231) — block before fetch
+    const timV = validateTimDosenClient(dosenRows);
+    const mhsV = validateMahasiswaClient(mahasiswaRows);
+    const ketuaRow = dosenRows.find((r) => r.peran === "Ketua Peneliti") || null;
+    const ketuaNamaGuard = ketuaRow?.nama?.trim() || "";
+    const ketuaNidnGuard = ketuaRow?.nidn?.trim() || "";
+    const extra: Record<string, string> = {};
+    if (ketuaNamaGuard) {
+      const lowerKetua = normalizeNama(ketuaNamaGuard);
+      const anggotaNamaSet = new Set(
+        dosenRows.filter((r) => r.peran !== "Ketua Peneliti").map((r) => normalizeNama(r.nama)).filter(Boolean),
+      );
+      const countKetua = dosenRows.filter((r) => normalizeNama(r.nama) === lowerKetua).length;
+      if (countKetua > 1 || anggotaNamaSet.has(lowerKetua)) {
+        extra.nama_ketua = `Ketua peneliti "${ketuaNamaGuard}" sudah ada di daftar anggota dosen. Tidak boleh double.`;
+      }
+    }
+    if (ketuaNidnGuard) {
+      const lowerNidn = normalizeNidn(ketuaNidnGuard);
+      const anggotaNidnSet = new Set(
+        dosenRows.filter((r) => r.peran !== "Ketua Peneliti").map((r) => normalizeNidn(r.nidn)).filter(Boolean),
+      );
+      const countNidn = dosenRows.filter((r) => normalizeNidn(r.nidn) === lowerNidn).length;
+      if (countNidn > 1 || anggotaNidnSet.has(lowerNidn)) {
+        extra.nidn_ketua = `NIDN ketua "${ketuaNidnGuard}" sudah ada di daftar anggota.`;
+      }
+    }
+    const combinedErrors = { ...timV.errors, ...mhsV.errors, ...extra };
+    if (Object.keys(combinedErrors).length > 0) {
+      setFieldErrors(combinedErrors);
+      const first = Object.values(combinedErrors)[0];
+      setError(first);
+      return;
+    }
+    setFieldErrors({});
+
     if (!formValues.title.trim()) {
       setError("Judul proposal wajib diisi.");
       return;
@@ -690,6 +1001,15 @@ export default function ProposalDosen() {
       closeForm();
       await loadProposals(debouncedQuery);
     } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { errors?: Record<string, string[] | string>; message?: string } | undefined;
+        if (data?.errors && typeof data.errors === "object") {
+          setFieldErrorsFromBe(data.errors as Record<string, string[] | string>);
+          // Render per-field + keep generic toast as fallback (BE messages verbatim)
+          setError(getErrorMessage(err, "Gagal menyimpan proposal."));
+          return;
+        }
+      }
       setError(getErrorMessage(err, "Gagal menyimpan proposal."));
     } finally {
       setIsSubmittingForm(false);
@@ -901,14 +1221,17 @@ export default function ProposalDosen() {
                   <div className="relative">
                     <select
                       value={sumberPendanaan}
-                      onChange={(e) => setSumberPendanaan(e.target.value)}
+                      onChange={(e) =>
+                        setSumberPendanaan(e.target.value as SumberPendanaanValue)
+                      }
                       className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                     >
                       <option value="Pilih">Pilih</option>
-                      <option value="Internal Kampus">Internal Kampus</option>
-                      <option value="Kemendikbudristek">Kemendikbudristek</option>
-                      <option value="Mandiri">Mandiri</option>
-                      <option value="Lainnya">Lainnya</option>
+                      {SUMBER_PENDANAAN_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                       <svg
@@ -1061,16 +1384,33 @@ export default function ProposalDosen() {
                             />
                           </td>
                           <td className="py-2 pr-2">
-                            <div className="h-10 w-full flex items-center rounded-xl border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800 shadow-none">
-                              {row.peran}
-                            </div>
+                            <select
+                              value={row.peran}
+                              onChange={(e) => {
+                                const next = [...dosenRows];
+                                const chosen = e.target.value;
+                                // Hanya 1 Ketua: jika pilih Ketua, reset yang lain jadi Anggota
+                                if (chosen === "Ketua Peneliti") {
+                                  for (let j = 0; j < next.length; j++) {
+                                    next[j] = { ...next[j], peran: j === idx ? "Ketua Peneliti" : "Anggota Peneliti" };
+                                  }
+                                } else {
+                                  next[idx] = { ...next[idx], peran: chosen };
+                                }
+                                setDosenRows(next);
+                                syncDosenToForm(next);
+                              }}
+                              className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800 shadow-none cursor-pointer"
+                            >
+                              <option value="Ketua Peneliti">Ketua Peneliti</option>
+                              <option value="Anggota Peneliti">Anggota Peneliti</option>
+                            </select>
                           </td>
                           <td className="py-2 text-center">
                             <button
                               type="button"
-                              disabled={idx === 0}
                               onClick={() => removeDosenRow(idx)}
-                              className="p-1.5 rounded-lg border border-transparent text-gray-300 hover:text-red-500 disabled:opacity-20 disabled:hover:text-gray-300 cursor-pointer transition-colors"
+                              className="p-1.5 rounded-lg border border-transparent text-gray-300 hover:text-red-500 cursor-pointer transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -1081,16 +1421,29 @@ export default function ProposalDosen() {
                   </table>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
+                  {(fieldErrors.dosen_terlibat || fieldErrors.nidn_dosen_terlibat || fieldErrors.nama_ketua || fieldErrors.nidn_ketua) && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 space-y-1">
+                      {fieldErrors.dosen_terlibat && <p>{fieldErrors.dosen_terlibat}</p>}
+                      {fieldErrors.nidn_dosen_terlibat && <p>{fieldErrors.nidn_dosen_terlibat}</p>}
+                      {fieldErrors.nama_ketua && <p>{fieldErrors.nama_ketua}</p>}
+                      {fieldErrors.nidn_ketua && <p>{fieldErrors.nidn_ketua}</p>}
+                    </div>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addDosenRow}
-                    className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none"
+                    disabled={hasAntiDoubleError}
+                    className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={hasAntiDoubleError ? "Perbaiki duplikasi sebelum menambah baris" : undefined}
                   >
                     <Plus size={14} />
                     Tambah Dosen
                   </Button>
+                  {hasAntiDoubleError && (
+                    <p className="text-[11px] text-red-600">Nama dosen sudah ada, tidak boleh double — perbaiki sebelum menambah/menyimpan.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1179,16 +1532,27 @@ export default function ProposalDosen() {
                   </table>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
+                  {(fieldErrors.nama_anggota || fieldErrors.nim_anggota) && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 space-y-1">
+                      {fieldErrors.nama_anggota && <p>{fieldErrors.nama_anggota}</p>}
+                      {fieldErrors.nim_anggota && <p>{fieldErrors.nim_anggota}</p>}
+                    </div>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addMahasiswaRow}
-                    className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none"
+                    disabled={Boolean(fieldErrors.nama_anggota || fieldErrors.nim_anggota)}
+                    className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={fieldErrors.nama_anggota || fieldErrors.nim_anggota ? "Perbaiki duplikasi mahasiswa" : undefined}
                   >
                     <Plus size={14} />
                     Tambah Mahasiswa
                   </Button>
+                  {(fieldErrors.nama_anggota || fieldErrors.nim_anggota) && (
+                    <p className="text-[11px] text-red-600">Nama/NIM mahasiswa duplikat — perbaiki sebelum menambah.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1315,6 +1679,11 @@ export default function ProposalDosen() {
           </Card>
 
           {/* Tombol Aksi di Bagian Bawah */}
+          {hasAntiDoubleError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+              Tidak bisa simpan: {Object.values(fieldErrors).join(" ")}
+            </div>
+          )}
           <div className="flex flex-wrap justify-end gap-3 mt-6">
             <Button
               type="button"
@@ -1329,9 +1698,10 @@ export default function ProposalDosen() {
             <Button
               type="button"
               variant="outline"
-              disabled={isSubmittingForm}
+              disabled={isSubmittingForm || hasAntiDoubleError}
               onClick={() => void handleSaveProposal(true)}
-              className="h-10 px-5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer text-xs font-semibold"
+              className="h-10 px-5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasAntiDoubleError ? Object.values(fieldErrors)[0] : undefined}
             >
               <Calendar size={15} />
               Simpan Draft
@@ -1339,9 +1709,10 @@ export default function ProposalDosen() {
 
             <Button
               type="button"
-              disabled={isSubmittingForm}
+              disabled={isSubmittingForm || hasAntiDoubleError}
               onClick={() => void handleSaveProposal(false)}
-              className="h-10 px-5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white flex items-center gap-2 cursor-pointer text-xs font-semibold border-0"
+              className="h-10 px-5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white flex items-center gap-2 cursor-pointer text-xs font-semibold border-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasAntiDoubleError ? Object.values(fieldErrors)[0] : undefined}
             >
               <Send size={15} />
               {isSubmittingForm ? "Memproses..." : "Simpan & Submit"}

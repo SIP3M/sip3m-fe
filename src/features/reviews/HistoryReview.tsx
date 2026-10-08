@@ -16,6 +16,7 @@ import type {
   ReviewHistoryItem,
   ProposalStatus,
 } from "./review.types";
+import { getKetuaNama, getKetuaNidn, isKetuaDiffFromUploader } from "@/utils/proposal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (iso: string) =>
@@ -135,8 +136,11 @@ function ReviewDetailModal({
             <div>
               <h2 className="font-semibold text-gray-800">{proposal.title}</h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {proposal.user.name} &bull; {proposal.faculty}
+                {getKetuaNama(proposal)} &bull; {proposal.faculty}
               </p>
+              {isKetuaDiffFromUploader(proposal) && (
+                <p className="text-[11px] text-gray-400">Pengusul akun: {proposal.user.name}</p>
+              )}
             </div>
             <button
               id="btn-close-modal"
@@ -483,10 +487,15 @@ export default function HistoryReview() {
                     </td>
 
                     <td className="px-5 py-4">
-                      <p className="text-gray-600">{item.user.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {item.user.nidn_nip}
+                      <p className="text-gray-600" title={isKetuaDiffFromUploader(item) ? `Pengusul akun: ${item.user.name}` : getKetuaNama(item)}>
+                        {getKetuaNama(item)}
                       </p>
+                      <p className="text-xs text-gray-400">
+                        {getKetuaNidn(item)}
+                      </p>
+                      {isKetuaDiffFromUploader(item) && (
+                        <p className="text-[11px] text-gray-400 truncate max-w-[160px]" title={item.user.name}>Pengusul: {item.user.name}</p>
+                      )}
                     </td>
 
                     <td className="px-5 py-4 text-gray-500 text-xs">
