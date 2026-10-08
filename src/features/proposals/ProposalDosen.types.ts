@@ -1,6 +1,8 @@
-import { ProposalStatus } from "./proposal.types";
+import { ProposalStatus, SumberPendanaan } from "./proposal.types";
 
 export type DosenProposalStatusFilter = "ALL" | ProposalStatus;
+
+export type SumberPendanaanValue = SumberPendanaan | "Pilih";
 
 export type ProposalFormValues = {
   title: string;

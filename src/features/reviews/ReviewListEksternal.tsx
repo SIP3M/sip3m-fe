@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAssignedProposals } from "./review.api";
 import type { AssignedProposal, ProposalStatus } from "./review.types";
+import { getKetuaNama, getKetuaNidn, isKetuaDiffFromUploader } from "@/utils/proposal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatCurrency = (n: number) =>
@@ -232,8 +233,11 @@ export default function ReviewListEksternal() {
               </div>
 
               <div className="min-w-0">
-                <p className="text-gray-700 truncate">{item.user.name}</p>
-                <p className="text-xs text-gray-400">{item.user.nidn_nip}</p>
+                <p className="text-gray-700 truncate" title={isKetuaDiffFromUploader(item) ? `Pengusul akun: ${item.user.name}` : getKetuaNama(item)}>{getKetuaNama(item)}</p>
+                <p className="text-xs text-gray-400">{getKetuaNidn(item)}</p>
+                {isKetuaDiffFromUploader(item) && (
+                  <p className="text-[11px] text-gray-400 truncate" title={item.user.name}>Pengusul: {item.user.name}</p>
+                )}
               </div>
 
               <div className="min-w-0">

@@ -90,10 +90,8 @@ export interface BulkAssignReviewersResponse {
   };
 }
 
-// Tambahkan ini di proposal.api.ts
 export const editProposalApi = async (id: number, formData: FormData) => {
-  // Pastikan URL-nya sesuai dengan base URL axios kamu
-  const response = await axios.put(`/proposals/${id}`, formData, {
+  const response = await api.put(`/proposals/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -128,6 +126,18 @@ const buildProposalFormData = (payload: UpsertProposalPayload) => {
 
   if (payload.sumber_data_penelitian !== undefined) {
     formData.append("sumber_data_penelitian", payload.sumber_data_penelitian);
+  }
+
+  if (payload.sumber_pendanaan !== undefined) {
+    formData.append("sumber_pendanaan", payload.sumber_pendanaan);
+  }
+
+  if (payload.nama_ketua !== undefined) {
+    formData.append("nama_ketua", payload.nama_ketua);
+  }
+
+  if (payload.nidn_ketua !== undefined) {
+    formData.append("nidn_ketua", payload.nidn_ketua);
   }
 
   if (payload.instansi !== undefined) {

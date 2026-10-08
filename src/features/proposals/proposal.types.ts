@@ -1,3 +1,16 @@
+export type SumberPendanaan =
+  | "Internal Kampus"
+  | "Kemendikbudristek"
+  | "Mandiri"
+  | "Lainnya";
+
+export const SUMBER_PENDANAAN_OPTIONS: SumberPendanaan[] = [
+  "Internal Kampus",
+  "Kemendikbudristek",
+  "Mandiri",
+  "Lainnya",
+];
+
 export type ProposalStatus =
   | "REVIEW"
   | "SUBMITTED"
@@ -13,6 +26,9 @@ export interface Proposal {
   id: number;
   title: string;
   lead_researcher_id: number;
+  // Opsi B: ketua eksplisit dari Peran "Ketua Peneliti" — nullable untuk proposal lama
+  nama_ketua?: string | null;
+  nidn_ketua?: string | null;
   user?: {
     name: string;
     nidn_nip: string;
@@ -21,7 +37,7 @@ export interface Proposal {
   skema: string;
   sumber_data_penelitian?: string | null;
   instansi?: string | null;
-  sumber_pendanaan?: string | null;
+  sumber_pendanaan?: SumberPendanaan | null;
   abstrak?: string | null;
   tujuan_penelitian?: string | null;
   metode_penelitian?: string | null;
@@ -106,6 +122,10 @@ export interface UpsertProposalPayload {
   faculty?: string;
   skema?: string;
   sumber_data_penelitian?: string;
+  sumber_pendanaan?: SumberPendanaan;
+  // Opsi B: ketua dari baris Peran === "Ketua Peneliti" (omit jika tidak ada -> BE null)
+  nama_ketua?: string;
+  nidn_ketua?: string;
   instansi?: string;
   funding_request_amount?: number | string;
   dosen_terlibat?: string;

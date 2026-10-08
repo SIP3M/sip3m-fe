@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { getAssignedProposals } from "./review.api";
 import type { AssignedProposal, ProposalStatus } from "./review.types";
+import { getKetuaNama, getKetuaNidn, isKetuaDiffFromUploader } from "@/utils/proposal";
 import {
   Table,
   TableBody,
@@ -385,14 +386,22 @@ export default function ReviewListReviewer() {
                       </p>
                     </TableCell>
 
-                    {/* Researcher */}
+                    {/* Researcher — Opsi B: nama_ketua ?? user.name */}
                     <TableCell>
-                      <p className="text-gray-700 max-w-[140px] truncate">
-                        {item.user.name}
+                      <p
+                        className="text-gray-700 max-w-[140px] truncate"
+                        title={isKetuaDiffFromUploader(item) ? `Pengusul akun: ${item.user.name}` : getKetuaNama(item)}
+                      >
+                        {getKetuaNama(item)}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {item.user.nidn_nip}
+                        {getKetuaNidn(item)}
                       </p>
+                      {isKetuaDiffFromUploader(item) && (
+                        <p className="text-[10px] text-gray-400 truncate max-w-[140px]" title={item.user.name}>
+                          Pengusul: {item.user.name}
+                        </p>
+                      )}
                     </TableCell>
 
                     {/* Skema / Fakultas */}
