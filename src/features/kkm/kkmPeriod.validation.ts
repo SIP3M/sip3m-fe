@@ -71,7 +71,7 @@ export function validateKkmPeriodPayload(payload: KkmPeriodPayload): Record<stri
   ];
   const dates: { key: string; value: string }[] = [];
   for (const k of order) {
-    const v = (payload as Record<string, unknown>)[k];
+    const v = (payload as unknown as Record<string, unknown>)[k];
     if (typeof v === "string" && v.trim()) {
       dates.push({ key: k, value: v.trim() });
     }
