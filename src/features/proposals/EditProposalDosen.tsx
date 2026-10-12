@@ -26,6 +26,8 @@ export default function EditProposalDosen() {
         nama_ketua?: string | null;
         nidn_ketua?: string | null;
         instansi?: string | null;
+        tujuan_penelitian?: string | null;
+        metode_penelitian?: string | null;
       }
     | undefined;
 
@@ -49,6 +51,12 @@ export default function EditProposalDosen() {
   const [namaKetua, setNamaKetua] = useState(existingProposal?.nama_ketua || "");
   const [nidnKetua, setNidnKetua] = useState(existingProposal?.nidn_ketua || "");
   const [instansi, setInstansi] = useState(existingProposal?.instansi || "");
+  const [tujuanPenelitian, setTujuanPenelitian] = useState(
+    existingProposal?.tujuan_penelitian || "",
+  );
+  const [metodePenelitian, setMetodePenelitian] = useState(
+    existingProposal?.metode_penelitian || "",
+  );
   // Simpan list dosen existing untuk validasi ketua vs anggota (BE f0be231)
   const [existingDosenTerlibat, setExistingDosenTerlibat] = useState(
     (existingProposal as { dosen_terlibat?: string | null })?.dosen_terlibat || "",
@@ -112,6 +120,8 @@ export default function EditProposalDosen() {
         setNamaKetua((p as { nama_ketua?: string | null }).nama_ketua || "");
         setNidnKetua((p as { nidn_ketua?: string | null }).nidn_ketua || "");
         setInstansi(p.instansi || "");
+        setTujuanPenelitian(p.tujuan_penelitian || "");
+        setMetodePenelitian(p.metode_penelitian || "");
         setExistingDosenTerlibat((p as { dosen_terlibat?: string | null }).dosen_terlibat || "");
         setExistingNidnTerlibat((p as { nidn_dosen_terlibat?: string | null }).nidn_dosen_terlibat || "");
       } catch (err: unknown) {
@@ -192,6 +202,8 @@ export default function EditProposalDosen() {
     if (ketuaNamaTrim) formData.append("nama_ketua", ketuaNamaTrim);
     if (ketuaNidnTrim) formData.append("nidn_ketua", ketuaNidnTrim);
     formData.append("instansi", instansi);
+    if (tujuanPenelitian.trim()) formData.append("tujuan_penelitian", tujuanPenelitian.trim());
+    if (metodePenelitian.trim()) formData.append("metode_penelitian", metodePenelitian.trim());
     formData.append("is_draft", "true"); // Tetap REVISION/DRAFT, nanti dosen submit ulangnya di halaman detail
 
     if (proposalFile) formData.append("proposal_file", proposalFile);
@@ -381,6 +393,26 @@ export default function EditProposalDosen() {
             value={instansi}
             onChange={(e) => setInstansi(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Tujuan Penelitian</label>
+          <textarea
+            value={tujuanPenelitian}
+            onChange={(e) => setTujuanPenelitian(e.target.value)}
+            placeholder="Jelaskan tujuan dan target yang ingin dicapai dari penelitian ini..."
+            className="mt-1 block w-full min-h-[90px] rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Metode Penelitian</label>
+          <textarea
+            value={metodePenelitian}
+            onChange={(e) => setMetodePenelitian(e.target.value)}
+            placeholder="Jelaskan rancangan, alur, tahapan, dan metode penelitian yang digunakan..."
+            className="mt-1 block w-full min-h-[90px] rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none"
           />
         </div>
 

@@ -11,6 +11,8 @@ export type ProposalFormValues = {
   skema: string;
   sumber_data_penelitian: string;
   detail_sumber_penelitian: string;
+  tujuan_penelitian: string;
+  metode_penelitian: string;
   instansi: string;
   dosen_terlibat: string;
   nidn_dosen_terlibat: string;

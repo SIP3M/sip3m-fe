@@ -179,6 +179,18 @@ const buildProposalFormData = (payload: UpsertProposalPayload) => {
     formData.append("rab_file", payload.rab_file);
   }
 
+  if (payload.detail_sumber_penelitian !== undefined) {
+    formData.append("detail_sumber_penelitian", payload.detail_sumber_penelitian);
+  }
+
+  if (payload.tujuan_penelitian !== undefined) {
+    formData.append("tujuan_penelitian", payload.tujuan_penelitian);
+  }
+
+  if (payload.metode_penelitian !== undefined) {
+    formData.append("metode_penelitian", payload.metode_penelitian);
+  }
+
   return formData;
 };
 

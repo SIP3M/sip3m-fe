@@ -135,6 +135,9 @@ export interface UpsertProposalPayload {
   is_draft?: boolean;
   proposal_file?: File;
   rab_file?: File;
+  detail_sumber_penelitian?: string;
+  tujuan_penelitian?: string;
+  metode_penelitian?: string;
 }
 
 export interface DeleteProposalResponse {

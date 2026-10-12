@@ -51,6 +51,8 @@ const defaultFormValues: ProposalFormValues = {
   skema: "",
   sumber_data_penelitian: "",
   detail_sumber_penelitian: "",
+  tujuan_penelitian: "",
+  metode_penelitian: "",
   instansi: "",
   dosen_terlibat: "",
   nidn_dosen_terlibat: "",
@@ -728,6 +730,8 @@ export default function ProposalDosen() {
       skema: proposal.skema || "",
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
       detail_sumber_penelitian: (proposal as any).detail_sumber_penelitian || "",
+      tujuan_penelitian: proposal.tujuan_penelitian || "",
+      metode_penelitian: proposal.metode_penelitian || "",
       instansi: proposal.instansi || "",
       dosen_terlibat: proposal.dosen_terlibat || "",
       nidn_dosen_terlibat: proposal.nidn_dosen_terlibat || "",
@@ -884,6 +888,10 @@ export default function ProposalDosen() {
         formValues.sumber_data_penelitian.trim() || undefined,
       detail_sumber_penelitian:
         formValues.detail_sumber_penelitian.trim() || undefined,
+      tujuan_penelitian:
+        formValues.tujuan_penelitian.trim() || undefined,
+      metode_penelitian:
+        formValues.metode_penelitian.trim() || undefined,
       instansi: formValues.instansi.trim() || undefined,
       dosen_terlibat: formValues.dosen_terlibat.trim() || undefined,
       nidn_dosen_terlibat: formValues.nidn_dosen_terlibat.trim() || undefined,
@@ -1192,6 +1200,40 @@ export default function ProposalDosen() {
                   <div className={`text-xs font-medium ${formValues.detail_sumber_penelitian.length >= 1800 ? 'text-orange-500' : 'text-gray-400'}`}>
                     {formValues.detail_sumber_penelitian.length}/2000 karakter
                   </div>
+                </div>
+
+                {/* Tujuan Penelitian */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Tujuan Penelitian
+                  </label>
+                  <textarea
+                    name="tujuan_penelitian"
+                    value={formValues.tujuan_penelitian}
+                    onChange={handleInputChange}
+                    placeholder="Jelaskan tujuan dan target yang ingin dicapai dari penelitian ini..."
+                    className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                  {fieldErrors.tujuan_penelitian && (
+                    <p className="text-xs text-red-600">{fieldErrors.tujuan_penelitian}</p>
+                  )}
+                </div>
+
+                {/* Metode Penelitian */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Metode Penelitian
+                  </label>
+                  <textarea
+                    name="metode_penelitian"
+                    value={formValues.metode_penelitian}
+                    onChange={handleInputChange}
+                    placeholder="Jelaskan rancangan, alur, tahapan, dan metode penelitian yang digunakan..."
+                    className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                  {fieldErrors.metode_penelitian && (
+                    <p className="text-xs text-red-600">{fieldErrors.metode_penelitian}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
