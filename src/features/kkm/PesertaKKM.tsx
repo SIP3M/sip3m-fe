@@ -1,615 +1,400 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, { useState } from 'react';
 import {
   Search,
+  Filter,
+  ChevronDown,
   Eye,
+  Edit,
+  Trash2,
   CheckCircle,
   XCircle,
   Clock,
   Users,
+  UserCheck,
   UserX,
-  Download,
+  UserPlus,
+  FileText,
   ChevronLeft,
   ChevronRight,
-  Loader2,
-  AlertCircle,
-  FileText,
-  MapPin,
-} from "lucide-react";
-import { useAuthStore } from "@/features/auth/auth.store";
-import { getKkmPeriodActive, getKkmPeriods } from "./kkmPeriod.api";
-import { getKkmDplKelompok } from "./kkmDpl.api";
-import {
-  getKkmPeserta,
-  getKkmPesertaStats,
-  bulkUpdateKkmPesertaStatus,
-  updateKkmPesertaStatus,
-  exportKkmPeserta,
-} from "./kkmPeserta.api";
-import type { KkmPeserta, KkmPesertaStats } from "./kkmPeserta.types";
-import type { KkmPeriod } from "./kkmPeriod.types";
-import type { KkmDplKelompokItem } from "./kkmDpl.types";
-import KkmPesertaAssignKelompokModal from "./KkmPesertaAssignKelompokModal";
-import KkmPesertaDetailModal from "./KkmPesertaDetailModal";
-
-type TabKey = "semua" | "pending" | "verified" | "rejected" | "belum_kelompok";
-
-function StatusVerifikasiBadge({ status }: { status: string }) {
-  const normalized = status.toUpperCase();
-  if (normalized === "VERIFIED") {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-        <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
-        Verified
-      </span>
-    );
-  }
-  if (normalized === "REJECTED") {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-        <XCircle size={12} />
-        Rejected
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-      <Clock size={12} />
-      Pending
-    </span>
-  );
-}
-
-function StatusKelompokBadge({ peserta }: { peserta: KkmPeserta }) {
-  if (peserta.kelompok && peserta.status_kelompok === "Sudah Ditempatkan") {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-        <Users size={12} />
-        {peserta.kelompok.nama} {peserta.kelompok.desa ? `· ${peserta.kelompok.desa}` : ""}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
-      <MapPin size={12} />
-      Belum Ditempatkan
-    </span>
-  );
-}
+  Download,
+  RefreshCw,
+} from 'lucide-react';
 
 export default function PesertaKKM() {
-  const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.roles?.roles === "ADMIN_LPPM";
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('semua');
+  const [selectedKelompok, setSelectedKelompok] = useState('semua');
+  const [selectedStatus, setSelectedStatus] = useState('semua');
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [periodes, setPeriodes] = useState<KkmPeriod[]>([]);
-  const [selectedPeriodeId, setSelectedPeriodeId] = useState<number | null>(null);
+  // Data peserta KKM
+  const pesertaData = [
+    {
+      id: 1,
+      nim: '210411001',
+      nama: 'Andi Pratama',
+      prodi: 'Teknik Informatika',
+      fakultas: 'FT',
+      semester: 7,
+      statusVerifikasi: 'Verified',
+      statusKelompok: 'Kelompok 07 Astana Japura',
+    },
+    {
+      id: 2,
+      nim: '210411002',
+      nama: 'Siti Rahayu',
+      prodi: 'Sistem Informasi',
+      fakultas: 'FT',
+      semester: 7,
+      statusVerifikasi: 'Pending',
+      statusKelompok: 'Belum Diempatkan',
+    },
+    {
+      id: 3,
+      nim: '210421003',
+      nama: 'Budi Santoso',
+      prodi: 'Farmasi',
+      fakultas: 'FF',
+      semester: 7,
+      statusVerifikasi: 'Verified',
+      statusKelompok: 'Kelompok 03 Gempol',
+    },
+    {
+      id: 4,
+      nim: '210431004',
+      nama: 'Dewi Anggraini',
+      prodi: 'Hukum',
+      fakultas: 'FH',
+      semester: 7,
+      statusVerifikasi: 'Pending',
+      statusKelompok: 'Belum Diempatkan',
+    },
+    {
+      id: 5,
+      nim: '210411005',
+      nama: 'Rizky Firmansyah',
+      prodi: 'Teknik Informatika',
+      fakultas: 'FT',
+      semester: 5,
+      statusVerifikasi: 'Verified',
+      statusKelompok: 'Kelompok 12 Ciwaringin',
+    },
+    {
+      id: 6,
+      nim: '210412006',
+      nama: 'Nurul Hidayah',
+      prodi: 'Manajemen',
+      fakultas: 'FE',
+      semester: 7,
+      statusVerifikasi: 'Rejected',
+      statusKelompok: 'Belum Diempatkan',
+    },
+    {
+      id: 7,
+      nim: '210421007',
+      nama: 'Ahmad Fauzi',
+      prodi: 'Farmasi',
+      fakultas: 'FF',
+      semester: 5,
+      statusVerifikasi: 'Verified',
+      statusKelompok: 'Kelompok 03 Gempol',
+    },
+    {
+      id: 8,
+      nim: '210431008',
+      nama: 'Lina Marlina',
+      prodi: 'Hukum',
+      fakultas: 'FH',
+      semester: 7,
+      statusVerifikasi: 'Pending',
+      statusKelompok: 'Belum Diempatkan',
+    },
+    {
+      id: 9,
+      nim: '210411009',
+      nama: 'Doni Saputra',
+      prodi: 'Teknik Informatika',
+      fakultas: 'FT',
+      semester: 5,
+      statusVerifikasi: 'Verified',
+      statusKelompok: 'Kelompok 07 Astana Japura',
+    },
+    {
+      id: 10,
+      nim: '210412010',
+      nama: 'Rina Febrianti',
+      prodi: 'Akuntansi',
+      fakultas: 'FE',
+      semester: 7,
+      statusVerifikasi: 'Pending',
+      statusKelompok: 'Belum Diempatkan',
+    },
+  ];
 
-  const [stats, setStats] = useState<KkmPesertaStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [statsError, setStatsError] = useState<string | null>(null);
-
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [filterFakultas, setFilterFakultas] = useState("");
-  const [filterProdi, setFilterProdi] = useState("");
-  const [filterSemester, setFilterSemester] = useState<string>("semua");
-  const [filterKelompokId, setFilterKelompokId] = useState<string>("semua");
-  const [kelompokOptions, setKelompokOptions] = useState<KkmDplKelompokItem[]>([]);
-
-  const [activeTab, setActiveTab] = useState<TabKey>("semua");
-
-  const [rows, setRows] = useState<KkmPeserta[]>([]);
-  const [meta, setMeta] = useState({ totalData: 0, totalPages: 1, currentPage: 1, limit: 10 });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [detailId, setDetailId] = useState<number | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
-  const [showAssign, setShowAssign] = useState(false);
-  const [bulkLoading, setBulkLoading] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  // Debounce search
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-      setPage(1);
-    }, 350);
-    return () => clearTimeout(t);
-  }, [searchInput]);
-
-  // Load periodes + active default
-  useEffect(() => {
-    let cancelled = false;
-    const init = async () => {
-      try {
-        const [activeRes, listRes] = await Promise.allSettled([getKkmPeriodActive(), getKkmPeriods({ page: 1, limit: 50 })]);
-        if (cancelled) return;
-        if (listRes.status === "fulfilled") setPeriodes(listRes.value.data || []);
-        if (activeRes.status === "fulfilled") {
-          const activeData = (activeRes.value as unknown as { data?: KkmPeriod | null })?.data ?? (activeRes.value as unknown as KkmPeriod | null);
-          // getKkmPeriodActive returns { message, data: KkmPeriod|null } so activeRes.value.data is KkmPeriod|null
-          const wrapped = activeRes.value as { data: KkmPeriod | null };
-          const activePeriod = wrapped.data;
-          if (activePeriod?.id) {
-            setSelectedPeriodeId(activePeriod.id);
-            return;
-          }
-        }
-        // fallback: latest periode (first of list sorted desc by id? BE returns by created)
-        if (listRes.status === "fulfilled" && listRes.value.data.length > 0) {
-          // Use first as fallback if no active, but spec says without periode table empty + hint — so we could still auto-select latest for UX
-          // We'll auto-select latest to match Peserta filter requirement "default = GET /active or latest"
-          const latest = listRes.value.data[0];
-          if (latest?.id) setSelectedPeriodeId(latest.id);
-        }
-      } catch {
-        // ignore
-      }
-    };
-    void init();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Fetch kelompok options for filter dropdown
-  useEffect(() => {
-    if (selectedPeriodeId == null) {
-      setKelompokOptions([]);
-      return;
-    }
-    let cancelled = false;
-    const fetch = async () => {
-      try {
-        const res = await getKkmDplKelompok({ periode_id: selectedPeriodeId, unassigned_only: false });
-        if (!cancelled) setKelompokOptions(res.data || []);
-      } catch {
-        if (!cancelled) setKelompokOptions([]);
-      }
-    };
-    void fetch();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedPeriodeId]);
-
-  const statusQuery = useMemo(() => {
-    if (activeTab === "pending") return "PENDING";
-    if (activeTab === "verified") return "VERIFIED";
-    if (activeTab === "rejected") return "REJECTED";
-    return undefined;
-  }, [activeTab]);
-
-  const statusKelompokQuery = useMemo(() => {
-    if (activeTab === "belum_kelompok") return "Belum Ditempatkan";
-    return undefined;
-  }, [activeTab]);
-
-  const fetchStats = useCallback(async () => {
-    if (selectedPeriodeId == null) {
-      setStats(null);
-      return;
-    }
-    setStatsLoading(true);
-    setStatsError(null);
-    try {
-      const res = await getKkmPesertaStats(selectedPeriodeId);
-      setStats(res.data);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setStats(null);
-      } else {
-        setStatsError(axios.isAxiosError(err) ? (err.response?.data as { message?: string })?.message || err.message : "Gagal memuat statistik.");
-      }
-    } finally {
-      setStatsLoading(false);
-    }
-  }, [selectedPeriodeId]);
-
-  const fetchList = useCallback(async () => {
-    if (selectedPeriodeId == null) {
-      setRows([]);
-      setMeta({ totalData: 0, totalPages: 1, currentPage: 1, limit: 10 });
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getKkmPeserta({
-        periode_id: selectedPeriodeId,
-        page,
-        search: debouncedSearch || undefined,
-        fakultas: filterFakultas.trim() || undefined,
-        prodi: filterProdi.trim() || undefined,
-        semester: filterSemester !== "semua" ? filterSemester : undefined,
-        kelompok_id: filterKelompokId !== "semua" ? filterKelompokId : undefined,
-        status: statusQuery,
-        status_kelompok: statusKelompokQuery,
-        limit: 10,
-      });
-      setRows(res.data || []);
-      setMeta(res.meta || { totalData: 0, totalPages: 1, currentPage: page, limit: 10 });
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        if (status === 401) {
-          setError("Sesi habis. Silakan login ulang.");
-          setTimeout(() => navigate("/login"), 1200);
-          return;
-        }
-        if (status === 403) setError("Akses ditolak.");
-        else setError((err.response?.data as { message?: string })?.message || err.message || "Gagal memuat peserta.");
-      } else {
-        setError(err instanceof Error ? err.message : "Gagal memuat peserta.");
-      }
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedPeriodeId, page, debouncedSearch, filterFakultas, filterProdi, filterSemester, filterKelompokId, statusQuery, statusKelompokQuery, navigate]);
-
-  useEffect(() => {
-    void fetchStats();
-  }, [fetchStats]);
-
-  useEffect(() => {
-    void fetchList();
-  }, [fetchList]);
-
-  // Clear selection when filters/page/tab change
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [selectedPeriodeId, debouncedSearch, filterFakultas, filterProdi, filterSemester, filterKelompokId, activeTab, page]);
-
-  const handleTabChange = (tab: TabKey) => {
-    setActiveTab(tab);
-    setPage(1);
+  // Statistik
+  const stats = {
+    total: pesertaData.length,
+    verified: pesertaData.filter(p => p.statusVerifikasi === 'Verified').length,
+    pending: pesertaData.filter(p => p.statusVerifikasi === 'Pending').length,
+    rejected: pesertaData.filter(p => p.statusVerifikasi === 'Rejected').length,
+    belumKelompok: pesertaData.filter(p => p.statusKelompok === 'Belum Diempatkan').length,
   };
 
-  const clearFilters = () => {
-    setSearchInput("");
-    setFilterFakultas("");
-    setFilterProdi("");
-    setFilterSemester("semua");
-    setFilterKelompokId("semua");
-    setActiveTab("semua");
-    setPage(1);
+  // Status badge component
+  const StatusBadge = ({ status }: { status: string }) => {
+    const statusConfig = {
+      Verified: {
+        bg: 'bg-green-50',
+        text: 'text-green-700',
+        icon: CheckCircle,
+        border: 'border-green-200',
+      },
+      Pending: {
+        bg: 'bg-yellow-50',
+        text: 'text-yellow-700',
+        icon: Clock,
+        border: 'border-yellow-200',
+      },
+      Rejected: {
+        bg: 'bg-red-50',
+        text: 'text-red-700',
+        icon: XCircle,
+        border: 'border-red-200',
+      },
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Pending;
+    const Icon = config.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}>
+        <Icon size={12} />
+        {status}
+      </span>
+    );
   };
 
+  // Status kelompok badge
+  const KelompokBadge = ({ status }: { status: string }) => {
+    if (status === 'Belum Diempatkan') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-500 border border-gray-200">
+          <UserX size={12} />
+          {status}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+        <Users size={12} />
+        {status}
+      </span>
+    );
+  };
+
+  // Filter data
+  const filteredData = pesertaData.filter((item) => {
+    const matchesSearch =
+      item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.nim.includes(searchTerm) ||
+      item.prodi.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesSemester = selectedSemester === 'semua' || item.semester.toString() === selectedSemester;
+    const matchesKelompok = selectedKelompok === 'semua' || 
+      (selectedKelompok === 'berkelompok' && item.statusKelompok !== 'Belum Diempatkan') ||
+      (selectedKelompok === 'belum' && item.statusKelompok === 'Belum Diempatkan');
+    const matchesStatus = selectedStatus === 'semua' || item.statusVerifikasi.toLowerCase() === selectedStatus;
+
+    return matchesSearch && matchesSemester && matchesKelompok && matchesStatus;
+  });
+
+  // Filter status untuk tab
+  const statusTabs = [
+    { label: 'Semua', count: stats.total, value: 'semua' },
+    { label: 'Pending', count: stats.pending, value: 'pending' },
+    { label: 'Verified', count: stats.verified, value: 'verified' },
+    { label: 'Rejected', count: stats.rejected, value: 'rejected' },
+    { label: 'Belum Kelompok', count: stats.belumKelompok, value: 'belum-kelompok' },
+  ];
+
+  // Toggle select all
   const toggleSelectAll = () => {
-    if (selectedIds.length === rows.length && rows.length > 0) setSelectedIds([]);
-    else setSelectedIds(rows.map((r) => r.id));
-  };
-
-  const toggleSelectOne = (id: number) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  };
-
-  const showToast = (type: "success" | "error", text: string) => {
-    setToast({ type, text });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleBulkStatus = async (status: "VERIFIED" | "REJECTED") => {
-    if (selectedPeriodeId == null) {
-      showToast("error", "Pilih periode dulu.");
-      return;
-    }
-    if (selectedIds.length === 0) return;
-    setBulkLoading(status);
-    try {
-      await bulkUpdateKkmPesertaStatus({ periode_id: selectedPeriodeId, peserta_ids: selectedIds, status });
-      showToast("success", `Berhasil update ${selectedIds.length} peserta menjadi ${status}.`);
-      setSelectedIds([]);
-      await Promise.all([fetchStats(), fetchList()]);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const data = err.response?.data as { message?: string; errors?: Record<string, string[] | string> } | undefined;
-        const msg = data?.message || err.message;
-        if (err.response?.status === 403) showToast("error", "Hanya ADMIN LPPM");
-        else if (err.response?.status === 400) showToast("error", msg || "Validasi gagal.");
-        else showToast("error", msg || "Gagal update status.");
-      } else showToast("error", err instanceof Error ? err.message : "Gagal update status.");
-    } finally {
-      setBulkLoading(null);
+    if (selectedItems.length === filteredData.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredData.map(item => item.id));
     }
   };
 
-  const handleSingleStatus = async (id: number, status: "VERIFIED" | "REJECTED" | "PENDING") => {
-    setBulkLoading(`single-${id}`);
-    try {
-      await updateKkmPesertaStatus(id, status);
-      showToast("success", `Peserta berhasil diupdate menjadi ${status}.`);
-      await Promise.all([fetchStats(), fetchList()]);
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const data = err.response?.data as { message?: string } | undefined;
-        const msg = data?.message || err.message;
-        if (err.response?.status === 403) showToast("error", "Hanya ADMIN LPPM");
-        else showToast("error", msg || "Gagal update status.");
-      } else showToast("error", "Gagal update status.");
-    } finally {
-      setBulkLoading(null);
+  // Toggle select item
+  const toggleSelectItem = (id: number) => {
+    if (selectedItems.includes(id)) {
+      setSelectedItems(selectedItems.filter(item => item !== id));
+    } else {
+      setSelectedItems([...selectedItems, id]);
     }
   };
 
-  const handleExport = async () => {
-    if (selectedPeriodeId == null) {
-      showToast("error", "Pilih periode dulu.");
-      return;
-    }
-    try {
-      const blob = await exportKkmPeserta({
-        periode_id: selectedPeriodeId,
-        search: debouncedSearch || undefined,
-        fakultas: filterFakultas.trim() || undefined,
-        prodi: filterProdi.trim() || undefined,
-        semester: filterSemester !== "semua" ? filterSemester : undefined,
-        kelompok_id: filterKelompokId !== "semua" ? filterKelompokId : undefined,
-        status: statusQuery,
-        status_kelompok: statusKelompokQuery,
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `peserta-kkm-periode-${selectedPeriodeId}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast("success", "Export berhasil diunduh.");
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) showToast("error", "Hanya ADMIN/STAFF LPPM");
-      else showToast("error", "Gagal export data.");
-    }
-  };
-
-  const totalPages = meta.totalPages || 1;
-  const currentPage = meta.currentPage || page;
+  // Pagination
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-4">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Peserta KKM</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Kelola peserta KKM per periode</p>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Manajemen dan verifikasi peserta Kuliah Kerja Mahasiswa
+          </p>
         </div>
-        <button
-          onClick={() => void handleExport()}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors shadow-sm shrink-0"
-        >
-          <Download size={16} />
-          Export Data
-        </button>
-      </div>
-
-      {toast && (
-        <div className={`mb-4 rounded-lg border px-4 py-3 text-sm ${toast.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-          {toast.text}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
-
-      {/* Periode selector (wajib) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[260px]">
-            <label className="text-xs font-medium text-gray-600 mb-1 block">Periode *</label>
-            <select
-              value={selectedPeriodeId ? String(selectedPeriodeId) : ""}
-              onChange={(e) => {
-                const v = e.target.value ? Number(e.target.value) : null;
-                setSelectedPeriodeId(v);
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="">Pilih periode</option>
-              {periodes.map((p) => (
-                <option key={p.id} value={String(p.id)}>
-                  {p.nama_periode} • {p.tahun_akademik} {p.status === "AKTIF" ? "(Aktif)" : `(${p.status})`}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            {selectedPeriodeId == null ? (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Pilih periode dulu.</p>
-            ) : statsError ? (
-              <p className="text-sm text-red-600">{statsError}</p>
-            ) : null}
-          </div>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+            <Download size={16} />
+            Export
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            <UserPlus size={18} />
+            Tambah Peserta
+          </button>
         </div>
       </div>
 
-      {/* 5 Kartu Statistik */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-5 gap-4 mb-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total</p>
-              {statsLoading ? <p className="text-xl font-bold text-gray-800 mt-1"><Loader2 size={16} className="animate-spin" /></p> : <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats?.total ?? 0}</p>}
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Peserta</p>
+              <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats.total}</p>
             </div>
-            <div className="bg-gray-100 p-2 rounded-lg"><Users size={18} className="text-gray-600" /></div>
+            <div className="bg-blue-50 p-2 rounded-lg">
+              <Users size={18} className="text-blue-600" />
+            </div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Verified</p>
-              {statsLoading ? <p className="text-xl font-bold text-green-600 mt-1"><Loader2 size={16} className="animate-spin" /></p> : <p className="text-2xl font-bold text-green-600 mt-0.5">{stats?.verified ?? 0}</p>}
+              <p className="text-2xl font-bold text-green-600 mt-0.5">{stats.verified}</p>
             </div>
-            <div className="bg-green-50 p-2 rounded-lg"><CheckCircle size={18} className="text-green-600" /></div>
+            <div className="bg-green-50 p-2 rounded-lg">
+              <CheckCircle size={18} className="text-green-600" />
+            </div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Pending</p>
-              {statsLoading ? <p className="text-xl font-bold text-yellow-600 mt-1"><Loader2 size={16} className="animate-spin" /></p> : <p className="text-2xl font-bold text-yellow-600 mt-0.5">{stats?.pending ?? 0}</p>}
+              <p className="text-2xl font-bold text-yellow-600 mt-0.5">{stats.pending}</p>
             </div>
-            <div className="bg-yellow-50 p-2 rounded-lg"><Clock size={18} className="text-yellow-600" /></div>
+            <div className="bg-yellow-50 p-2 rounded-lg">
+              <Clock size={18} className="text-yellow-600" />
+            </div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Rejected</p>
-              {statsLoading ? <p className="text-xl font-bold text-red-600 mt-1"><Loader2 size={16} className="animate-spin" /></p> : <p className="text-2xl font-bold text-red-600 mt-0.5">{stats?.rejected ?? 0}</p>}
+              <p className="text-2xl font-bold text-red-600 mt-0.5">{stats.rejected}</p>
             </div>
-            <div className="bg-red-50 p-2 rounded-lg"><XCircle size={18} className="text-red-600" /></div>
+            <div className="bg-red-50 p-2 rounded-lg">
+              <XCircle size={18} className="text-red-600" />
+            </div>
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Belum Kelompok</p>
-              {statsLoading ? <p className="text-xl font-bold text-orange-600 mt-1"><Loader2 size={16} className="animate-spin" /></p> : <p className="text-2xl font-bold text-orange-600 mt-0.5">{stats?.belum_kelompok ?? 0}</p>}
+              <p className="text-2xl font-bold text-orange-600 mt-0.5">{stats.belumKelompok}</p>
             </div>
-            <div className="bg-orange-50 p-2 rounded-lg"><UserX size={18} className="text-orange-600" /></div>
+            <div className="bg-orange-50 p-2 rounded-lg">
+              <UserX size={18} className="text-orange-600" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Filter Bar */}
+      {/* Filter & Search */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="w-[160px]">
-            <input
-              type="text"
-              placeholder="Semua Fakultas"
-              value={filterFakultas}
-              onChange={(e) => { setFilterFakultas(e.target.value); setPage(1); }}
-              disabled={selectedPeriodeId == null}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-50"
-            />
-          </div>
-          <div className="w-[160px]">
-            <input
-              type="text"
-              placeholder="Semua Program Studi"
-              value={filterProdi}
-              onChange={(e) => { setFilterProdi(e.target.value); setPage(1); }}
-              disabled={selectedPeriodeId == null}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-50"
-            />
-          </div>
-          <div className="w-[140px]">
-            <select
-              value={filterSemester}
-              onChange={(e) => { setFilterSemester(e.target.value); setPage(1); }}
-              disabled={selectedPeriodeId == null}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-50"
-            >
-              <option value="semua">Semua Semester</option>
-              {Array.from({ length: 14 }, (_, i) => i + 1).map((s) => (
-                <option key={s} value={String(s)}>Semester {s}</option>
-              ))}
-            </select>
-          </div>
-          <div className="w-[180px]">
-            <select
-              value={filterKelompokId}
-              onChange={(e) => { setFilterKelompokId(e.target.value); setPage(1); }}
-              disabled={selectedPeriodeId == null}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-50"
-            >
-              <option value="semua">Semua (Kelompok)</option>
-              {kelompokOptions.map((k) => (
-                <option key={k.id} value={String(k.id)}>{k.nama} {k.lokasi?.desa ? `· ${k.lokasi.desa}` : k.desa ? `· ${k.desa}` : ""}</option>
-              ))}
-            </select>
-          </div>
-          <button onClick={clearFilters} disabled={selectedPeriodeId == null} className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            Reset
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs + Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-          <div className="flex-1 min-w-[220px]">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[250px]">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Cari NIM, nama, prodi, kelompok..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                disabled={selectedPeriodeId == null}
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-50"
+                placeholder="Cari mahasiswa, NIM, prodi, atau kelompok..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { key: "semua" as TabKey, label: "Semua", count: stats?.total ?? 0 },
-              { key: "pending" as TabKey, label: "Pending", count: stats?.pending ?? 0 },
-              { key: "verified" as TabKey, label: "Verified", count: stats?.verified ?? 0 },
-              { key: "rejected" as TabKey, label: "Rejected", count: stats?.rejected ?? 0 },
-              { key: "belum_kelompok" as TabKey, label: "Belum Kelompok", count: stats?.belum_kelompok ?? 0 },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                disabled={selectedPeriodeId == null}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors disabled:opacity-40 ${activeTab === tab.key ? "bg-red-600 text-white border-red-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
-              >
-                {tab.label} {tab.count}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <Filter size={18} className="text-gray-400" />
+            <select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+            >
+              <option value="semua">Semua Semester</option>
+              <option value="5">Semester 5</option>
+              <option value="7">Semester 7</option>
+            </select>
+            <select
+              value={selectedKelompok}
+              onChange={(e) => setSelectedKelompok(e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+            >
+              <option value="semua">Semua (Kelompok)</option>
+              <option value="berkelompok">Sudah Berkelompok</option>
+              <option value="belum">Belum Berkelompok</option>
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Bulk Bar */}
-      {selectedIds.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm font-medium text-blue-700">{selectedIds.length} peserta dipilih</span>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => void handleBulkStatus("VERIFIED")}
-              disabled={!isAdmin || bulkLoading != null}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-xs font-medium rounded-lg"
-            >
-              {bulkLoading === "VERIFIED" ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
-              Verifikasi Massal
+      {/* Status Tabs */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        {statusTabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setSelectedStatus(tab.value)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              selectedStatus === tab.value
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {tab.label} {tab.count}
+          </button>
+        ))}
+      </div>
+
+      {/* Selected count */}
+      {selectedItems.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 mb-4 flex items-center justify-between">
+          <span className="text-sm text-blue-700 font-medium">
+            {selectedItems.length} peserta dipilih
+          </span>
+          <div className="flex items-center gap-2">
+            <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
+              Verifikasi
             </button>
-            <button
-              onClick={() => void handleBulkStatus("REJECTED")}
-              disabled={!isAdmin || bulkLoading != null}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-xs font-medium rounded-lg"
-            >
-              {bulkLoading === "REJECTED" ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
-              Reject
-            </button>
-            <button
-              onClick={() => setShowAssign(true)}
-              disabled={!isAdmin}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium rounded-lg"
-            >
-              <Users size={12} />
-              Assign Kelompok
-            </button>
-            <button onClick={() => void handleExport()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg">
-              <Download size={12} />
-              Export Data
-            </button>
-            <button onClick={() => setSelectedIds([])} className="text-xs text-blue-700 hover:underline px-2">
-              Batal pilih
+            <button className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors">
+              Hapus
             </button>
           </div>
         </div>
@@ -624,105 +409,78 @@ export default function PesertaKKM() {
                 <th className="px-4 py-3 w-10">
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === rows.length && rows.length > 0}
+                    checked={selectedItems.length === filteredData.length && filteredData.length > 0}
                     onChange={toggleSelectAll}
-                    disabled={selectedPeriodeId == null || rows.length === 0}
-                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer disabled:opacity-40"
+                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NIM</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">NAMA</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">PRODI / FAK.</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SEM.</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">STATUS VERIFIKASI</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">STATUS KELOMPOK</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">AKSI</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  NIM
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  NAMA
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  PRODI / FAK.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  SEM.
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  STATUS VERIFIKASI
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  STATUS KELOMPOK
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  AKSI
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {selectedPeriodeId == null ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users size={32} className="text-gray-300" />
-                      <p className="text-sm font-medium">Pilih periode dulu</p>
-                      <p className="text-xs text-gray-400">Pilih periode untuk menampilkan peserta KKM.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : loading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-gray-400">
-                      <Loader2 size={24} className="animate-spin" />
-                      <span className="text-sm">Memuat peserta...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : rows.length > 0 ? (
-                rows.map((peserta) => (
+              {paginatedData.length > 0 ? (
+                paginatedData.map((peserta) => (
                   <tr key={peserta.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
-                        checked={selectedIds.includes(peserta.id)}
-                        onChange={() => toggleSelectOne(peserta.id)}
+                        checked={selectedItems.includes(peserta.id)}
+                        onChange={() => toggleSelectItem(peserta.id)}
                         className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm font-mono font-medium text-gray-800">{peserta.nim}</td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-semibold text-gray-800">{peserta.nama}</p>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                      {peserta.nim}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-800">
+                      {peserta.nama}
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="text-sm text-gray-800">{peserta.prodi || "—"}</p>
-                        <p className="text-xs text-gray-400">{peserta.fakultas || "—"}</p>
+                        <p className="text-sm text-gray-800">{peserta.prodi}</p>
+                        <p className="text-xs text-gray-400">{peserta.fakultas}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                        SEM. {peserta.semester ?? "—"}
-                      </span>
+                    <td className="px-4 py-3 text-sm text-gray-600 text-center">
+                      {peserta.semester}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusVerifikasiBadge status={peserta.status} />
+                      <StatusBadge status={peserta.statusVerifikasi} />
                     </td>
                     <td className="px-4 py-3">
-                      <StatusKelompokBadge peserta={peserta} />
+                      <KelompokBadge status={peserta.statusKelompok} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => {
-                            setDetailId(peserta.id);
-                            setShowDetail(true);
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Detail"
-                        >
+                        <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                           <Eye size={16} />
                         </button>
-                        {isAdmin && (
-                          <>
-                            <button
-                              onClick={() => void handleSingleStatus(peserta.id, "VERIFIED")}
-                              disabled={bulkLoading === `single-${peserta.id}`}
-                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-40"
-                              title="Verifikasi"
-                            >
-                              {bulkLoading === `single-${peserta.id}` ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={16} />}
-                            </button>
-                            <button
-                              onClick={() => void handleSingleStatus(peserta.id, "REJECTED")}
-                              disabled={bulkLoading === `single-${peserta.id}`}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
-                              title="Reject"
-                            >
-                              <XCircle size={16} />
-                            </button>
-                          </>
-                        )}
+                        <button className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
+                          <Edit size={16} />
+                        </button>
+                        <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -731,9 +489,9 @@ export default function PesertaKKM() {
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
-                      <FileText size={32} className="text-gray-300" />
-                      <p className="text-sm font-medium">Belum ada peserta di periode ini</p>
-                      <p className="text-xs text-gray-400">Coba ubah filter atau pilih periode lain.</p>
+                      <FileText size={40} className="text-gray-300" />
+                      <p className="text-sm font-medium">Tidak ada data peserta</p>
+                      <p className="text-xs text-gray-400">Coba ubah filter atau tambahkan peserta baru</p>
                     </div>
                   </td>
                 </tr>
@@ -744,42 +502,40 @@ export default function PesertaKKM() {
 
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <div className="text-sm text-gray-500">Menampilkan {rows.length} dari {meta.totalData} peserta</div>
+          <div className="text-sm text-gray-500">
+            Menampilkan {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredData.length)} dari {filteredData.length} peserta
+          </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1 || selectedPeriodeId == null}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronLeft size={14} /> Sebelumnya
+              <ChevronLeft size={18} />
             </button>
-            <span className="px-3 py-1 text-sm font-medium bg-red-600 text-white rounded-lg">{currentPage}</span>
-            {totalPages > 1 && <span className="text-sm text-gray-500">/ {totalPages}</span>}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                  currentPage === page
+                    ? 'bg-red-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages || selectedPeriodeId == null}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Selanjutnya <ChevronRight size={14} />
+              <ChevronRight size={18} />
             </button>
           </div>
         </div>
       </div>
-
-      <KkmPesertaDetailModal open={showDetail} pesertaId={detailId} onClose={() => { setShowDetail(false); setDetailId(null); }} />
-
-      <KkmPesertaAssignKelompokModal
-        open={showAssign}
-        onClose={() => setShowAssign(false)}
-        onSuccess={() => {
-          showToast("success", `Berhasil assign ${selectedIds.length} peserta ke kelompok.`);
-          setSelectedIds([]);
-          void fetchStats();
-          void fetchList();
-        }}
-        periodeId={selectedPeriodeId}
-        pesertaIds={selectedIds}
-      />
     </div>
   );
 }
