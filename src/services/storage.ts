@@ -63,17 +63,25 @@ const notifyAuthBroadcast = (payload: unknown) => {
 };
 
 export const clearAuthSession = () => {
+  // Idempotent: jangan broadcast kalau memang sudah kosong (landing page 2 tab kosongan -> loop reload)
+  const hadSession =
+    !!localStorage.getItem(ACCESS_TOKEN_KEY) ||
+    !!sessionStorage.getItem(ACCESS_TOKEN_KEY) ||
+    !!localStorage.getItem(USER_DATA_KEY) ||
+    !!sessionStorage.getItem(USER_DATA_KEY) ||
+    !!localStorage.getItem(AUTH_SNAPSHOT_KEY);
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(USER_DATA_KEY);
   sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(USER_DATA_KEY);
-  // Opsi B: trigger cross-tab via localStorage + BroadcastChannel (sessionStorage tidak fire storage event)
-  const tid = getTabId();
   try {
     localStorage.removeItem(AUTH_SNAPSHOT_KEY);
   } catch {
     // ignore
   }
+  if (!hadSession) return;
+  // Opsi B: trigger cross-tab via localStorage + BroadcastChannel (sessionStorage tidak fire storage event)
+  const tid = getTabId();
   try {
     localStorage.setItem(AUTH_SYNC_KEY, String(Date.now()));
   } catch {

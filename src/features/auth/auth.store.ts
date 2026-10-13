@@ -28,7 +28,16 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     const token = getAccessToken();
     if (!token) {
-      clearAuthSession();
+      // Landing page / guest: jangan broadcast clear (biar 2 tab landing tidak loop reload)
+      try {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("userData");
+        sessionStorage.removeItem("accessToken");
+        sessionStorage.removeItem("userData");
+        localStorage.removeItem("auth_snapshot");
+      } catch {
+        // ignore
+      }
       set({ user: null, isLoading: false });
       return;
     }
@@ -48,6 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         error.message ||
         "Failed to initialize session";
 
+      // Invalid token -> clear dengan broadcast (sesi kadaluarsa / 401) biar tab lain ikut logout
       clearAuthSession();
       set({ error: errorMessage, isLoading: false, user: null });
     }
