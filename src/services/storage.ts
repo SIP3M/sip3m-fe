@@ -31,6 +31,24 @@ export const getStoredUser = (): User | null => {
 
 export const AUTH_SYNC_KEY = "auth_sync";
 export const AUTH_SNAPSHOT_KEY = "auth_snapshot";
+const TAB_ID_KEY = "tab_id";
+
+export const getTabId = (): string => {
+  try {
+    let id = sessionStorage.getItem(TAB_ID_KEY);
+    if (!id) {
+      try {
+        id = crypto.randomUUID();
+      } catch {
+        id = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      }
+      sessionStorage.setItem(TAB_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "unknown-tab";
+  }
+};
 
 const notifyAuthBroadcast = (payload: unknown) => {
   try {
@@ -50,6 +68,7 @@ export const clearAuthSession = () => {
   sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   sessionStorage.removeItem(USER_DATA_KEY);
   // Opsi B: trigger cross-tab via localStorage + BroadcastChannel (sessionStorage tidak fire storage event)
+  const tid = getTabId();
   try {
     localStorage.removeItem(AUTH_SNAPSHOT_KEY);
   } catch {
@@ -60,7 +79,7 @@ export const clearAuthSession = () => {
   } catch {
     // ignore
   }
-  notifyAuthBroadcast({ type: "auth_cleared", ts: Date.now() });
+  notifyAuthBroadcast({ type: "auth_cleared", ts: Date.now(), tabId: tid });
 };
 
 export const setAuthSession = (params: {
@@ -79,6 +98,7 @@ export const setAuthSession = (params: {
 
   // Opsi B: sync lintas tab — sessionStorage isolasi per-tab, jadi broadcast + snapshot localStorage
   // snapshot pakai key terpisah agar tidak mengganggu getAccessToken (yang cek accessToken)
+  const tid2 = getTabId();
   try {
     localStorage.setItem(
       AUTH_SNAPSHOT_KEY,
@@ -87,6 +107,7 @@ export const setAuthSession = (params: {
         user: params.user,
         rememberMe: params.rememberMe,
         ts: Date.now(),
+        tabId: tid2,
       }),
     );
   } catch {
@@ -103,6 +124,7 @@ export const setAuthSession = (params: {
     user: params.user,
     rememberMe: params.rememberMe,
     ts: Date.now(),
+    tabId: tid2,
   });
   // bersihkan snapshot setelah lewat jendela sync (tidak untuk persist login)
   setTimeout(() => {

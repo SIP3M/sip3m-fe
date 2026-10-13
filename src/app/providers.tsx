@@ -6,6 +6,7 @@ import {
   getAccessToken,
   AUTH_SYNC_KEY,
   AUTH_SNAPSHOT_KEY,
+  getTabId,
   applySyncedAuth,
   clearSyncedAuth,
 } from "@/services/storage";
@@ -22,6 +23,14 @@ import type { User } from "@/features/auth/auth.types";
  */
 function useCrossTabSync() {
   useEffect(() => {
+    const myTabId = getTabId();
+
+    const isSameToken = (incoming?: string) => {
+      if (!incoming) return false;
+      const cur = getAccessToken();
+      return !!cur && incoming === cur;
+    };
+
     const tryApplySnapshotAndReload = (reason: string) => {
       try {
         const raw = localStorage.getItem(AUTH_SNAPSHOT_KEY);
@@ -30,7 +39,11 @@ function useCrossTabSync() {
             token: string;
             user: User;
             rememberMe: boolean;
+            tabId?: string;
           };
+          // Self-broadcast guard: tab penulis sendiri (tabId sama) -> skip reload
+          if (snap?.tabId && snap.tabId === myTabId) return;
+          if (snap?.token && isSameToken(snap.token)) return;
           if (snap?.token && snap?.user) {
             applySyncedAuth({
               token: snap.token,
@@ -42,9 +55,19 @@ function useCrossTabSync() {
           }
         }
         // snapshot kosong + sync trigger => logout (clearAuthSession hapus snapshot lalu set sync)
+        // Hanya clear jika tab lain yang logout (snapshot null tapi sync fire -> cek bukan self)
         if (reason === AUTH_SYNC_KEY) {
-          clearSyncedAuth();
-          window.location.reload();
+          // kalau masih ada token lokal dan snapshot null -> kemungkinan logout dari tab lain
+          // Guard: jangan clear kalau kita baru saja login di tab ini
+          if (!raw) {
+            // baca lagi untuk pastikan bukan self-clear: localStorage snapshot sudah null, tapi cek tabId tidak tersedia -> pakai token check
+            // Jika token masih ada dan tidak ada snapshot, anggap logout dari tab lain
+            clearSyncedAuth();
+            // Jika sedang di /login jangan reload loop, biar tetap di login
+            if (window.location.pathname.startsWith("/login")) return;
+            window.location.reload();
+            return;
+          }
           return;
         }
         // snapshot event dengan value langsung (fallback)
@@ -52,11 +75,12 @@ function useCrossTabSync() {
           // already handled above
         }
       } catch {
+        if (window.location.pathname.startsWith("/login")) return;
         window.location.reload();
       }
     };
 
-    // BroadcastChannel — jalan bahkan untuk sessionStorage
+    // BroadcastChannel — jalan bahkan untuk sessionStorage; guard self-tabId + same-token
     let bc: BroadcastChannel | null = null;
     try {
       if (typeof BroadcastChannel !== "undefined") {
@@ -67,8 +91,12 @@ function useCrossTabSync() {
             token?: string;
             user?: User;
             rememberMe?: boolean;
+            tabId?: string;
           };
           if (!d || typeof d !== "object") return;
+          // Self guard: pengirim sama dengan tab ini -> abaikan (ini yang bikin login ke-reload sendiri)
+          if (d.tabId && d.tabId === myTabId) return;
+          if (d.token && isSameToken(d.token)) return;
           if (d.type === "auth_changed" && d.token && d.user) {
             try {
               applySyncedAuth({
@@ -86,6 +114,7 @@ function useCrossTabSync() {
             } catch {
               // ignore
             }
+            if (window.location.pathname.startsWith("/login")) return;
             window.location.reload();
           }
         };
@@ -95,16 +124,19 @@ function useCrossTabSync() {
     }
 
     const onStorage = (e: StorageEvent) => {
-      // Fallback localStorage sync — storage event hanya fire di tab LAIN
+      // Fallback localStorage sync — storage event hanya fire di tab LAIN (jadi safe, tapi tetap guard)
       if (e.key === AUTH_SYNC_KEY || e.key === AUTH_SNAPSHOT_KEY) {
-        // e.newValue untuk snapshot event bisa langsung dipakai tanpa baca lagi
+        // Guard self-tabId via e.newValue jika ada
         if (e.key === AUTH_SNAPSHOT_KEY && e.newValue) {
           try {
             const snap = JSON.parse(e.newValue) as {
               token: string;
               user: User;
               rememberMe: boolean;
+              tabId?: string;
             };
+            if (snap?.tabId && snap.tabId === myTabId) return;
+            if (snap?.token && isSameToken(snap.token)) return;
             if (snap?.token && snap?.user) {
               applySyncedAuth({
                 token: snap.token,
