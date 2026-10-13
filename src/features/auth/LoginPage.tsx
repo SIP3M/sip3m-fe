@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import bgImage from "@/assets/images/BG-login.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../auth/auth.api";
 import axios from "axios";
 import { useAuthStore } from "./auth.store";
@@ -23,6 +23,7 @@ const getDashboardPathByRole = (role?: string) => {
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setUser = useAuthStore((state) => state.setUser);
 
   const [form, setForm] = useState({
@@ -37,6 +38,12 @@ const LoginPage = () => {
   // 🆕 State untuk toast sukses login (UI only, tidak menyentuh logic auth)
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [loggedInName, setLoggedInName] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get("reason") === "session_replaced") {
+      setErrorMessage("Sesi kamu di browser ini digantikan login baru. Silakan login ulang.");
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({

@@ -49,6 +49,7 @@ import HistoryReview from "@/features/reviews/HistoryReview";
 import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
 import EditProposalDosen from "@/features/proposals/EditProposalDosen";
 import SystemSettings from "@/features/settings/SystemSettings";
+import AuthSessionsPage from "@/features/settings/AuthSessionsPage";
 
 import PeriodeKKM from "@/features/kkm/PeriodeKKM";
 import DetailPeriodeKKM from "@/features/kkm/DetailPeriodeKKM";
@@ -159,6 +160,10 @@ export const router = createBrowserRouter([
     {
       path: "settings",
       element: <SystemSettings />
+    },
+    {
+      path: "settings/sessions",
+      element: <AuthSessionsPage />
     },
     // Tambahkan route untuk menu KKM lainnya
     {
