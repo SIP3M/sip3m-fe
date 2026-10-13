@@ -1,5 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useInitializeAuth } from "@/hooks/useInitializeAuth";
+import { getDeviceId } from "@/utils/device";
 
 /**
  * App Providers Component
@@ -9,6 +10,14 @@ import { useInitializeAuth } from "@/hooks/useInitializeAuth";
 const Providers = ({ children }: { children: ReactNode }) => {
   // Initialize auth (fetch current user saat app start)
   useInitializeAuth();
+
+  useEffect(() => {
+    try {
+      getDeviceId();
+    } catch {
+      // ignore
+    }
+  }, []);
 
   return <>{children}</>;
 };

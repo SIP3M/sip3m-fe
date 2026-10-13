@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { User } from "./auth.types";
-import { getCurrentUser } from "./auth.api";
+import { getCurrentUser, logout as logoutApi } from "./auth.api";
 import {
   clearAuthSession,
   getAccessToken,
@@ -68,6 +68,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   logout: () => {
+    // Fire-and-forget revoke current jti; ignore errors (expired / already revoked)
+    const token = getAccessToken();
+    if (token) {
+      void logoutApi().catch(() => {});
+    }
     clearAuthSession();
     set({ user: null, error: null });
   },
