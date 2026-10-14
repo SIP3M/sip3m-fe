@@ -34,7 +34,16 @@ import {
   SumberPendanaanValue,
 } from "./ProposalDosen.types";
 import { SUMBER_PENDANAAN_OPTIONS } from "./proposal.types";
-import { normalizeNama, normalizeNidn, normalizeNim, splitList } from "@/utils/proposal";
+import {
+  normalizeNama,
+  normalizeNidn,
+  normalizeNim,
+  splitList,
+  TIM_DOSEN_MAX,
+  TIM_MHS_MAX,
+  getTimDosenLimitErrors,
+  getTimMhsLimitErrors,
+} from "@/utils/proposal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DosenAutocomplete from "./components/DosenAutocomplete";
@@ -257,6 +266,17 @@ export default function ProposalDosen() {
     }
     setFieldErrors(mapped);
   };
+  // BE limit 5+5 — block tambah/simpan kalau sudah 5 atau pasangan tidak sama
+  const dosenCount = useMemo(() => splitList(formValues.dosen_terlibat).length, [formValues.dosen_terlibat]);
+  const nidnCount = useMemo(() => splitList(formValues.nidn_dosen_terlibat).length, [formValues.nidn_dosen_terlibat]);
+  const mhsNamaCount = useMemo(() => splitList(formValues.nama_anggota).length, [formValues.nama_anggota]);
+  const mhsNimCount = useMemo(() => splitList(formValues.nim_anggota).length, [formValues.nim_anggota]);
+  const hasTimLimitError = useMemo(() => {
+    const a = getTimDosenLimitErrors(formValues.dosen_terlibat, formValues.nidn_dosen_terlibat);
+    const b = getTimMhsLimitErrors(formValues.nama_anggota, formValues.nim_anggota);
+    return Boolean(a.dosen_terlibat || a.nidn_dosen_terlibat || b.nama_anggota || b.nim_anggota);
+  }, [formValues.dosen_terlibat, formValues.nidn_dosen_terlibat, formValues.nama_anggota, formValues.nim_anggota]);
+
   const hasAntiDoubleError = useMemo(
     () =>
       Boolean(
@@ -269,6 +289,7 @@ export default function ProposalDosen() {
       ),
     [fieldErrors],
   );
+  const hasBlockError = hasAntiDoubleError || hasTimLimitError;
 
   const editingProposal = useMemo(
     () => data.find((item) => item.id === editingProposalId) || null,
@@ -482,19 +503,27 @@ export default function ProposalDosen() {
   };
 
   const syncDosenToForm = (rows: DosenRow[]) => {
+    const dosisCsv = rows.map((r) => r.nidn.trim()).join("\n");
+    const namaCsv = rows.map((r) => r.nama.trim()).join("\n");
+    // for limit we use the CSV form (split handles ,;\n), not row count alone
     setFormValues((prev) => ({
       ...prev,
-      nidn_dosen_terlibat: rows.map((r) => r.nidn.trim()).join("\n"),
-      dosen_terlibat: rows.map((r) => r.nama.trim()).join("\n"),
+      nidn_dosen_terlibat: dosisCsv,
+      dosen_terlibat: namaCsv,
     }));
-    // Live anti-double validation for UX (inline error + disable save/add)
+    // Live anti-double + limit 5 validation for UX (inline error + disable save/add)
     const v = validateTimDosenClient(rows);
+    const limitErrs = getTimDosenLimitErrors(namaCsv, dosisCsv);
     setFieldErrors((prev) => {
       const next = { ...prev };
+      // anti-double first
       if (v.errors.dosen_terlibat) next.dosen_terlibat = v.errors.dosen_terlibat;
-      else delete next.dosen_terlibat;
+      else if (!limitErrs.dosen_terlibat) delete next.dosen_terlibat;
       if (v.errors.nidn_dosen_terlibat) next.nidn_dosen_terlibat = v.errors.nidn_dosen_terlibat;
-      else delete next.nidn_dosen_terlibat;
+      else if (!limitErrs.nidn_dosen_terlibat) delete next.nidn_dosen_terlibat;
+      // limit overrides if present
+      if (limitErrs.dosen_terlibat) next.dosen_terlibat = limitErrs.dosen_terlibat;
+      if (limitErrs.nidn_dosen_terlibat) next.nidn_dosen_terlibat = limitErrs.nidn_dosen_terlibat;
       // Also re-check ketua vs anggota when dosen list changes
       const ketuaRow = rows.find((r) => r.peran === "Ketua Peneliti") || null;
       const ketuaNama = ketuaRow?.nama?.trim() || "";
@@ -535,18 +564,23 @@ export default function ProposalDosen() {
   };
 
   const syncMahasiswaToForm = (rows: MahasiswaRow[]) => {
+    const nimCsv = rows.map((r) => r.nim.trim()).join("\n");
+    const namaCsv = rows.map((r) => r.nama.trim()).join("\n");
     setFormValues((prev) => ({
       ...prev,
-      nim_anggota: rows.map((r) => r.nim.trim()).join("\n"),
-      nama_anggota: rows.map((r) => r.nama.trim()).join("\n"),
+      nim_anggota: nimCsv,
+      nama_anggota: namaCsv,
     }));
     const v = validateMahasiswaClient(rows);
+    const limitErrs = getTimMhsLimitErrors(namaCsv, nimCsv);
     setFieldErrors((prev) => {
       const next = { ...prev };
       if (v.errors.nama_anggota) next.nama_anggota = v.errors.nama_anggota;
-      else delete next.nama_anggota;
+      else if (!limitErrs.nama_anggota) delete next.nama_anggota;
       if (v.errors.nim_anggota) next.nim_anggota = v.errors.nim_anggota;
-      else delete next.nim_anggota;
+      else if (!limitErrs.nim_anggota) delete next.nim_anggota;
+      if (limitErrs.nama_anggota) next.nama_anggota = limitErrs.nama_anggota;
+      if (limitErrs.nim_anggota) next.nim_anggota = limitErrs.nim_anggota;
       return next;
     });
   };
@@ -919,9 +953,11 @@ export default function ProposalDosen() {
   };
 
   const handleSaveProposal = async (isDraft: boolean) => {
-    // Client-side anti-double (BE f0be231) — block before fetch
+    // Client-side anti-double (BE f0be231) + limit 5 (BE superRefine) — block before fetch
     const timV = validateTimDosenClient(dosenRows);
     const mhsV = validateMahasiswaClient(mahasiswaRows);
+    const limitDosen = getTimDosenLimitErrors(formValues.dosen_terlibat, formValues.nidn_dosen_terlibat);
+    const limitMhs = getTimMhsLimitErrors(formValues.nama_anggota, formValues.nim_anggota);
     const ketuaRow = dosenRows.find((r) => r.peran === "Ketua Peneliti") || null;
     const ketuaNamaGuard = ketuaRow?.nama?.trim() || "";
     const ketuaNidnGuard = ketuaRow?.nidn?.trim() || "";
@@ -946,7 +982,7 @@ export default function ProposalDosen() {
         extra.nidn_ketua = `NIDN ketua "${ketuaNidnGuard}" sudah ada di daftar anggota.`;
       }
     }
-    const combinedErrors = { ...timV.errors, ...mhsV.errors, ...extra };
+    const combinedErrors = { ...timV.errors, ...mhsV.errors, ...limitDosen, ...limitMhs, ...extra };
     if (Object.keys(combinedErrors).length > 0) {
       setFieldErrors(combinedErrors);
       const first = Object.values(combinedErrors)[0];
@@ -1383,7 +1419,7 @@ export default function ProposalDosen() {
                     Tim Dosen Peneliti
                   </h3>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Dosen-dosen yang terlibat dalam penelitian atau pengabdian, dll.
+                    Maks 5 dosen (ketua tidak hitung), pisah koma/semicolon/enter. Contoh: Dr. Budi, Dr. Sari. NIDN berpasangan urut dengan nama.
                   </p>
                 </div>
 
@@ -1472,19 +1508,34 @@ export default function ProposalDosen() {
                       {fieldErrors.nidn_ketua && <p>{fieldErrors.nidn_ketua}</p>}
                     </div>
                   )}
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className={dosenCount > TIM_DOSEN_MAX ? "text-red-600 font-semibold" : nidnCount > 0 && dosenCount !== nidnCount ? "text-amber-600" : "text-gray-500"}>
+                      Dosen: {dosenCount}/{TIM_DOSEN_MAX}
+                    </span>
+                    <span className={nidnCount > TIM_DOSEN_MAX ? "text-red-600 font-semibold" : nidnCount > 0 && dosenCount !== nidnCount ? "text-amber-600" : "text-gray-500"}>
+                      NIDN: {nidnCount}/{TIM_DOSEN_MAX}
+                    </span>
+                    {nidnCount > 0 && dosenCount !== nidnCount && (
+                      <span className="text-amber-600">Jumlah NIDN harus sama dengan dosen.</span>
+                    )}
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addDosenRow}
-                    disabled={hasAntiDoubleError}
+                    disabled={hasBlockError}
                     className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={hasAntiDoubleError ? "Perbaiki duplikasi sebelum menambah baris" : undefined}
+                    title={hasBlockError ? "Perbaiki validasi tim (limit 5 / duplikat / pasangan) sebelum menambah" : undefined}
                   >
                     <Plus size={14} />
                     Tambah Dosen
                   </Button>
-                  {hasAntiDoubleError && (
-                    <p className="text-[11px] text-red-600">Nama dosen sudah ada, tidak boleh double — perbaiki sebelum menambah/menyimpan.</p>
+                  {hasBlockError && (
+                    <p className="text-[11px] text-red-600">
+                      {fieldErrors.dosen_terlibat || fieldErrors.nidn_dosen_terlibat || fieldErrors.nama_ketua || fieldErrors.nidn_ketua
+                        ? Object.values(fieldErrors).join(" ")
+                        : "Maks 5 dosen / NIDN harus sama — perbaiki sebelum menambah/menyimpan."}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -1498,7 +1549,7 @@ export default function ProposalDosen() {
                     Mahasiswa Terlibat
                   </h3>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Daftar mahasiswa yang terlibat dalam penelitian. (Opsional)
+                    Maks 5 mahasiswa, pisah koma/semicolon/enter. Contoh: Budi, Sari. NIM berpasangan urut dengan nama.
                   </p>
                 </div>
 
@@ -1581,19 +1632,32 @@ export default function ProposalDosen() {
                       {fieldErrors.nim_anggota && <p>{fieldErrors.nim_anggota}</p>}
                     </div>
                   )}
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className={mhsNamaCount > TIM_MHS_MAX ? "text-red-600 font-semibold" : mhsNimCount > 0 && mhsNamaCount !== mhsNimCount ? "text-amber-600" : "text-gray-500"}>
+                      Mhs: {mhsNamaCount}/{TIM_MHS_MAX}
+                    </span>
+                    <span className={mhsNimCount > TIM_MHS_MAX ? "text-red-600 font-semibold" : mhsNimCount > 0 && mhsNamaCount !== mhsNimCount ? "text-amber-600" : "text-gray-500"}>
+                      NIM: {mhsNimCount}/{TIM_MHS_MAX}
+                    </span>
+                    {mhsNimCount > 0 && mhsNamaCount !== mhsNimCount && (
+                      <span className="text-amber-600">Jumlah NIM harus sama dengan mahasiswa.</span>
+                    )}
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addMahasiswaRow}
-                    disabled={Boolean(fieldErrors.nama_anggota || fieldErrors.nim_anggota)}
+                    disabled={hasBlockError}
                     className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={fieldErrors.nama_anggota || fieldErrors.nim_anggota ? "Perbaiki duplikasi mahasiswa" : undefined}
+                    title={hasBlockError ? "Perbaiki validasi tim (limit 5 / pasangan / duplikat)" : undefined}
                   >
                     <Plus size={14} />
                     Tambah Mahasiswa
                   </Button>
                   {(fieldErrors.nama_anggota || fieldErrors.nim_anggota) && (
-                    <p className="text-[11px] text-red-600">Nama/NIM mahasiswa duplikat — perbaiki sebelum menambah.</p>
+                    <p className="text-[11px] text-red-600">
+                      {fieldErrors.nama_anggota || fieldErrors.nim_anggota || "Maks 5 / NIM harus sama — perbaiki."}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -1721,9 +1785,9 @@ export default function ProposalDosen() {
           </Card>
 
           {/* Tombol Aksi di Bagian Bawah */}
-          {hasAntiDoubleError && (
+          {hasBlockError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-              Tidak bisa simpan: {Object.values(fieldErrors).join(" ")}
+              Tidak bisa simpan: {Object.values(fieldErrors).join(" ") || "Perbaiki limit 5 / pasangan / duplikasi tim."}
             </div>
           )}
           <div className="flex flex-wrap justify-end gap-3 mt-6">
@@ -1740,10 +1804,10 @@ export default function ProposalDosen() {
             <Button
               type="button"
               variant="outline"
-              disabled={isSubmittingForm || hasAntiDoubleError}
+              disabled={isSubmittingForm || hasBlockError}
               onClick={() => void handleSaveProposal(true)}
               className="h-10 px-5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
-              title={hasAntiDoubleError ? Object.values(fieldErrors)[0] : undefined}
+              title={hasBlockError ? Object.values(fieldErrors)[0] : undefined}
             >
               <Calendar size={15} />
               Simpan Draft
@@ -1751,10 +1815,10 @@ export default function ProposalDosen() {
 
             <Button
               type="button"
-              disabled={isSubmittingForm || hasAntiDoubleError}
+              disabled={isSubmittingForm || hasBlockError}
               onClick={() => void handleSaveProposal(false)}
               className="h-10 px-5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white flex items-center gap-2 cursor-pointer text-xs font-semibold border-0 disabled:opacity-40 disabled:cursor-not-allowed"
-              title={hasAntiDoubleError ? Object.values(fieldErrors)[0] : undefined}
+              title={hasBlockError ? Object.values(fieldErrors)[0] : undefined}
             >
               <Send size={15} />
               {isSubmittingForm ? "Memproses..." : "Simpan & Submit"}
