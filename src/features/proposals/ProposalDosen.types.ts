@@ -13,6 +13,7 @@ export type ProposalFormValues = {
   detail_sumber_penelitian: string;
   tujuan_penelitian: string;
   metode_penelitian: string;
+  abstrak: string;
   instansi: string;
   dosen_terlibat: string;
   nidn_dosen_terlibat: string;

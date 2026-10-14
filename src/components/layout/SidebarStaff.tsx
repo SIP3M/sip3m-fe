@@ -7,7 +7,6 @@ import {
   Globe,
   ClipboardList,
   LogOut,
-  ClipboardCheck,
   ChevronDown,
   FlaskConical,
   Users,
@@ -36,11 +35,6 @@ export default function Sidebar() {
   };
 
   const researchMenus = [
-    {
-      name: "Verifikasi Proposal",
-      icon: ClipboardCheck,
-      path: "/staff-lppm/verifikasi-proposal",
-    },
     {
       name: "Plotting Reviewer",
       icon: UserCheck,

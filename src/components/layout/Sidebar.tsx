@@ -143,7 +143,6 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
           label: "MANAJEMEN PENELITIAN",
           icon: FlaskConical,
           items: [
-            { name: "Verifikasi Proposal", icon: ClipboardCheck, path: "/staff-lppm/verifikasi-proposal" },
             { name: "Plotting Reviewer", icon: UserCheck, path: "/staff-lppm/plotting-reviewer" },
             { name: "Monitoring Proyek", icon: Activity, path: "/staff-lppm/monitoring-project" },
             { name: "Keuangan & Hibah", icon: Wallet, path: "/staff-lppm/finance" },

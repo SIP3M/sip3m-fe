@@ -70,6 +70,13 @@ const LoginPage = () => {
       const token = response.data.token;
       const user = response.data.user;
 
+      const role = (user as User | undefined)?.roles?.roles;
+      if (role === "REVIEWER_EKSTERNAL" && !user.is_active) {
+        setErrorMessage("akun anda belum di validasi oleh admin lppm.");
+        setIsLoading(false);
+        return;
+      }
+
       setAuthSession({
         token,
         user,
@@ -77,8 +84,6 @@ const LoginPage = () => {
       });
 
       setUser(user);
-
-      const role = (user as User | undefined)?.roles?.roles;
 
       // 🆕 Trigger toast sukses sebelum redirect (tidak mengubah role/logic)
       setLoggedInName((user as User | undefined)?.name || "");

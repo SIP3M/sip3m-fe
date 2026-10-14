@@ -3,7 +3,6 @@ import {
   FileText,
   Activity,
   LogOut,
-  Upload,
   User,
   ChevronDown,
   FlaskConical,
@@ -68,11 +67,6 @@ export default function Sidebar() {
       name: "Proyek Saya",
       icon: Activity,
       path: "/dosen-dashboard/project-dosen",
-    },
-    {
-      name: "Laporan Penelitian",
-      icon: Upload,
-      path: "/dosen-dashboard/laporan",
     },
   ];
 
