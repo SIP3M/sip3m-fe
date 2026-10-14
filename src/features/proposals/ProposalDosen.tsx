@@ -266,7 +266,7 @@ export default function ProposalDosen() {
     }
     setFieldErrors(mapped);
   };
-  // BE limit 5+5 — block tambah/simpan kalau sudah 5 atau pasangan tidak sama
+  // BE limit 5+5 — Opsi A ketua tidak hitung; token (split ,;\n) + baris kosong tetap hitung
   const dosenCount = useMemo(() => splitList(formValues.dosen_terlibat).length, [formValues.dosen_terlibat]);
   const nidnCount = useMemo(() => splitList(formValues.nidn_dosen_terlibat).length, [formValues.nidn_dosen_terlibat]);
   const mhsNamaCount = useMemo(() => splitList(formValues.nama_anggota).length, [formValues.nama_anggota]);
@@ -276,6 +276,10 @@ export default function ProposalDosen() {
     const b = getTimMhsLimitErrors(formValues.nama_anggota, formValues.nim_anggota);
     return Boolean(a.dosen_terlibat || a.nidn_dosen_terlibat || b.nama_anggota || b.nim_anggota);
   }, [formValues.dosen_terlibat, formValues.nidn_dosen_terlibat, formValues.nama_anggota, formValues.nim_anggota]);
+  // Baris fisik: kosong tetap hitung, ketua tidak hitung (sesuai Opsi A)
+  const dosenMemberRowCount = useMemo(() => dosenRows.filter((r) => r.peran !== "Ketua Peneliti").length, [dosenRows]);
+  const mhsRowCount = useMemo(() => mahasiswaRows.length, [mahasiswaRows]);
+  const hasRowLimitError = dosenMemberRowCount > TIM_DOSEN_MAX || mhsRowCount > TIM_MHS_MAX;
 
   const hasAntiDoubleError = useMemo(
     () =>
@@ -289,7 +293,9 @@ export default function ProposalDosen() {
       ),
     [fieldErrors],
   );
-  const hasBlockError = hasAntiDoubleError || hasTimLimitError;
+  const hasBlockError = hasAntiDoubleError || hasTimLimitError || hasRowLimitError;
+  const isDosenAddDisabled = hasBlockError || dosenMemberRowCount >= TIM_DOSEN_MAX;
+  const isMhsAddDisabled = hasBlockError || mhsRowCount >= TIM_MHS_MAX;
 
   const editingProposal = useMemo(
     () => data.find((item) => item.id === editingProposalId) || null,
@@ -704,6 +710,10 @@ export default function ProposalDosen() {
   };
 
   const addDosenRow = () => {
+    if (dosenRows.filter((r) => r.peran !== "Ketua Peneliti").length >= TIM_DOSEN_MAX) {
+      setFieldErrors((prev) => ({ ...prev, dosen_terlibat: `Maksimal ${TIM_DOSEN_MAX} anggota dosen (ketua tidak hitung). Hapus baris dulu.` }));
+      return;
+    }
     const next = [
       ...dosenRows,
       { nidn: "", nama: "", peran: "Anggota Peneliti" },
@@ -720,6 +730,10 @@ export default function ProposalDosen() {
   };
 
   const addMahasiswaRow = () => {
+    if (mahasiswaRows.length >= TIM_MHS_MAX) {
+      setFieldErrors((prev) => ({ ...prev, nama_anggota: `Maksimal ${TIM_MHS_MAX} mahasiswa. Hapus baris dulu.` }));
+      return;
+    }
     const next = [
       ...mahasiswaRows,
       { nim: "", nama: "", prodi: "", peran: "Anggota" },
@@ -982,7 +996,12 @@ export default function ProposalDosen() {
         extra.nidn_ketua = `NIDN ketua "${ketuaNidnGuard}" sudah ada di daftar anggota.`;
       }
     }
-    const combinedErrors = { ...timV.errors, ...mhsV.errors, ...limitDosen, ...limitMhs, ...extra };
+    // Baris kosong tetap hitung (ketua tidak hitung)
+    const rowLimitExtra: Record<string, string> = {};
+    const dosenAnggotaRows = dosenRows.filter((r) => r.peran !== "Ketua Peneliti").length;
+    if (dosenAnggotaRows > TIM_DOSEN_MAX) rowLimitExtra.dosen_terlibat = `Maksimal ${TIM_DOSEN_MAX} anggota dosen (ketua tidak hitung). Saat ini ${dosenAnggotaRows} baris — hapus baris kosong dulu.`;
+    if (mahasiswaRows.length > TIM_MHS_MAX) rowLimitExtra.nama_anggota = `Maksimal ${TIM_MHS_MAX} mahasiswa. Saat ini ${mahasiswaRows.length} baris — hapus baris kosong dulu.`;
+    const combinedErrors = { ...timV.errors, ...mhsV.errors, ...limitDosen, ...limitMhs, ...rowLimitExtra, ...extra };
     if (Object.keys(combinedErrors).length > 0) {
       setFieldErrors(combinedErrors);
       const first = Object.values(combinedErrors)[0];
@@ -1508,33 +1527,41 @@ export default function ProposalDosen() {
                       {fieldErrors.nidn_ketua && <p>{fieldErrors.nidn_ketua}</p>}
                     </div>
                   )}
-                  <div className="flex items-center gap-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
                     <span className={dosenCount > TIM_DOSEN_MAX ? "text-red-600 font-semibold" : nidnCount > 0 && dosenCount !== nidnCount ? "text-amber-600" : "text-gray-500"}>
                       Dosen: {dosenCount}/{TIM_DOSEN_MAX}
                     </span>
                     <span className={nidnCount > TIM_DOSEN_MAX ? "text-red-600 font-semibold" : nidnCount > 0 && dosenCount !== nidnCount ? "text-amber-600" : "text-gray-500"}>
                       NIDN: {nidnCount}/{TIM_DOSEN_MAX}
                     </span>
+                    <span className={dosenMemberRowCount >= TIM_DOSEN_MAX ? "text-red-600 font-semibold" : "text-gray-500"}>
+                      Baris: {dosenMemberRowCount}/{TIM_DOSEN_MAX} {dosenMemberRowCount >= TIM_DOSEN_MAX ? "(penuh)" : ""}
+                    </span>
                     {nidnCount > 0 && dosenCount !== nidnCount && (
                       <span className="text-amber-600">Jumlah NIDN harus sama dengan dosen.</span>
+                    )}
+                    {hasRowLimitError && dosenMemberRowCount > TIM_DOSEN_MAX && (
+                      <span className="text-red-600">Melebihi 5 baris anggota (ketua tidak hitung).</span>
                     )}
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addDosenRow}
-                    disabled={hasBlockError}
+                    disabled={isDosenAddDisabled}
                     className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={hasBlockError ? "Perbaiki validasi tim (limit 5 / duplikat / pasangan) sebelum menambah" : undefined}
+                    title={isDosenAddDisabled ? (dosenMemberRowCount >= TIM_DOSEN_MAX ? `Sudah ${TIM_DOSEN_MAX} anggota (maks 5). Hapus baris dulu.` : Object.values(fieldErrors)[0] || "Perbaiki validasi tim sebelum menambah") : undefined}
                   >
                     <Plus size={14} />
                     Tambah Dosen
                   </Button>
-                  {hasBlockError && (
+                  {(hasBlockError || isDosenAddDisabled) && (
                     <p className="text-[11px] text-red-600">
                       {fieldErrors.dosen_terlibat || fieldErrors.nidn_dosen_terlibat || fieldErrors.nama_ketua || fieldErrors.nidn_ketua
                         ? Object.values(fieldErrors).join(" ")
-                        : "Maks 5 dosen / NIDN harus sama — perbaiki sebelum menambah/menyimpan."}
+                        : dosenMemberRowCount >= TIM_DOSEN_MAX
+                          ? `Sudah ${dosenMemberRowCount}/${TIM_DOSEN_MAX} baris anggota — tidak bisa tambah lagi (kosong tetap hitung).`
+                          : "Maks 5 dosen / NIDN harus sama — perbaiki sebelum menambah/menyimpan."}
                     </p>
                   )}
                 </div>
@@ -1632,31 +1659,41 @@ export default function ProposalDosen() {
                       {fieldErrors.nim_anggota && <p>{fieldErrors.nim_anggota}</p>}
                     </div>
                   )}
-                  <div className="flex items-center gap-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
                     <span className={mhsNamaCount > TIM_MHS_MAX ? "text-red-600 font-semibold" : mhsNimCount > 0 && mhsNamaCount !== mhsNimCount ? "text-amber-600" : "text-gray-500"}>
                       Mhs: {mhsNamaCount}/{TIM_MHS_MAX}
                     </span>
                     <span className={mhsNimCount > TIM_MHS_MAX ? "text-red-600 font-semibold" : mhsNimCount > 0 && mhsNamaCount !== mhsNimCount ? "text-amber-600" : "text-gray-500"}>
                       NIM: {mhsNimCount}/{TIM_MHS_MAX}
                     </span>
+                    <span className={mhsRowCount >= TIM_MHS_MAX ? "text-red-600 font-semibold" : "text-gray-500"}>
+                      Baris: {mhsRowCount}/{TIM_MHS_MAX} {mhsRowCount >= TIM_MHS_MAX ? "(penuh)" : ""}
+                    </span>
                     {mhsNimCount > 0 && mhsNamaCount !== mhsNimCount && (
                       <span className="text-amber-600">Jumlah NIM harus sama dengan mahasiswa.</span>
+                    )}
+                    {hasRowLimitError && mhsRowCount > TIM_MHS_MAX && (
+                      <span className="text-red-600">Melebihi 5 baris mahasiswa.</span>
                     )}
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addMahasiswaRow}
-                    disabled={hasBlockError}
+                    disabled={isMhsAddDisabled}
                     className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-xs flex items-center gap-1.5 cursor-pointer shadow-none disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={hasBlockError ? "Perbaiki validasi tim (limit 5 / pasangan / duplikat)" : undefined}
+                    title={isMhsAddDisabled ? (mhsRowCount >= TIM_MHS_MAX ? `Sudah ${TIM_MHS_MAX} baris mahasiswa (maks 5). Hapus baris dulu.` : Object.values(fieldErrors)[0] || "Perbaiki validasi tim") : undefined}
                   >
                     <Plus size={14} />
                     Tambah Mahasiswa
                   </Button>
-                  {(fieldErrors.nama_anggota || fieldErrors.nim_anggota) && (
+                  {(fieldErrors.nama_anggota || fieldErrors.nim_anggota || isMhsAddDisabled) && (
                     <p className="text-[11px] text-red-600">
-                      {fieldErrors.nama_anggota || fieldErrors.nim_anggota || "Maks 5 / NIM harus sama — perbaiki."}
+                      {fieldErrors.nama_anggota || fieldErrors.nim_anggota
+                        ? (fieldErrors.nama_anggota || fieldErrors.nim_anggota)
+                        : mhsRowCount >= TIM_MHS_MAX
+                          ? `Sudah ${mhsRowCount}/${TIM_MHS_MAX} baris mahasiswa — tidak bisa tambah lagi (kosong tetap hitung).`
+                          : "Maks 5 / NIM harus sama — perbaiki."}
                     </p>
                   )}
                 </div>

@@ -102,6 +102,11 @@ export const getTimMhsLimitErrors = (namaRaw: string, nimRaw: string): Record<st
   return errs;
 };
 
+/** Hitung baris fisik (rollback kosong tetap hitung) — Opsi A ketua tidak hitung */
+export const countDosenAnggotaRows = (rows: Array<{ peran?: string }>): number =>
+  rows.filter((r) => r.peran !== "Ketua Peneliti").length;
+export const countMhsRows = (rows: unknown[]): number => rows.length;
+
 export type RowLike = { nama?: string; nidn?: string; nim?: string };
 export const getRowCounts = (rows: RowLike[]): { dosen: number; nidn: number; namaMhs: number; nim: number } => {
   const dosenTokens: string[] = [];
