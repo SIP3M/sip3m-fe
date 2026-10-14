@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import { editProposalApi, getProposalById } from "./proposal.api";
 import { SUMBER_PENDANAAN_OPTIONS, type SumberPendanaan } from "./proposal.types";
 import axios from "axios";
-import { normalizeNama, normalizeNidn, splitList } from "@/utils/proposal";
+import { normalizeNama, normalizeNidn, normalizeNim, splitList, TIM_DOSEN_MAX, TIM_MHS_MAX, getTimDosenLimitErrors, getTimMhsLimitErrors } from "@/utils/proposal";
 
 type SumberPendanaanValue = SumberPendanaan | "Pilih";
 
@@ -63,6 +63,12 @@ export default function EditProposalDosen() {
   );
   const [existingNidnTerlibat, setExistingNidnTerlibat] = useState(
     (existingProposal as { nidn_dosen_terlibat?: string | null })?.nidn_dosen_terlibat || "",
+  );
+  const [existingNamaAnggota, setExistingNamaAnggota] = useState(
+    (existingProposal as { nama_anggota?: string | null })?.nama_anggota || "",
+  );
+  const [existingNimAnggota, setExistingNimAnggota] = useState(
+    (existingProposal as { nim_anggota?: string | null })?.nim_anggota || "",
   );
 
   // State File Upload
@@ -124,6 +130,8 @@ export default function EditProposalDosen() {
         setMetodePenelitian(p.metode_penelitian || "");
         setExistingDosenTerlibat((p as { dosen_terlibat?: string | null }).dosen_terlibat || "");
         setExistingNidnTerlibat((p as { nidn_dosen_terlibat?: string | null }).nidn_dosen_terlibat || "");
+        setExistingNamaAnggota((p as { nama_anggota?: string | null }).nama_anggota || "");
+        setExistingNimAnggota((p as { nim_anggota?: string | null }).nim_anggota || "");
       } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
           setErrorMsg(err.response?.data?.message || "Gagal memuat detail proposal.");
@@ -140,7 +148,7 @@ export default function EditProposalDosen() {
     };
   }, [existingProposal?.title, proposalId]);
 
-  // Live client guard untuk Edit (ketua vs anggota existing) — BE f0be231
+  // Live client guard untuk Edit (ketua vs anggota existing) — BE f0be231 + limit 5
   const editKetuaNamaDup = (() => {
     const t = namaKetua.trim();
     if (!t) return null;
@@ -157,10 +165,35 @@ export default function EditProposalDosen() {
   })();
   const hasEditDup = Boolean(editKetuaNamaDup || editKetuaNidnDup);
 
+  // Tim existing: hitung + validasi limit 5 untuk prefill data lama >5 (BE tetap izinkan tampil, tapi edit 400 sampai dikurangi)
+  const editTimInfo = (() => {
+    const errs = {
+      ...getTimDosenLimitErrors(existingDosenTerlibat, existingNidnTerlibat),
+      ...getTimMhsLimitErrors(existingNamaAnggota, existingNimAnggota),
+    };
+    const dosenC = splitList(existingDosenTerlibat).length;
+    const nidnC = splitList(existingNidnTerlibat).length;
+    const namaC = splitList(existingNamaAnggota).length;
+    const nimC = splitList(existingNimAnggota).length;
+    return { errs, dosenC, nidnC, namaC, nimC };
+  })();
+  const hasEditLimit = Boolean(
+    editTimInfo.errs.dosen_terlibat || editTimInfo.errs.nidn_dosen_terlibat || editTimInfo.errs.nama_anggota || editTimInfo.errs.nim_anggota,
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
-    // Client-side anti-double sebelum fetch (BE f0be231)
+    // Client-side anti-double + limit 5 sebelum fetch (BE f0be231 + superRefine)
+    const limDosen = getTimDosenLimitErrors(existingDosenTerlibat, existingNidnTerlibat);
+    const limMhs = getTimMhsLimitErrors(existingNamaAnggota, existingNimAnggota);
+    const limCombined = { ...limDosen, ...limMhs };
+    if (Object.keys(limCombined).length) {
+      setFieldErrors(limCombined as Record<string, string>);
+      const first = Object.values(limCombined)[0] as string;
+      setErrorMsg(first);
+      return;
+    }
     const ketuaNamaTrimGuard = namaKetua.trim();
     const ketuaNidnTrimGuard = nidnKetua.trim();
     if (ketuaNamaTrimGuard) {
@@ -364,14 +397,25 @@ export default function EditProposalDosen() {
             )}
           </div>
         </div>
-        {/* Inline 400 mapping for other fields (render verbatim) */}
-        {(fieldErrors.dosen_terlibat || fieldErrors.nidn_dosen_terlibat || fieldErrors.nama_anggota || fieldErrors.nim_anggota || fieldErrors.sumber_pendanaan) && (
+        {/* Inline 400 mapping for other fields (render verbatim) — tambah counter limit 5 untuk edit */}
+        {(fieldErrors.dosen_terlibat || fieldErrors.nidn_dosen_terlibat || fieldErrors.nama_anggota || fieldErrors.nim_anggota || fieldErrors.sumber_pendanaan || hasEditLimit) && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 space-y-1">
             {fieldErrors.dosen_terlibat && <p>{fieldErrors.dosen_terlibat}</p>}
             {fieldErrors.nidn_dosen_terlibat && <p>{fieldErrors.nidn_dosen_terlibat}</p>}
             {fieldErrors.nama_anggota && <p>{fieldErrors.nama_anggota}</p>}
             {fieldErrors.nim_anggota && <p>{fieldErrors.nim_anggota}</p>}
             {fieldErrors.sumber_pendanaan && <p>{fieldErrors.sumber_pendanaan}</p>}
+            {hasEditLimit && (
+              <>
+                {editTimInfo.errs.dosen_terlibat && <p>Tim existing: {editTimInfo.errs.dosen_terlibat} — kurangi sebelum simpan.</p>}
+                {editTimInfo.errs.nidn_dosen_terlibat && <p>NIDN existing: {editTimInfo.errs.nidn_dosen_terlibat}</p>}
+                {editTimInfo.errs.nama_anggota && <p>Mahasiswa existing: {editTimInfo.errs.nama_anggota}</p>}
+                {editTimInfo.errs.nim_anggota && <p>NIM existing: {editTimInfo.errs.nim_anggota}</p>}
+                <p className="text-[11px]">
+                  Existing — Dosen {editTimInfo.dosenC}/{TIM_DOSEN_MAX} · NIDN {editTimInfo.nidnC}/{TIM_DOSEN_MAX} · Mhs {editTimInfo.namaC}/{TIM_MHS_MAX} · NIM {editTimInfo.nimC}/{TIM_MHS_MAX} · data lama &gt;5 tetap tampil, edit akan 400.
+                </p>
+              </>
+            )}
           </div>
         )}
 
@@ -467,13 +511,15 @@ export default function EditProposalDosen() {
           >
             Batal
           </button>
-          {hasEditDup && (
-            <p className="text-xs text-red-600">Perbaiki duplikasi ketua vs anggota sebelum menyimpan.</p>
+          {(hasEditDup || hasEditLimit) && (
+            <p className="text-xs text-red-600">
+              {hasEditDup ? "Perbaiki duplikasi ketua vs anggota." : "Tim melebihi 5 / pasangan tidak sama — kurangi sebelum menyimpan (BE akan 400)."}
+            </p>
           )}
           <button
             type="submit"
-            disabled={isSaving || hasEditDup}
-            title={hasEditDup ? (editKetuaNamaDup || editKetuaNidnDup || "") : undefined}
+            disabled={isSaving || hasEditDup || hasEditLimit}
+            title={hasEditDup ? (editKetuaNamaDup || editKetuaNidnDup || "") : hasEditLimit ? Object.values(editTimInfo.errs).join(" ") : undefined}
             className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
           >
             {isSaving && <Loader2 size={14} className="animate-spin" />}
