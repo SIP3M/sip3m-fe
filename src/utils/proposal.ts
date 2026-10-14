@@ -58,3 +58,70 @@ export const findDuplicateNidn = (values: string[]): string | null => {
   }
   return null;
 };
+
+// ─── BE tim limit 5 (Opsi A: 5 dosen + 5 mahasiswa terpisah) ───────────────────
+export const TIM_DOSEN_MAX = 5;
+export const TIM_MHS_MAX = 5;
+
+/** Jumlah token setelah split ,;\n (shared dengan BE superRefine) */
+export const countTokens = (raw: string): number => splitList(raw).length;
+
+export const getTimDosenLimitErrors = (dosenTerlibatRaw: string, nidnRaw: string): Record<string, string> => {
+  const errs: Record<string, string> = {};
+  const dosenCount = splitList(dosenTerlibatRaw).length;
+  const nidnCount = splitList(nidnRaw).length;
+  if (dosenCount > TIM_DOSEN_MAX) {
+    errs.dosen_terlibat = `Maksimal ${TIM_DOSEN_MAX} dosen terlibat. Saat ini ${dosenCount}.`;
+  }
+  if (nidnCount > TIM_DOSEN_MAX) {
+    errs.nidn_dosen_terlibat = `Maksimal ${TIM_DOSEN_MAX} NIDN. Saat ini ${nidnCount}.`;
+  }
+  const dosenHas = dosenCount > 0;
+  const nidnHas = nidnCount > 0;
+  if (dosenHas && nidnHas && dosenCount !== nidnCount) {
+    errs.nidn_dosen_terlibat = `Jumlah NIDN (${nidnCount}) harus sama dengan jumlah dosen (${dosenCount}) — berpasangan urut.`;
+  }
+  return errs;
+};
+
+export const getTimMhsLimitErrors = (namaRaw: string, nimRaw: string): Record<string, string> => {
+  const errs: Record<string, string> = {};
+  const namaCount = splitList(namaRaw).length;
+  const nimCount = splitList(nimRaw).length;
+  if (namaCount > TIM_MHS_MAX) {
+    errs.nama_anggota = `Maksimal ${TIM_MHS_MAX} mahasiswa. Saat ini ${namaCount}.`;
+  }
+  if (nimCount > TIM_MHS_MAX) {
+    errs.nim_anggota = `Maksimal ${TIM_MHS_MAX} NIM. Saat ini ${nimCount}.`;
+  }
+  const namaHas = namaCount > 0;
+  const nimHas = nimCount > 0;
+  if (namaHas && nimHas && namaCount !== nimCount) {
+    errs.nim_anggota = `Jumlah NIM (${nimCount}) harus sama dengan jumlah mahasiswa (${namaCount}) — berpasangan urut.`;
+  }
+  return errs;
+};
+
+/** Hitung baris fisik (rollback kosong tetap hitung) — Opsi A ketua tidak hitung */
+export const countDosenAnggotaRows = (rows: Array<{ peran?: string }>): number =>
+  rows.filter((r) => r.peran !== "Ketua Peneliti").length;
+export const countMhsRows = (rows: unknown[]): number => rows.length;
+
+export type RowLike = { nama?: string; nidn?: string; nim?: string };
+export const getRowCounts = (rows: RowLike[]): { dosen: number; nidn: number; namaMhs: number; nim: number } => {
+  const dosenTokens: string[] = [];
+  const nidnTokens: string[] = [];
+  const namaTokens: string[] = [];
+  const nimTokens: string[] = [];
+  for (const r of rows as any[]) {
+    if (typeof r.nama === "string") namaTokens.push(...splitList(r.nama));
+    if (typeof r.nidn === "string") nidnTokens.push(...splitList(r.nidn));
+    if (typeof r.nim === "string") nimTokens.push(...splitList(r.nim));
+  }
+  return {
+    dosen: namaTokens.length || (rows as any[]).filter((r) => (r.nama || "").trim()).length,
+    nidn: nidnTokens.length || (rows as any[]).filter((r) => (r.nidn || "").trim()).length,
+    namaMhs: namaTokens.length,
+    nim: nimTokens.length,
+  };
+};
