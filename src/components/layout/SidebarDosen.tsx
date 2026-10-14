@@ -13,7 +13,7 @@ import {
   Star,
   Megaphone,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
 
@@ -22,15 +22,40 @@ export default function Sidebar() {
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
 
+  const isKkmPath = (path: string) => path.startsWith("/dosen-dashboard/kkm");
+
   // state lokal untuk tab & collapse group
-  const [activeTab, setActiveTab] = useState<"penelitian" | "kkm">("penelitian");
+  const [activeTab, setActiveTab] = useState<"penelitian" | "kkm">(
+    isKkmPath(location.pathname) ? "kkm" : "penelitian"
+  );
   const [isResearchOpen, setIsResearchOpen] = useState(true);
   const [isKkmOpen, setIsKkmOpen] = useState(true);
 
+  // Sinkronkan tab jika user berpindah halaman via route / back button
+  useEffect(() => {
+    if (isKkmPath(location.pathname)) {
+      setActiveTab("kkm");
+    } else if (!location.pathname.startsWith("/dosen-dashboard/profile")) {
+      setActiveTab("penelitian");
+    }
+  }, [location.pathname]);
+
+  const handleTabChange = (tab: "penelitian" | "kkm") => {
+    setActiveTab(tab);
+    if (tab === "penelitian") {
+      navigate("/dosen-dashboard");
+    } else {
+      navigate("/dosen-dashboard/kkm/dashboard");
+    }
+  };
+
   const dashboardMenu = {
-    name: "Dashboard",
+    name: activeTab === "penelitian" ? "Dashboard" : "Dashboard KKM",
     icon: LayoutDashboard,
-    path: "/dosen-dashboard",
+    path:
+      activeTab === "penelitian"
+        ? "/dosen-dashboard"
+        : "/dosen-dashboard/kkm/dashboard",
   };
 
   const researchMenus = [
@@ -205,11 +230,6 @@ export default function Sidebar() {
     );
   };
 
-  // Menentukan judul dashboard berdasarkan tab aktif
-  const getDashboardLabel = () => {
-    return activeTab === "penelitian" ? "Dashboard" : "Dashboard KKM";
-  };
-
   return (
     <div className="w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)] z-50 transition-transform duration-300 -translate-x-full peer-checked:translate-x-0 lg:translate-x-0">
       {/* TOP SECTION */}
@@ -227,7 +247,7 @@ export default function Sidebar() {
           <div className="flex items-center bg-gray-100 rounded-full p-1">
             <button
               type="button"
-              onClick={() => setActiveTab("penelitian")}
+              onClick={() => handleTabChange("penelitian")}
               className={`flex-1 text-sm font-medium py-1.5 rounded-full transition-colors cursor-pointer
                 ${
                   activeTab === "penelitian"
@@ -239,7 +259,7 @@ export default function Sidebar() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("kkm")}
+              onClick={() => handleTabChange("kkm")}
               className={`flex-1 text-sm font-medium py-1.5 rounded-full transition-colors cursor-pointer
                 ${
                   activeTab === "kkm"
@@ -271,7 +291,7 @@ export default function Sidebar() {
               }`}
           >
             <dashboardMenu.icon size={18} />
-            {getDashboardLabel()}
+            {dashboardMenu.name}
           </div>
         </div>
 

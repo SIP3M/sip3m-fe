@@ -2,7 +2,7 @@ import SidebarDosen from "@/components/layout/SidebarDosen";
 import Navbar from "@/components/layout/Navbar";
 import { Outlet } from "react-router-dom";
 
-export default function StaffLayout() {
+export default function DosenLayout() {
   return (
     <div className="flex min-h-screen relative overflow-x-hidden">
       <input type="checkbox" id="sidebar-toggle" className="peer hidden" />

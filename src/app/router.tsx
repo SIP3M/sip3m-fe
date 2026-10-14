@@ -64,6 +64,12 @@ import KelompokKKM from "@/features/kkm/KelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 
+import DashboardDosenKKM from "@/features/dashboard/DashboardDosenKKM";
+import KelompokBimbingan from "@/features/kkm/KelompokBimbingan";
+import DetailKelompokBimbingan from "@/features/kkm/DetailKelompokBimbingan";
+import MonitoringKKMDosen from "@/features/kkm/MonitoringKKMDosen";
+import DetailMonitoringKKMDosen from "@/features/kkm/DetailMonitoringKKMDosen";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -94,128 +100,128 @@ export const router = createBrowserRouter([
   // ADMIN AREA
   // =========================
   // ADMIN AREA - Perbaiki bagian ini
-{
-  element: (
-    <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
-      <DashboardLayout />
-    </ProtectedRoute>
-  ),
-  children: [
-    {
-      path: "admin-dashboard",
-      element: <AdminDashboard />, // Dashboard Penelitian
-    },
-    {
-      path: "admin-dashboard/kkm/dashboard", // Dashboard KKM
-      element: <DashboardAdminKKM />,
-    },
-    {
-      path: "users",
-      element: <UsersPage />,
-    },
-    {
-      path: "users/add",
-      element: <AddUserPage />,
-    },
-    {
-      path: "users/:id",
-      element: <UserDetailPage />,
-    },
-    {
-      path: "users/:id/edit",
-      element: <EditUserPage />,
-    },
-    {
-      path: "proposals",
-      element: <ProposalList />,
-    },
-    {
-      path: "proposals/:id",
-      element: <ProposalDetail />,
-    },
-    {
-      path: "plotting-reviewer",
-      element: <ReviewList />,
-    },
-    {
-      path: "monitoring-project",
-      element: <ProjectList />,
-    },
-    {
-      path: "monitoring-project/:id",
-      element: <ProjectDetail />,
-    },
-    {
-      path: "finance",
-      element: <FinancePage />,
-    },
-    {
-      path: "repository-publik",
-      element: <PublicationList />,
-    },
-    {
-      path: "logs",
-      element: <LogsPage />,
-    },
-    {
-      path: "settings",
-      element: <SystemSettings />
-    },
-    {
-      path: "settings/sessions",
-      element: <AuthSessionsPage />
-    },
-    // Tambahkan route untuk menu KKM lainnya
-    {
-      path: "admin-dashboard/kkm/periode",
-      element: <PeriodeKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/periode/new",
-      element: <TambahPeriodeKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/periode/:id",
-      element: <DetailPeriodeKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/periode/:id/edit",
-      element: <KkmPeriodForm mode="edit" />,
-    },
-    {
-      path: "admin-dashboard/kkm/peserta",
-      element: <PesertaKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/kelompok",
-      element: <KelompokKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/lokasi",
-      element: <LokasiKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/dpl",
-      element: <DPLKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/generate",
-      element: <GenerateKelompok />,
-    },
-    {
-      path: "admin-dashboard/kkm/monitoring",
-      element: <MonitoringKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/laporan",
-      element: <LaporanKKM />,
-    },
-    {
-      path: "admin-dashboard/kkm/pengumuman",
-      element: <PengumumanKKM />,
-    },
-  ],
-},
+  {
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "admin-dashboard",
+        element: <AdminDashboard />, // Dashboard Penelitian
+      },
+      {
+        path: "admin-dashboard/kkm/dashboard", // Dashboard KKM
+        element: <DashboardAdminKKM />,
+      },
+      {
+        path: "users",
+        element: <UsersPage />,
+      },
+      {
+        path: "users/add",
+        element: <AddUserPage />,
+      },
+      {
+        path: "users/:id",
+        element: <UserDetailPage />,
+      },
+      {
+        path: "users/:id/edit",
+        element: <EditUserPage />,
+      },
+      {
+        path: "proposals",
+        element: <ProposalList />,
+      },
+      {
+        path: "proposals/:id",
+        element: <ProposalDetail />,
+      },
+      {
+        path: "plotting-reviewer",
+        element: <ReviewList />,
+      },
+      {
+        path: "monitoring-project",
+        element: <ProjectList />,
+      },
+      {
+        path: "monitoring-project/:id",
+        element: <ProjectDetail />,
+      },
+      {
+        path: "finance",
+        element: <FinancePage />,
+      },
+      {
+        path: "repository-publik",
+        element: <PublicationList />,
+      },
+      {
+        path: "logs",
+        element: <LogsPage />,
+      },
+      {
+        path: "settings",
+        element: <SystemSettings />,
+      },
+      {
+        path: "settings/sessions",
+        element: <AuthSessionsPage />,
+      },
+      // Tambahkan route untuk menu KKM lainnya
+      {
+        path: "admin-dashboard/kkm/periode",
+        element: <PeriodeKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/periode/new",
+        element: <TambahPeriodeKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/periode/:id",
+        element: <DetailPeriodeKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/periode/:id/edit",
+        element: <KkmPeriodForm mode="edit" />,
+      },
+      {
+        path: "admin-dashboard/kkm/peserta",
+        element: <PesertaKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/kelompok",
+        element: <KelompokKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/lokasi",
+        element: <LokasiKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/dpl",
+        element: <DPLKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/generate",
+        element: <GenerateKelompok />,
+      },
+      {
+        path: "admin-dashboard/kkm/monitoring",
+        element: <MonitoringKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/laporan",
+        element: <LaporanKKM />,
+      },
+      {
+        path: "admin-dashboard/kkm/pengumuman",
+        element: <PengumumanKKM />,
+      },
+    ],
+  },
   // =========================
   // STAFF LPPM
   // =========================
@@ -282,6 +288,26 @@ export const router = createBrowserRouter([
         element: <DosenDashboard />,
       },
       {
+        path: "kkm/dashboard",
+        element: <DashboardDosenKKM />,
+      },
+      {
+        path: "kkm/kelompok-bimbingan",
+        element: <KelompokBimbingan />,
+      },
+      {
+        path: "kkm/kelompok-bimbingan/:id",
+        element: <DetailKelompokBimbingan />,
+      },
+      {
+        path: "kkm/monitoring",
+        element: <MonitoringKKMDosen />,
+      },
+      {
+        path: "kkm/monitoring/:id",
+        element: <DetailMonitoringKKMDosen />,
+      },
+      {
         path: "proposals",
         element: <ProposalDosen />,
       },
@@ -289,7 +315,7 @@ export const router = createBrowserRouter([
         path: "proposals/:id",
         element: <ProposalDetail />,
       },
-            {
+      {
         path: "proposals/:id/edit",
         element: <EditProposalDosen />, // Ganti dengan nama komponen form edit kamu
       },
@@ -308,7 +334,7 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      }
+      },
     ],
   },
 
