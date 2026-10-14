@@ -63,12 +63,17 @@ import MonitoringKKM from "@/features/kkm/MonitoringKKM";
 import KelompokKKM from "@/features/kkm/KelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
+import PengumumanKKMDosen from "@/features/kkm/PengumumanKKMDosen";
 
 import DashboardDosenKKM from "@/features/dashboard/DashboardDosenKKM";
 import KelompokBimbingan from "@/features/kkm/KelompokBimbingan";
 import DetailKelompokBimbingan from "@/features/kkm/DetailKelompokBimbingan";
 import MonitoringKKMDosen from "@/features/kkm/MonitoringKKMDosen";
 import DetailMonitoringKKMDosen from "@/features/kkm/DetailMonitoringKKMDosen";
+import ValidasiLogbookDosen from "@/features/kkm/ValidasiLogbookDosen";
+import DetailValidasiLogbookDosen from "@/features/kkm/DetailValidasiLogbookDosen";
+import LaporanKKMDosen from "@/features/kkm/LaporanKKMDosen";
+import PenilaianMahasiswaDosen from "@/features/kkm/PenilaianMahasiswaDosen";
 
 export const router = createBrowserRouter([
   {
@@ -306,6 +311,26 @@ export const router = createBrowserRouter([
       {
         path: "kkm/monitoring/:id",
         element: <DetailMonitoringKKMDosen />,
+      },
+      {
+        path: "kkm/validasi-logbook",
+        element: <ValidasiLogbookDosen />,
+      },
+      {
+        path: "kkm/validasi-logbook/:id",
+        element: <DetailValidasiLogbookDosen />,
+      },
+      {
+        path: "kkm/laporan",
+        element: <LaporanKKMDosen />,
+      },
+      {
+        path: "kkm/penilaian",
+        element: <PenilaianMahasiswaDosen />,
+      },
+      {
+        path: "kkm/pengumuman",
+        element: <PengumumanKKMDosen />,
       },
       {
         path: "proposals",
