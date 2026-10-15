@@ -13,7 +13,7 @@ export default function Navbar() {
   const displayRole = user?.roles?.roles || "GUEST";
 
   return (
-    <div className="w-full bg-white px-4 sm:px-8 py-4 flex items-center justify-between shadow-[0_2px_10px_rgba(0,0,0,0.05)] gap-4">
+    <div data-print-hide className="w-full bg-white px-4 sm:px-8 py-4 flex items-center justify-between shadow-[0_2px_10px_rgba(0,0,0,0.05)] gap-4">
       
       {/* SEARCH & HAMBURGER */}
       <div className="flex items-center gap-4 flex-1">

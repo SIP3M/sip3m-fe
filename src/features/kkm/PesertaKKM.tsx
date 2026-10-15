@@ -185,8 +185,9 @@ export default function PesertaKKM() {
     return undefined;
   }, [activeTab]);
 
+  // Enum BE (Swagger): "BelumDitempatkan" — tanpa spasi, pakai "Belum Ditempatkan" berujung 400.
   const statusKelompokQuery = useMemo(() => {
-    if (activeTab === "belum_kelompok") return "Belum Ditempatkan";
+    if (activeTab === "belum_kelompok") return "BelumDitempatkan";
     return undefined;
   }, [activeTab]);
 
