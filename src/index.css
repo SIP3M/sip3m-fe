@@ -129,3 +129,17 @@
     scroll-behavior: smooth;
     }
 }
+
+/* Cetak (window.print): sembunyikan navbar/sidebar & rapikan halaman */
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .no-print,
+  button.no-print {
+    display: none !important;
+  }
+}

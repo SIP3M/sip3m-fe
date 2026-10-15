@@ -11,6 +11,8 @@ interface Props {
   onSuccess: () => void;
   periodeId: number | null;
   pesertaIds: number[];
+  /** Sembunyikan kelompok asal (mis. saat pindah anggota dari halaman Detail) */
+  excludeKelompokId?: number | null;
 }
 
 function errorMessage(err: unknown, fallback: string) {
@@ -27,7 +29,7 @@ function errorMessage(err: unknown, fallback: string) {
   return fallback;
 }
 
-export default function KkmPesertaAssignKelompokModal({ open, onClose, onSuccess, periodeId, pesertaIds }: Props) {
+export default function KkmPesertaAssignKelompokModal({ open, onClose, onSuccess, periodeId, pesertaIds, excludeKelompokId }: Props) {
   const [search, setSearch] = useState("");
   const [kelompokList, setKelompokList] = useState<KkmDplKelompokItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -103,6 +105,7 @@ export default function KkmPesertaAssignKelompokModal({ open, onClose, onSuccess
   if (!open) return null;
 
   const selected = kelompokList.find((k) => k.id === selectedKelompokId) || null;
+  const visibleList = kelompokList.filter((k) => k.id !== excludeKelompokId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -138,11 +141,11 @@ export default function KkmPesertaAssignKelompokModal({ open, onClose, onSuccess
             <div className="mt-2 border border-gray-100 rounded-xl overflow-hidden max-h-[320px] overflow-y-auto">
               {loading ? (
                 <div className="py-8 text-center text-sm text-gray-400 flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> Memuat kelompok...</div>
-              ) : kelompokList.length === 0 ? (
+              ) : visibleList.length === 0 ? (
                 <div className="py-8 text-center text-sm text-gray-500">Tidak ada kelompok di periode ini. Tambah Lokasi dulu.</div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {kelompokList.map((k) => {
+                  {visibleList.map((k) => {
                     const desa = k.lokasi?.desa || k.desa || "-";
                     const kuota = k.lokasi?.kuota ?? k.kuota ?? "-";
                     const isSelected = selectedKelompokId === k.id;
