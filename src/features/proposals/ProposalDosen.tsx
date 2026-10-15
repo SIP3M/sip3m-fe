@@ -510,8 +510,9 @@ export default function ProposalDosen() {
   };
 
   const syncDosenToForm = (rows: DosenRow[]) => {
-    const dosisCsv = rows.map((r) => r.nidn.trim()).join("\n");
-    const namaCsv = rows.map((r) => r.nama.trim()).join("\n");
+    const anggotaRows = rows.filter((r) => r.peran !== "Ketua Peneliti");
+    const dosisCsv = anggotaRows.map((r) => r.nidn.trim()).join("\n");
+    const namaCsv = anggotaRows.map((r) => r.nama.trim()).join("\n");
     // for limit we use the CSV form (split handles ,;\n), not row count alone
     setFormValues((prev) => ({
       ...prev,
@@ -837,6 +838,17 @@ export default function ProposalDosen() {
       parsedDosen[0].peran = "Ketua Peneliti";
     }
     setDosenRows(parsedDosen);
+    // Sinkronkan field anggota (tanpa ketua) agar payload tidak kirim duplikat
+    const anggotaRowsForForm = parsedDosen.filter(
+      (r) => r.peran !== "Ketua Peneliti",
+    );
+    setFormValues((prev) => ({
+      ...prev,
+      dosen_terlibat: anggotaRowsForForm.map((r) => r.nama.trim()).join("\n"),
+      nidn_dosen_terlibat: anggotaRowsForForm
+        .map((r) => r.nidn.trim())
+        .join("\n"),
+    }));
 
     // PARSE MAHASISWA
     const nims = proposal.nim_anggota ? proposal.nim_anggota.split("\n") : [];
@@ -1501,28 +1513,10 @@ export default function ProposalDosen() {
                             />
                           </td>
                           <td className="py-2 pr-2">
-                            <select
-                              value={row.peran}
-                              onChange={(e) => {
-                                const next = [...dosenRows];
-                                const chosen = e.target.value;
-                                // Hanya 1 Ketua: jika pilih Ketua, reset yang lain jadi Anggota
-                                if (chosen === "Ketua Peneliti") {
-                                  for (let j = 0; j < next.length; j++) {
-                                    next[j] = { ...next[j], peran: j === idx ? "Ketua Peneliti" : "Anggota Peneliti" };
-                                  }
-                                } else {
-                                  next[idx] = { ...next[idx], peran: chosen };
-                                }
-                                setDosenRows(next);
-                                syncDosenToForm(next);
-                              }}
-                              className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs font-medium text-gray-800 shadow-none cursor-pointer"
-                            >
-                              <option value="Ketua Peneliti">Ketua Peneliti</option>
-                              <option value="Anggota Peneliti">Anggota Peneliti</option>
-                            </select>
-                          </td>
+                             <div className="h-10 w-full flex items-center rounded-xl border border-gray-200 bg-gray-50/80 px-3 text-xs font-medium text-gray-700">
+                               {row.peran || (idx === 0 ? "Ketua Peneliti" : "Anggota Peneliti")}
+                             </div>
+                           </td>
                           <td className="py-2 text-center">
                             <button
                               type="button"
