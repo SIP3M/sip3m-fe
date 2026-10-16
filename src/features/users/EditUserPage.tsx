@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { updateUser, getUserById } from "./Users.api";
+import { getFakultas, getProdiByFakultas, MasterData } from "@/features/auth/auth.api";
 import { AppRole, APP_ROLES } from "@/constant/roles";
 import { CreateUserPayload, User } from "./users.types";
 
@@ -43,6 +44,7 @@ export default function EditUserPage() {
     password: "",
     roles: "" as AppRole | "",
     nidn_nip: "",
+    // Disimpan sebagai STRING id ("1"), bukan nama, bukan objek {id,nama}
     fakultas: "",
     program_studi: "",
     tempat_lahir: "",
@@ -52,6 +54,55 @@ export default function EditUserPage() {
     nomor_hp: "",
     is_active: true,
   });
+
+  // Data master fakultas / prodi (value = id, label = nama)
+  const [fakultasList, setFakultasList] = useState<MasterData[]>([]);
+  const [prodiList, setProdiList] = useState<MasterData[]>([]);
+  const [masterLoading, setMasterLoading] = useState(false);
+  const [masterError, setMasterError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchFakultas = async () => {
+      try {
+        const data = await getFakultas();
+        if (!cancelled) setFakultasList(data);
+      } catch {
+        if (!cancelled) setMasterError("Gagal memuat daftar fakultas.");
+      }
+    };
+    void fetchFakultas();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Ambil prodi tiap fakultas berubah (termasuk saat prefill dari data user)
+  useEffect(() => {
+    if (!form.fakultas) {
+      setProdiList([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchProdi = async () => {
+      setMasterLoading(true);
+      try {
+        const data = await getProdiByFakultas(Number(form.fakultas));
+        if (!cancelled) {
+          setProdiList(data);
+          setMasterError(null);
+        }
+      } catch {
+        if (!cancelled) setMasterError("Gagal memuat daftar program studi.");
+      } finally {
+        if (!cancelled) setMasterLoading(false);
+      }
+    };
+    void fetchProdi();
+    return () => {
+      cancelled = true;
+    };
+  }, [form.fakultas]);
 
   useEffect(() => {
     if (!Number.isInteger(userId)) {
@@ -71,10 +122,14 @@ export default function EditUserPage() {
           password: "",
           roles: user.roles.roles || "",
           nidn_nip: user.nidn || "",
-          fakultas: user.fakultas || "",
-          program_studi: user.program_studi || "",
+          // Prefill dari bentuk baru { id, nama } | null → simpan ID-nya sebagai string
+          fakultas: user.fakultas ? String(user.fakultas.id) : "",
+          program_studi: user.program_studi ? String(user.program_studi.id) : "",
           tempat_lahir: user.tempat_lahir || "",
-          tanggal_lahir: user.tanggal_lahir || "",
+          // BE mengirim ISO (1999-01-01T00:00:00.000Z); <input type="date"> butuh YYYY-MM-DD
+          tanggal_lahir: user.tanggal_lahir
+            ? String(user.tanggal_lahir).slice(0, 10)
+            : "",
           jenis_kelamin: user.jenis_kelamin || "",
           alamat: user.alamat || "",
           nomor_hp: user.nomor_hp || "",
@@ -113,12 +168,28 @@ export default function EditUserPage() {
     if (name === "email" || name === "username" || name === "nidn_nip") {
       setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+
+    // Ganti fakultas → prodi lama tidak relevan
+    if (name === "fakultas") {
+      setForm((prev) => ({ ...prev, fakultas: value, program_studi: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
+
+    // PUT /users/:id mewajibkan tanggal_lahir valid (YYYY-MM-DD).
+    // Tanpa ini, simpan selalu 400 "Validation failed.".
+    if (!form.tanggal_lahir.trim()) {
+      setError("Tanggal lahir wajib diisi (format YYYY-MM-DD) — wajib oleh API untuk menyimpan user.");
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.tanggal_lahir.trim())) {
+      setError("Tanggal lahir harus format YYYY-MM-DD");
+      return;
+    }
 
     const payload: CreateUserPayload = {
       name: form.name.trim(),
@@ -127,10 +198,12 @@ export default function EditUserPage() {
       password: form.password || "",
       roles: form.roles as AppRole,
       nidn_nip: form.nidn_nip.trim() || undefined,
-      fakultas: form.fakultas.trim() || undefined,
-      program_studi: form.program_studi.trim() || undefined,
+      // ID string; "" artinya cabut fakultas/prodi — dikirim eksplisit (lihat filter di bawah)
+      fakultas: form.fakultas,
+      program_studi: form.program_studi,
       tempat_lahir: form.tempat_lahir.trim() || undefined,
-      tanggal_lahir: form.tanggal_lahir || undefined,
+      // Wajib menurut validasi runtime BE (PUT /users/:id)
+      tanggal_lahir: form.tanggal_lahir.trim(),
       jenis_kelamin: form.jenis_kelamin || undefined,
       alamat: form.alamat.trim() || undefined,
       nomor_hp: form.nomor_hp.trim() || undefined,
@@ -138,7 +211,9 @@ export default function EditUserPage() {
     };
 
     const updatePayload = Object.fromEntries(
-      Object.entries(payload).filter(([, value]) => {
+      Object.entries(payload).filter(([key, value]) => {
+        // fakultas/program_studi selalu ikut walau "" ("" = cabut menurut API)
+        if (key === "fakultas" || key === "program_studi") return typeof value === "string";
         if (typeof value === "string") return value.length > 0;
         return value !== undefined && value !== null;
       }),
@@ -360,6 +435,74 @@ export default function EditUserPage() {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Fakultas
+                </label>
+                <div className="relative">
+                  <select
+                    name="fakultas"
+                    value={form.fakultas}
+                    onChange={handleChange}
+                    className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  >
+                    <option value="">Pilih Fakultas</option>
+                    {fakultasList.map((fak) => (
+                      <option key={fak.id} value={String(fak.id)}>
+                        {fak.nama}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Program Studi
+                </label>
+                <div className="relative">
+                  <select
+                    name="program_studi"
+                    value={form.program_studi}
+                    onChange={handleChange}
+                    disabled={!form.fakultas}
+                    className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:bg-gray-50 disabled:text-gray-400"
+                  >
+                    <option value="">
+                      {!form.fakultas
+                        ? "Pilih Fakultas terlebih dahulu"
+                        : masterLoading
+                          ? "Memuat program studi..."
+                          : "Pilih Program Studi"}
+                    </option>
+                    {prodiList.map((prodi) => (
+                      <option key={prodi.id} value={String(prodi.id)}>
+                        {prodi.nama}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
+                </div>
+                {masterLoading && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                    <Loader2 size={11} className="animate-spin" /> Memuat program studi...
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {masterError && (
+              <p className="text-xs text-red-600">{masterError}</p>
+            )}
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <Button

@@ -24,6 +24,7 @@ const sanitizeCreateUserPayload = (data: CreateUserPayload) => {
     email: data.email.trim(),
     username: data.username?.trim(),
     nidn_nip: data.nidn_nip?.trim(),
+    // ID fakultas/prodi (string angka) — jangan dikirim objek {id,nama}
     fakultas: data.fakultas?.trim(),
     program_studi: data.program_studi?.trim(),
     tempat_lahir: data.tempat_lahir?.trim(),
@@ -168,7 +169,9 @@ const sanitizeUpdateUserPayload = (data: UpdateUserPayload) => {
   };
 
   return Object.fromEntries(
-    Object.entries(normalized).filter(([, value]) => {
+    Object.entries(normalized).filter(([key, value]) => {
+      // fakultas/program_studi: "" adalah instruksi "cabut" menurut API → selalu ikut
+      if (key === "fakultas" || key === "program_studi") return typeof value === "string";
       if (typeof value === "string") {
         return value.length > 0;
       }

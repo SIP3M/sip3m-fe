@@ -700,7 +700,8 @@ export default function ProposalDosen() {
           next[index] = {
             ...next[index],
             nama: matched.name,
-            prodi: matched.program_studi || "",
+            // Endpoint /users → program_studi berupa { id, nama } | null
+            prodi: matched.program_studi?.nama || "",
           };
           setMahasiswaRows(next);
           syncMahasiswaToForm(next);
@@ -875,7 +876,7 @@ export default function ProposalDosen() {
               setMahasiswaRows((prev) => {
                 const updated = [...prev];
                 if (updated[idx]) {
-                  updated[idx].prodi = matched.program_studi || "";
+                  updated[idx].prodi = matched.program_studi?.nama || "";
                 }
                 return updated;
               });
