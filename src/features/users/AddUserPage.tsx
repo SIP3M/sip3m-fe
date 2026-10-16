@@ -8,6 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
+import { getFakultas, getProdiByFakultas, MasterData } from "@/features/auth/auth.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -26,65 +27,6 @@ const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
   "DOSEN",
   "REVIEWER",
   "REVIEWER_EKSTERNAL",
-];
-
-const FAKULTAS_OPTIONS = [
-  "Fakultas Agama Islam (FAI)",
-  "Fakultas Ekonomi dan Bisnis (FEB)",
-  "Fakultas Keguruan dan Ilmu Pendidikan (FKIP)",
-  "Fakultas Ilmu Kesehatan (FIKES)",
-  "Fakultas Teknik (FT)",
-  "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)",
-  "Fakultas Hukum (FH)",
-];
-
-const PRODI_OPTIONS: { fakultas: string; prodi: string[] }[] = [
-  {
-    fakultas: "Fakultas Agama Islam (FAI)",
-    prodi: ["S1 Ilmu Al-Qur'an dan Tafsir", "S1 Tasawuf dan Psikoterapi"],
-  },
-  {
-    fakultas: "Fakultas Ekonomi dan Bisnis (FEB)",
-    prodi: ["S1 Akuntansi", "S1 Manajemen"],
-  },
-  {
-    fakultas: "Fakultas Keguruan dan Ilmu Pendidikan (FKIP)",
-    prodi: [
-      "S1 Pendidikan Guru Sekolah Dasar (PGSD)",
-      "S1 Pendidikan Guru Pendidikan Anak Usia Dini (PGPAUD)",
-      "S1 Pendidikan Matematika",
-      "S1 Pendidikan Kimia",
-      "S1 Pendidikan IPA",
-      "S1 Pendidikan Bahasa Inggris",
-      "S1 Ilmu Keolahragaan",
-      "Program Profesi Guru (PPG)",
-    ],
-  },
-  {
-    fakultas: "Fakultas Ilmu Kesehatan (FIKES)",
-    prodi: ["S1 Keperawatan", "S1 Ilmu Gizi", "Program Profesi Ners"],
-  },
-  {
-    fakultas: "Fakultas Teknik (FT)",
-    prodi: [
-      "S1 Teknik Informatika",
-      "D3 Teknik Informatika",
-      "S1 Teknik Industri",
-      "S1 Peternakan",
-    ],
-  },
-  {
-    fakultas: "Fakultas Ilmu Sosial dan Ilmu Politik (FISIP)",
-    prodi: [
-      "S1 Ilmu Komunikasi",
-      "S1 Ilmu Pemerintahan",
-      "D3 Hubungan Masyarakat (Humas)",
-    ],
-  },
-  {
-    fakultas: "Fakultas Hukum (FH)",
-    prodi: ["S1 Ilmu Hukum"],
-  },
 ];
 
 export default function AddUserPage() {
@@ -122,11 +64,57 @@ export default function AddUserPage() {
     is_active: true,
   });
 
-  // Daftar prodi yang ditampilkan di dropdown Program Studi,
-  // hanya berisi prodi dari fakultas yang sedang dipilih.
-  const availableProdi =
-    PRODI_OPTIONS.find((group) => group.fakultas === form.fakultas)?.prodi ??
-    [];
+  // Data master dari API (value = String(id), label = nama) — bukan list hardcoded
+  const [fakultasList, setFakultasList] = useState<MasterData[]>([]);
+  const [prodiList, setProdiList] = useState<MasterData[]>([]);
+  const [prodiLoading, setProdiLoading] = useState(false);
+  const [masterError, setMasterError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchFakultas = async () => {
+      try {
+        const data = await getFakultas();
+        if (!cancelled) setFakultasList(data);
+      } catch {
+        if (!cancelled) setMasterError("Gagal memuat daftar fakultas. Muat ulang halaman.");
+      }
+    };
+    void fetchFakultas();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Ambil prodi sesuai fakultas terpilih
+  useEffect(() => {
+    if (!form.fakultas) {
+      setProdiList([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchProdi = async () => {
+      setProdiLoading(true);
+      try {
+        const data = await getProdiByFakultas(Number(form.fakultas));
+        if (!cancelled) {
+          setProdiList(data);
+          setMasterError(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setProdiList([]);
+          setMasterError("Gagal memuat daftar program studi.");
+        }
+      } finally {
+        if (!cancelled) setProdiLoading(false);
+      }
+    };
+    void fetchProdi();
+    return () => {
+      cancelled = true;
+    };
+  }, [form.fakultas]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -210,6 +198,18 @@ export default function AddUserPage() {
       return false;
     }
 
+    // API /users (POST) mewajibkan tanggal_lahir dengan format YYYY-MM-DD,
+    // padahal Swagger menuliskannya opsional — divalidasi di sini agar
+    // pengguna mendapat pesan jelas, bukan 400 "Validation failed.".
+    if (!form.tanggal_lahir.trim()) {
+      setError("Tanggal lahir wajib diisi (format YYYY-MM-DD)");
+      return false;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.tanggal_lahir.trim())) {
+      setError("Tanggal lahir harus format YYYY-MM-DD");
+      return false;
+    }
+
     return true;
   };
 
@@ -235,7 +235,8 @@ export default function AddUserPage() {
         fakultas: form.fakultas.trim() || undefined,
         program_studi: form.program_studi.trim() || undefined,
         tempat_lahir: form.tempat_lahir.trim() || undefined,
-        tanggal_lahir: form.tanggal_lahir || undefined,
+        // Wajib menurut validasi runtime BE (POST /users)
+        tanggal_lahir: form.tanggal_lahir.trim(),
         jenis_kelamin: form.jenis_kelamin || undefined,
         alamat: form.alamat.trim() || undefined,
         nomor_hp: form.nomor_hp.trim() || undefined,
@@ -696,12 +697,18 @@ export default function AddUserPage() {
                     className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                   >
                     <option value="">Pilih Fakultas</option>
-                    {FAKULTAS_OPTIONS.map((fakultas) => (
-                      <option key={fakultas} value={fakultas}>
-                        {fakultas}
+                    {fakultasList.map((fakultas) => (
+                      <option key={fakultas.id} value={String(fakultas.id)}>
+                        {fakultas.nama}
                       </option>
                     ))}
                   </select>
+                  {fakultasList.length === 0 && !masterError && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                      <Loader2 size={11} className="animate-spin" /> Memuat daftar
+                      fakultas...
+                    </p>
+                  )}
                 </div>
 
                 {/* PROGRAM STUDI */}
@@ -718,17 +725,23 @@ export default function AddUserPage() {
                     className="mt-2 w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="">
-                      {form.fakultas
-                        ? "Pilih Program Studi"
-                        : "Pilih Fakultas terlebih dahulu"}
+                      {!form.fakultas
+                        ? "Pilih Fakultas terlebih dahulu"
+                        : prodiLoading
+                          ? "Memuat program studi..."
+                          : "Pilih Program Studi"}
                     </option>
-                    {availableProdi.map((prodi) => (
-                      <option key={prodi} value={prodi}>
-                        {prodi}
+                    {prodiList.map((prodi) => (
+                      <option key={prodi.id} value={String(prodi.id)}>
+                        {prodi.nama}
                       </option>
                     ))}
                   </select>
                 </div>
+
+                {masterError && (
+                  <p className="text-xs text-red-600">{masterError}</p>
+                )}
 
                 {/* TEMPAT LAHIR */}
                 <div>
@@ -748,7 +761,8 @@ export default function AddUserPage() {
                 {/* TANGGAL LAHIR */}
                 <div>
                   <label className="text-sm font-medium text-gray-700">
-                    Tanggal Lahir
+                    Tanggal Lahir{" "}
+                    <span className="text-red-500">(Wajib)</span>
                   </label>
 
                   <Input

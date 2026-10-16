@@ -52,6 +52,16 @@ export default function UserRow({ user, onView, onEdit, onDelete }: Props) {
       {/* EMAIL */}
       <td className="px-6 py-4 text-gray-600 text-sm">{user.email}</td>
 
+      {/* FAKULTAS — respons /users berbentuk { id, nama } | null */}
+      <td className="px-6 py-4 text-gray-600 text-sm">
+        {user.fakultas?.nama ?? <span className="text-gray-400">-</span>}
+      </td>
+
+      {/* PROGRAM STUDI */}
+      <td className="px-6 py-4 text-gray-600 text-sm">
+        {user.program_studi?.nama ?? <span className="text-gray-400">-</span>}
+      </td>
+
       {/* ROLE */}
       <td className="px-6 py-4">
         <span
