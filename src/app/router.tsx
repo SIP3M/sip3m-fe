@@ -47,6 +47,7 @@ import ReviewDetailPage from "@/features/dashboard/ReviewDetailPage";
 import ReviewListReviewer from "@/features/reviews/ReviewListReviewer";
 import HistoryReview from "@/features/reviews/HistoryReview";
 import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
+import ReviewNoteDetailPage from "@/features/reviews/ReviewNoteDetailPage";
 import EditProposalDosen from "@/features/proposals/EditProposalDosen";
 import SystemSettings from "@/features/settings/SystemSettings";
 import AuthSessionsPage from "@/features/settings/AuthSessionsPage";
@@ -353,6 +354,10 @@ export const router = createBrowserRouter([
       {
         path: "proposals/:id/edit",
         element: <EditProposalDosen />, // Ganti dengan nama komponen form edit kamu
+      },
+      {
+        path: "proposals/:id/review-detail",
+        element: <ReviewNoteDetailPage />,
       },
       {
         path: "project-dosen",

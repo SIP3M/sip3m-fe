@@ -5,8 +5,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronLeft,
+  ChevronRight,
   Clock,
   Download,
+  Eye,
   FileText,
   Info,
   ListChecks,
@@ -100,6 +102,74 @@ const formatDateISO = (value?: string | null) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toISOString().split("T")[0];
+};
+
+const formatTimelineDate = (value?: string | null) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+// ─── Kartu dokumen proposal ──────────────────────────────────────────────────
+const DocumentCard = ({
+  ext,
+  title,
+  size,
+  href,
+}: {
+  ext: string;
+  title: string;
+  size: string;
+  href: string;
+}) => {
+  const isPdf = ext.toLowerCase() === "pdf";
+  const isXlsx = ["xlsx", "xls"].includes(ext.toLowerCase());
+  const badgeClass = isPdf
+    ? "bg-red-50 text-red-600 border-red-200"
+    : isXlsx
+    ? "bg-green-50 text-green-600 border-green-200"
+    : "bg-gray-50 text-gray-600 border-gray-200";
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className={`flex h-8 w-8 items-center justify-center rounded-full border ${badgeClass}`}>
+            <FileText size={14} />
+          </span>
+          <div>
+            <p className="text-sm font-medium text-gray-800">{title}</p>
+            <p className="text-[11px] text-gray-500">{size}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-gray-400">Preview</span>
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            title="Preview dokumen"
+          >
+            <Eye size={14} />
+          </a>
+          <a
+            href={href}
+            download
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            title="Unduh dokumen"
+          >
+            <Download size={14} />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // ─── Review notes parser (mirrors ReviewDetailPage serialize/deserialize) ───────
@@ -247,6 +317,45 @@ export default function ProposalDetail() {
     if (!proposal?.submitted_at) return "-";
     return new Date(proposal.submitted_at).getFullYear();
   }, [proposal?.submitted_at]);
+
+  const timelineItems = useMemo(() => {
+    if (!proposal) return [];
+    const items: Array<{
+      date: string;
+      title: string;
+      desc: string;
+      dotClass: string;
+    }> = [];
+
+    items.push({
+      date: formatTimelineDate(proposal.created_at),
+      title: "Proposal Diajukan",
+      desc: "Disimpan sebagai draft oleh dosen pengusul",
+      dotClass: "border-gray-300 bg-gray-200",
+    });
+
+    if (proposal.submitted_at) {
+      items.push({
+        date: formatTimelineDate(proposal.submitted_at),
+        title: "Proposal Diajukan ke LPPM",
+        desc: "Dikirim ke LPPM untuk verifikasi administratif",
+        dotClass: "border-blue-500 bg-blue-100",
+      });
+    }
+
+    if (latestReview) {
+      items.push({
+        date: formatTimelineDate(latestReview.created_at),
+        title: "Proses Review Dimulai",
+        desc: `Direview oleh Reviewer ${
+          latestReview.reviewer?.name || "yang ditunjuk LPPM"
+        }`,
+        dotClass: "border-yellow-500 bg-yellow-100",
+      });
+    }
+
+    return items;
+  }, [proposal, latestReview, formatTimelineDate]);
 
   const handleAutoAssign = async () => {
     if (!isAdmin) return;
@@ -711,34 +820,41 @@ export default function ProposalDetail() {
           )}
 
           {activeTab === "dokumen" && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <a
-                href={proposal.proposal_file_path || "#"}
-                target="_blank"
-                rel="noreferrer"
-                className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
-                  proposal.proposal_file_path
-                    ? "border-gray-300 text-gray-700 hover:bg-gray-50"
-                    : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
-                }`}
-              >
-                <FileText size={16} />
-                Lihat/Download Proposal
-              </a>
-
-              <a
-                href={proposal.rab_file_path || "#"}
-                target="_blank"
-                rel="noreferrer"
-                className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
-                  proposal.rab_file_path
-                    ? "border-gray-300 text-gray-700 hover:bg-gray-50"
-                    : "pointer-events-none border-gray-200 bg-gray-100 text-gray-400"
-                }`}
-              >
-                <FileText size={16} />
-                Lihat/Download RAB
-              </a>
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500">
+                Dokumen yang diunggah saat pengajuan proposal.
+              </p>
+              <div className="space-y-3">
+                {proposal.proposal_file_path && (
+                  <DocumentCard
+                    key="proposal"
+                    ext="pdf"
+                    title={
+                      proposal.file_info?.proposal_file?.current_name ||
+                      "Proposal Lengkap"
+                    }
+                    size="-"
+                    href={proposal.proposal_file_path}
+                  />
+                )}
+                {proposal.rab_file_path && (
+                  <DocumentCard
+                    key="rab"
+                    ext="xlsx"
+                    title={
+                      proposal.file_info?.rab_file?.current_name ||
+                      "Rencana Anggaran Biaya (RAB)"
+                    }
+                    size="-"
+                    href={proposal.rab_file_path}
+                  />
+                )}
+                {!proposal.proposal_file_path && !proposal.rab_file_path && (
+                  <p className="text-xs text-gray-400">
+                    Tidak ada dokumen yang diunggah.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -762,12 +878,25 @@ export default function ProposalDetail() {
 
                   return (
                     <div className="space-y-3">
-                      <p className="text-xs text-gray-500">
-                        <span className="font-medium text-gray-400">Reviewer:</span>{" "}
-                        <span className="font-semibold text-gray-700">
-                          {latestReview.reviewer?.name || "Tim Reviewer"}
-                        </span>
-                      </p>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-gray-500">
+                          <span className="font-medium text-gray-400">Reviewer:</span>{" "}
+                          <span className="font-semibold text-gray-700">
+                            {latestReview.reviewer?.name || "Tim Reviewer"}
+                          </span>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              `/dosen-dashboard/proposals/${proposal.id}/review-detail`,
+                            )
+                          }
+                          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white hover:bg-red-700 transition-colors"
+                        >
+                          Lihat Detail Catatan <ChevronRight size={14} />
+                        </button>
+                      </div>
 
                       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {/* ── Left column ── */}
@@ -898,27 +1027,41 @@ export default function ProposalDetail() {
           )}
 
           {activeTab === "riwayat" && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    statusBadgeMap[statusKey] || "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {getStatusLabel(proposal.status)}
-                </span>
-                <p className="text-sm text-gray-600">
-                  Status proposal saat ini
-                  {proposal.submitted_at &&
-                    ` — diperbarui pada ${new Date(
-                      proposal.submitted_at,
-                    ).toLocaleString("id-ID")}`}
-                  .
-                </p>
-              </div>
-              <p className="text-xs text-gray-400">
-                Riwayat perubahan status lengkap belum tersedia pada sistem ini.
+            <div className="space-y-6">
+              <p className="text-xs text-gray-500">
+                Riwayat perubahan status proposal secara kronologis.
               </p>
+
+              {/* Vertical timeline */}
+              <div className="relative space-y-6">
+                <div className="absolute left-2.5 top-0 bottom-0 w-0.5 bg-gray-200" />
+
+                {timelineItems.map((item, idx) => (
+                  <div key={idx} className="relative pl-10">
+                    {/* Timeline dot */}
+                    <div className="absolute left-0 top-2">
+                      <div
+                        className={`w-3 h-3 rounded-full border-2 ${
+                          item.dotClass
+                        }`}
+                      />
+                    </div>
+
+                    {/* Timeline content */}
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-gray-800">
+                        {item.date}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
