@@ -7,6 +7,15 @@ import {
   AlertCircle,
   Clock,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 import { getKkmDashboard } from "@/features/kkm/kkmDashboard.api";
 import type {
@@ -17,16 +26,8 @@ import { getKkmPeriods } from "@/features/kkm/kkmPeriod.api";
 import type { KkmPeriod } from "@/features/kkm/kkmPeriod.types";
 import { getFakultas, getProdiByFakultas } from "@/features/auth/auth.api";
 
-/** Warna bar (ikuti desain asli) — index-based, "Lainnya" selalu abu-abu */
-const BAR_COLORS = [
-  "bg-blue-500",
-  "bg-green-500",
-  "bg-purple-500",
-  "bg-orange-500",
-  "bg-pink-500",
-  "bg-indigo-500",
-  "bg-teal-500",
-];
+/** Warna ikon kartu (pastel, ikuti desain) */
+const CARD_ICON_BG = "p-2.5 rounded-xl";
 
 /** Warna donut status kelompok (definisi isi-vs-kuota, bukan lifecycle) */
 const STATUS_DONUT: Record<string, { stroke: string; dot: string }> = {
@@ -42,6 +43,10 @@ const STATUS_DONUT_FALLBACK = [
 
 const donutStyle = (status: string, index: number) =>
   STATUS_DONUT[status] || STATUS_DONUT_FALLBACK[index % 3];
+
+/** "Fakultas Teknik" -> "Teknik" agar label sumbu-X muat */
+const shortFakultasLabel = (name: string) =>
+  name.replace(/^Fakultas\s+/i, "");
 
 export default function DashboardAdminKKM() {
   const [data, setData] = useState<KkmDashboardData | null>(null);
@@ -147,42 +152,42 @@ export default function DashboardAdminKKM() {
       value: summary?.total_peserta ?? 0,
       subtitle: "Mahasiswa",
       icon: Users,
-      color: "bg-blue-500",
+      iconClass: `${CARD_ICON_BG} bg-rose-50 text-rose-500`,
     },
     {
       title: "Total Kelompok",
       value: summary?.total_kelompok ?? 0,
       subtitle: "Kelompok",
       icon: UserCheck,
-      color: "bg-green-500",
+      iconClass: `${CARD_ICON_BG} bg-blue-50 text-blue-500`,
     },
     {
       title: "Total Desa Penempatan",
       value: summary?.total_desa ?? 0,
       subtitle: "Desa",
       icon: MapPin,
-      color: "bg-purple-500",
+      iconClass: `${CARD_ICON_BG} bg-green-50 text-green-500`,
     },
     {
       title: "Total DPL",
       value: summary?.total_dpl ?? 0,
       subtitle: "Dosen",
       icon: UserPlus,
-      color: "bg-orange-500",
+      iconClass: `${CARD_ICON_BG} bg-purple-50 text-purple-500`,
     },
     {
       title: "Belum Mendapat Kelompok",
       value: summary?.belum_dapat_kelompok ?? 0,
       subtitle: "Mahasiswa",
       icon: AlertCircle,
-      color: "bg-red-500",
+      iconClass: `${CARD_ICON_BG} bg-amber-50 text-amber-500`,
     },
     {
       title: "Menunggu Verifikasi",
       value: summary?.menunggu_verifikasi ?? 0,
       subtitle: "Peserta",
       icon: Clock,
-      color: "bg-yellow-500",
+      iconClass: `${CARD_ICON_BG} bg-red-50 text-red-500`,
     },
   ];
 
@@ -214,8 +219,6 @@ export default function DashboardAdminKKM() {
     return rows;
   }, [data, prodiKeFakultas]);
 
-  const maxFakultas = Math.max(1, ...fakultasBars.map((row) => row.count));
-
   // Donut status kelompok — selalu 3 entri dari BE (jumlah boleh 0)
   const statusData = data?.status_kelompok ?? [];
   const totalStatus = statusData.reduce((sum, s) => sum + s.jumlah, 0);
@@ -229,9 +232,8 @@ export default function DashboardAdminKKM() {
     .slice(10)
     .reduce((sum, d) => sum + d.jumlah, 0);
   const maxDesa = Math.max(1, ...desaRows.map((row) => row.jumlah));
-  const desaTicks = [0, 1, 2, 3, 4].map((i) =>
-    Math.round((maxDesa * i) / 4),
-  );
+  const desaStep = Math.max(1, Math.ceil(maxDesa / 4));
+  const desaTicks = [0, 1, 2, 3, 4].map((i) => desaStep * i);
 
   const formatNumber = (value: number) => value.toLocaleString("id-ID");
 
@@ -241,14 +243,14 @@ export default function DashboardAdminKKM() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Dashboard KKM</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Monitoring pelaksanaan Kuliah Kerja Mahasiswa (KKM)
+          </p>
           {data?.periode ? (
-            <p className="text-sm font-medium text-gray-700 mt-1">
+            <p className="text-sm font-medium text-gray-700 mt-1.5">
               {data.periode.nama_periode} · T.A. {data.periode.tahun_akademik}
             </p>
           ) : null}
-          <p className="text-gray-500 text-sm">
-            Monitoring pelaksanaan Kuliah Kerja Mahasiswa (KKM)
-          </p>
         </div>
 
         {/* Ganti periode → kirim ulang ?periode_id=<id> */}
@@ -287,20 +289,20 @@ export default function DashboardAdminKKM() {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-100" />
+              <div key={i} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
             ))}
           </div>
           <div className="grid grid-cols-3 gap-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-100" />
+              <div key={i} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
             ))}
           </div>
           <div className="grid grid-cols-2 gap-6">
             {[0, 1].map((i) => (
-              <div key={i} className="h-64 animate-pulse rounded-xl bg-gray-100" />
+              <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-100" />
             ))}
           </div>
-          <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
+          <div className="h-72 animate-pulse rounded-2xl bg-gray-100" />
         </div>
       ) : (
         <>
@@ -311,22 +313,20 @@ export default function DashboardAdminKKM() {
               return (
                 <div
                   key={stat.title}
-                  className="bg-white rounded-xl shadow-sm p-4 border border-gray-100"
+                  className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-bold text-gray-800 mt-1">
-                        {formatNumber(stat.value)}
-                      </p>
-                      <p className="text-xs text-gray-400">{stat.subtitle}</p>
-                    </div>
-                    <div className={`${stat.color} p-2.5 rounded-lg`}>
-                      <Icon size={18} className="text-white" />
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-400 font-medium">
+                      {stat.title}
+                    </p>
+                    <div className={stat.iconClass}>
+                      <Icon size={18} />
                     </div>
                   </div>
+                  <p className="text-3xl font-bold text-gray-800 mt-3">
+                    {formatNumber(stat.value)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
                 </div>
               );
             })}
@@ -338,22 +338,20 @@ export default function DashboardAdminKKM() {
               return (
                 <div
                   key={stat.title}
-                  className="bg-white rounded-xl shadow-sm p-4 border border-gray-100"
+                  className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-bold text-gray-800 mt-1">
-                        {formatNumber(stat.value)}
-                      </p>
-                      <p className="text-xs text-gray-400">{stat.subtitle}</p>
-                    </div>
-                    <div className={`${stat.color} p-2.5 rounded-lg`}>
-                      <Icon size={18} className="text-white" />
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs text-gray-400 font-medium">
+                      {stat.title}
+                    </p>
+                    <div className={stat.iconClass}>
+                      <Icon size={18} />
                     </div>
                   </div>
+                  <p className="text-3xl font-bold text-gray-800 mt-3">
+                    {formatNumber(stat.value)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
                 </div>
               );
             })}
@@ -361,120 +359,136 @@ export default function DashboardAdminKKM() {
 
           {/* Charts Row - 2 columns (Fakultas & Status) */}
           <div className="grid grid-cols-2 gap-6 mb-6">
-            {/* Peserta Berdasarkan Fakultas (agregasi dari peserta_per_prodi) */}
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            {/* Bar vertikal: Peserta per Fakultas (agregasi dari peserta_per_prodi) */}
+            <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
               <h3 className="text-sm font-semibold text-gray-800 mb-4">
                 Peserta Berdasarkan Fakultas
               </h3>
               {fakultasBars.length === 0 ? (
-                <p className="text-xs text-gray-400">Belum ada data peserta.</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {fakultasBars.map((row, index) => {
-                    const percentage = (row.count / maxFakultas) * 100;
-                    const color =
-                      row.name === "Lainnya"
-                        ? "bg-gray-500"
-                        : BAR_COLORS[index % BAR_COLORS.length];
-                    return (
-                      <div key={row.name}>
-                        <div className="flex justify-between text-xs text-gray-600 mb-0.5">
-                          <span>{row.name}</span>
-                          <span>{formatNumber(row.count)} Mahasiswa</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5">
-                          <div
-                            className={`${color} h-1.5 rounded-full transition-all duration-700`}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex h-[260px] items-center justify-center text-xs text-gray-400">
+                  Belum ada data peserta.
                 </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={fakultasBars}
+                    margin={{ top: 8, right: 8, left: -12, bottom: 4 }}
+                    barCategoryGap="28%"
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#F1F5F9"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10, fill: "#6B7280" }}
+                      tickFormatter={shortFakultasLabel}
+                      angle={-22}
+                      textAnchor="end"
+                      height={64}
+                      interval={0}
+                      axisLine={{ stroke: "#E5E7EB" }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "rgba(0,0,0,0.03)" }}
+                      formatter={(value) => [value, "Mahasiswa"]}
+                      labelFormatter={(label) => label}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="#EF4444"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={48}
+                      isAnimationActive
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
 
-            {/* Status Kelompok KKM — derive isi-vs-kuota, selalu 3 entri */}
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+            {/* Donut status kelompok — derive isi-vs-kuota, selalu 3 entri */}
+            <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex flex-col">
               <h3 className="text-sm font-semibold text-gray-800 mb-4">
                 Status Kelompok KKM
               </h3>
-              <div className="flex items-center gap-6">
-                {/* Donut Chart */}
-                <div className="relative w-28 h-28 flex-shrink-0">
-                  <svg viewBox="0 0 100 100" className="w-28 h-28">
-                    {/* lingkaran dasar di bawah, agar segmen warna tidak tertimpa */}
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      fill="none"
-                      stroke="#F3F4F6"
-                      strokeWidth="12"
-                    />
-                    {totalStatus > 0 &&
-                      statusData.map((status, index) => {
-                        const percentage = (status.jumlah / totalStatus) * 100;
-                        const offset =
-                          circumference * (1 - percentage / 100) + cumulativeOffset;
-                        cumulativeOffset +=
-                          circumference * (percentage / 100);
-                        return (
-                          <circle
-                            key={status.status}
-                            cx="50"
-                            cy="50"
-                            r="40"
-                            fill="none"
-                            stroke={donutStyle(status.status, index).stroke}
-                            strokeWidth="12"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={offset}
-                            className="origin-center -rotate-90 transition-all duration-700"
-                          />
-                        );
-                      })}
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <span className="text-lg font-bold text-gray-800">
-                        {formatNumber(totalStatus)}
-                      </span>
-                      <p className="text-[8px] text-gray-400 -mt-0.5">Total</p>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Legend */}
-                <div className="flex-1 space-y-2">
-                  {statusData.map((status, index) => (
-                    <div
-                      key={status.status}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <div
+              {statusData.length === 0 ? (
+                <div className="flex h-[260px] items-center justify-center text-xs text-gray-400">
+                  Belum ada data kelompok.
+                </div>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center gap-5 pb-2">
+                  <div className="relative w-40 h-40">
+                    <svg viewBox="0 0 100 100" className="w-40 h-40">
+                      {/* lingkaran dasar di bawah, agar segmen warna tidak tertimpa */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        fill="none"
+                        stroke="#F3F4F6"
+                        strokeWidth="14"
+                      />
+                      {totalStatus > 0 &&
+                        statusData.map((status, index) => {
+                          const percentage = (status.jumlah / totalStatus) * 100;
+                          const offset =
+                            circumference * (1 - percentage / 100) +
+                            cumulativeOffset;
+                          cumulativeOffset +=
+                            circumference * (percentage / 100);
+                          return (
+                            <circle
+                              key={status.status}
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              fill="none"
+                              stroke={donutStyle(status.status, index).stroke}
+                              strokeWidth="14"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={offset}
+                              className="origin-center -rotate-90 transition-all duration-700"
+                            />
+                          );
+                        })}
+                    </svg>
+                  </div>
+
+                  {/* Legend horizontal di bawah donut */}
+                  <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                    {statusData.map((status, index) => (
+                      <span
+                        key={status.status}
+                        className="flex items-center gap-1.5 text-xs text-gray-700"
+                      >
+                        <span
                           className={`w-2.5 h-2.5 rounded-full ${
                             donutStyle(status.status, index).dot
                           }`}
                         />
-                        <span className="text-xs text-gray-600">
-                          {status.label}
+                        {status.label}
+                        <span className="font-semibold text-gray-800">
+                          ({formatNumber(status.jumlah)})
                         </span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-800">
-                        {formatNumber(status.jumlah)}
                       </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
           {/* Distribusi Mahasiswa per Desa - Full width at bottom */}
-          <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
             <h3 className="text-sm font-semibold text-gray-800 mb-4">
               Distribusi Mahasiswa per Desa
             </h3>
@@ -482,24 +496,39 @@ export default function DashboardAdminKKM() {
               <p className="text-xs text-gray-400">Belum ada data desa.</p>
             ) : (
               <>
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {desaRows.map((desa) => {
                     const percentage = (desa.jumlah / maxDesa) * 100;
                     return (
-                      <div key={desa.nama}>
-                        <div className="flex justify-between text-xs text-gray-600 mb-0.5">
-                          <span>{desa.nama}</span>
-                          <span>{formatNumber(desa.jumlah)} Mahasiswa</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        key={desa.nama}
+                        className="flex items-center gap-3"
+                      >
+                        <span
+                          className="w-36 shrink-0 truncate text-right text-[11px] text-gray-600"
+                          title={desa.nama}
+                        >
+                          {desa.nama}
+                        </span>
+                        <div className="flex-1">
                           <div
-                            className="bg-indigo-500 h-1.5 rounded-full transition-all duration-700"
+                            className="h-4 rounded-sm bg-blue-500 transition-all duration-700"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Axis bawah, sejajar area bar */}
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="w-36 shrink-0" />
+                  <div className="flex flex-1 justify-between text-[10px] text-gray-400">
+                    {desaTicks.map((tick) => (
+                      <span key={tick}>{tick}</span>
+                    ))}
+                  </div>
                 </div>
 
                 {sisaDesa > 0 && (
@@ -508,10 +537,6 @@ export default function DashboardAdminKKM() {
                     mahasiswa)
                   </p>
                 )}
-
-                <div className="mt-3 text-[10px] text-gray-400 text-right">
-                  {desaTicks.join(" | ")}
-                </div>
               </>
             )}
           </div>
