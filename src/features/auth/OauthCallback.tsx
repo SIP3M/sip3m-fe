@@ -8,6 +8,7 @@ const getDashboardPathByRole = (role?: string) => {
   if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
   if (role === APP_ROLES.STAFF_LPPM) return "/staff-lppm/staff-dashboard";
   if (role === APP_ROLES.DOSEN) return "/dosen-dashboard";
+  if (role === APP_ROLES.MAHASISWA) return "/mahasiswa-dashboard";
   if (role === APP_ROLES.REVIEWER) return "/reviewer-dashboard";
   if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
     return "/reviewer-eksternal-dashboard";

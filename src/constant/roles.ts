@@ -4,6 +4,7 @@ export const APP_ROLES = {
   DOSEN: "DOSEN",
   REVIEWER: "REVIEWER",
   REVIEWER_EKSTERNAL: "REVIEWER_EKSTERNAL",
+  MAHASISWA: "MAHASISWA",
 } as const;
 
 export type AppRole = keyof typeof APP_ROLES;

@@ -14,6 +14,7 @@ import StaffLayout from "@/components/layout/StaffLayout";
 import DosenLayout from "@/components/layout/DosenLayout";
 import ReviewerLayout from "@/components/layout/ReviewerLayout";
 import EksternalLayout from "@/components/layout/EksternalLayout";
+import MahasiswaLayout from "@/components/layout/MahasiswaLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
 import DashboardAdminKKM from "@/features/dashboard/DashboardAdminKKM";
@@ -67,6 +68,7 @@ import EditKelompokKKM from "@/features/kkm/EditKelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 import PengumumanKKMDosen from "@/features/kkm/PengumumanKKMDosen";
+import PilihSkemaKKM from "@/features/kkm/PilihSkemaKKM";
 
 import DashboardDosenKKM from "@/features/dashboard/DashboardDosenKKM";
 import KelompokBimbingan from "@/features/kkm/KelompokBimbingan";
@@ -431,6 +433,32 @@ export const router = createBrowserRouter([
         path: "reviews/:id",
         element: <ReviewDetailPage />,
       },
+    ],
+  },
+
+  // =========================
+  // MAHASISWA — PORTAL KKM
+  // =========================
+  {
+    path: "mahasiswa-dashboard",
+    element: (
+      // Admin/staff juga boleh masuk untuk preview (sesuai akses GET /kkm/skema)
+      <ProtectedRoute
+        roles={[
+          APP_ROLES.MAHASISWA,
+          APP_ROLES.ADMIN_LPPM,
+          APP_ROLES.STAFF_LPPM,
+        ]}
+      >
+        <MahasiswaLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <PilihSkemaKKM />,
+      },
+      // Langkah 2-4 (Formulir & Lokasi, Unggah Berkas, Verifikasi) menyusul
     ],
   },
 
