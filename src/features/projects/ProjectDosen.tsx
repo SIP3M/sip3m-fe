@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, FormEvent, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
   Check,
   Upload,
@@ -397,24 +398,53 @@ export default function ProjectDosen() {
         {/* PROYEK SELESAI — card kecil + arsip (hanya memakai field yang sudah tersedia) */}
         {completedProjects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {completedProjects.map((project) => (
-              <div
-                key={project.id}
-                className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5"
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="text-base font-bold text-gray-900 leading-tight">
-                    {project.title}
-                  </h3>
-                  <span className="shrink-0 text-[11px] px-3 py-1 rounded-full font-semibold bg-green-100 text-green-700">
-                    {getStatusLabel(project.status)}
-                  </span>
+            {completedProjects.map((project) => {
+              // Card proposal → arahkan ke halaman detail yang sama dengan
+              // tombol "Lihat Detail" di menu "Proposal Saya"
+              const proposalId = project.proposal_id || project.proposal?.id;
+
+              const cardContent = (
+                <>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="text-base font-bold text-gray-900 leading-tight transition-colors group-hover:text-red-600">
+                      {project.title}
+                    </h3>
+                    <span className="shrink-0 text-[11px] px-3 py-1 rounded-full font-semibold bg-green-100 text-green-700">
+                      {getStatusLabel(project.status)}
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-mono text-gray-400">
+                    {project.project_code}
+                  </p>
+
+                  {proposalId ? (
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <span className="inline-flex items-center gap-2 text-sm font-medium text-red-600 transition-colors group-hover:text-red-700">
+                        <FileText className="h-4 w-4" /> Lihat Detail
+                      </span>
+                    </div>
+                  ) : null}
+                </>
+              );
+
+              const cardClass =
+                "group bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 flex flex-col transition-all";
+
+              return proposalId ? (
+                <Link
+                  key={project.id}
+                  to={`/dosen-dashboard/proposals/${proposalId}`}
+                  className={`${cardClass} cursor-pointer hover:border-red-200 hover:shadow-md`}
+                >
+                  {cardContent}
+                </Link>
+              ) : (
+                <div key={project.id} className={cardClass}>
+                  {cardContent}
                 </div>
-                <p className="text-xs font-mono text-gray-400">
-                  {project.project_code}
-                </p>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Placeholder arsip — UI only, belum ada route/handler */}
             <div className="border-2 border-dashed border-gray-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-2 min-h-[110px]">

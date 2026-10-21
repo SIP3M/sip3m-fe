@@ -5,10 +5,19 @@ interface Props {
   users: User[];
   onView: (user: User) => void;
   onEdit: (user: User) => void;
+  /** Hapus akun secara permanen */
   onDelete: (user: User) => void;
+  /** Id user yang sedang dihapus (menampilkan spinner) */
+  deletingId?: number | null;
 }
 
-export default function UsersTable({ users, onView, onEdit, onDelete }: Props) {
+export default function UsersTable({
+  users,
+  onView,
+  onEdit,
+  onDelete,
+  deletingId,
+}: Props) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto w-full">
@@ -33,6 +42,7 @@ export default function UsersTable({ users, onView, onEdit, onDelete }: Props) {
                 onView={onView}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                deletingId={deletingId}
               />
             ))}
           </tbody>

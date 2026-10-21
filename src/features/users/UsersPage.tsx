@@ -3,17 +3,26 @@ import UsersTable from "./UsersTable";
 import { User, UserStatusFilter } from "./users.types";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { getUsers, updateUserStatus } from "./Users.api";
+import { deleteUser, getUsers } from "./Users.api";
 import { AppRole, APP_ROLES } from "@/constant/roles";
 import Pagination from "@/components/common/Pagination";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import { useAuthStore } from "@/features/auth/auth.store";
 
 const ITEMS_PER_PAGE = 5;
 
 export default function UsersPage() {
   const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Id user yang sedang dihapus — untuk spinner di baris tabel
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // User yang akan dihapus (untuk popup konfirmasi)
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,28 +139,47 @@ export default function UsersPage() {
     navigate(`/users/${user.id}/edit`);
   };
 
-  const handleDeleteUser = async (user: User) => {
-    const nextStatus = !user.is_active;
-    const actionLabel = nextStatus ? "mengaktifkan" : "menonaktifkan";
+  /**
+   * Hapus akun secara permanen (hard delete).
+   * Memakai DELETE /users/{id}.
+   */
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
 
-    const confirmed = window.confirm(
-      `Yakin ingin ${actionLabel} user ${user.name}?`,
-    );
+    const user = userToDelete;
 
-    if (!confirmed) return;
+    if (currentUser?.id === user.id) {
+      setUserToDelete(null);
+      setError("Anda tidak dapat menghapus akun Anda sendiri.");
+      return;
+    }
+
+    setDeletingId(user.id);
+    setError(null);
 
     try {
-      await updateUserStatus(user.id, { is_active: nextStatus });
-      await fetchUsers(currentPage);
+      await deleteUser(user.id);
+
+      // Kalau baris yang dihapus adalah baris terakhir di halaman ini → mundur 1 halaman
+      if (users.length === 1 && currentPage > 1) {
+        await fetchUsers(currentPage - 1);
+      } else {
+        await fetchUsers(currentPage);
+      }
+
+      setUserToDelete(null);
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
         ? err.response?.data?.message ||
           err.message ||
-          "Gagal memperbarui status user"
+          "Gagal menghapus user"
         : err instanceof Error
           ? err.message
-          : "Gagal memperbarui status user";
+          : "Gagal menghapus user";
       setError(message);
+      setUserToDelete(null);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -247,7 +275,8 @@ export default function UsersPage() {
             users={users}
             onView={handleViewUser}
             onEdit={handleEditUser}
-            onDelete={handleDeleteUser}
+            onDelete={(user) => setUserToDelete(user)}
+            deletingId={deletingId}
           />
 
           {/* Pagination Footer */}
@@ -287,6 +316,32 @@ export default function UsersPage() {
           )}
         </div>
       )}
+
+      {/* POPUP KONFIRMASI HAPUS AKUN */}
+      <ConfirmDialog
+        open={Boolean(userToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setUserToDelete(null);
+        }}
+        title="Hapus Akun?"
+        description={
+          <>
+            Anda akan menghapus akun{" "}
+            <span className="font-semibold text-gray-700">
+              {userToDelete?.name}
+            </span>{" "}
+            ({userToDelete?.email}). Akun dan seluruh data terkait akan dihapus
+            permanen.
+            <span className="mt-2 block font-semibold text-red-600">
+              Tindakan ini tidak dapat dibatalkan.
+            </span>
+          </>
+        }
+        confirmLabel="Hapus Akun"
+        cancelLabel="Batal"
+        isLoading={deletingId !== null}
+        onConfirm={handleDeleteUser}
+      />
     </div>
   );
 }

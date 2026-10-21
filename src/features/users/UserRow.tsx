@@ -1,10 +1,11 @@
-import { Pencil, Trash2, Eye } from "lucide-react";
+import { Loader2, Pencil, Trash2, Eye } from "lucide-react";
 import { User } from "./users.types";
 
 const roleStyle: Record<string, string> = {
   ADMIN_LPPM: "bg-purple-100 text-purple-600",
   STAFF_LPPM: "bg-blue-100 text-blue-600",
   DOSEN: "bg-green-100 text-green-600",
+  MAHASISWA: "bg-cyan-100 text-cyan-700",
   REVIEWER: "bg-yellow-100 text-yellow-700",
   REVIEWER_EKSTERNAL: "bg-gray-100 text-gray-600",
 };
@@ -18,13 +19,24 @@ interface Props {
   user: User;
   onView: (user: User) => void;
   onEdit: (user: User) => void;
+  /** Hapus akun secara permanen */
   onDelete: (user: User) => void;
+  /** Id user yang sedang dihapus (menampilkan spinner) */
+  deletingId?: number | null;
 }
 
-export default function UserRow({ user, onView, onEdit, onDelete }: Props) {
+export default function UserRow({
+  user,
+  onView,
+  onEdit,
+  onDelete,
+  deletingId,
+}: Props) {
   const statusLabel = user.is_active ? "Active" : "Inactive";
   const statusKey = user.is_active ? "active" : "inactive";
   const displayRole = user.roles.roles || "UNKNOWN";
+
+  const isDeleting = deletingId === user.id;
 
   return (
     <tr className="bg-white shadow-sm hover:shadow-md transition duration-200">
@@ -81,27 +93,42 @@ export default function UserRow({ user, onView, onEdit, onDelete }: Props) {
       </td>
 
       {/* ACTION */}
-      <td className="px-6 py-4 flex gap-3">
+      <td className="px-6 py-4 flex gap-3 items-center">
         <button
           type="button"
           onClick={() => onView(user)}
-          className="text-gray-500 hover:text-emerald-600 transition"
+          className="text-gray-500 hover:text-emerald-600 transition cursor-pointer"
           aria-label={`Lihat detail ${user.name}`}
+          title="Lihat detail"
         >
           <Eye size={18} />
         </button>
 
-        <Pencil
-          size={18}
-          className="text-gray-500 hover:text-blue-600 cursor-pointer transition"
+        <button
+          type="button"
           onClick={() => onEdit(user)}
-        />
+          className="text-gray-500 hover:text-blue-600 transition cursor-pointer"
+          aria-label={`Edit ${user.name}`}
+          title="Edit"
+        >
+          <Pencil size={18} />
+        </button>
 
-        <Trash2
-          size={18}
-          className="text-gray-500 hover:text-red-600 cursor-pointer transition"
+        {/* HAPUS AKUN — permanen */}
+        <button
+          type="button"
           onClick={() => onDelete(user)}
-        />
+          disabled={isDeleting}
+          className="text-gray-500 hover:text-red-600 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label={`Hapus akun ${user.name}`}
+          title="Hapus akun"
+        >
+          {isDeleting ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <Trash2 size={18} />
+          )}
+        </button>
       </td>
     </tr>
   );

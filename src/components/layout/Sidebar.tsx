@@ -30,13 +30,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";
 
+
 type Tab = "penelitian" | "kkm";
 
 interface MenuItem {
   name: string;
   icon: LucideIcon;
   path: string;
-  // Path lain yang juga dianggap "aktif" untuk menu ini (mis. halaman tambah/detail)
+  // Path lain yang juga dianggap aktif untuk menu ini
   alsoActive?: string[];
 }
 
@@ -49,7 +50,7 @@ interface MenuGroup {
 
 interface ModuleConfig {
   dashboard?: MenuItem;
-  // Awalan URL yang menandakan user sedang berada di modul ini (dipakai menentukan tab aktif)
+  // Awalan URL yang menandakan user sedang berada di modul ini
   prefixes?: string[];
   groups: MenuGroup[];
 }
@@ -58,9 +59,10 @@ interface RoleConfig {
   penelitian: ModuleConfig;
   // Jika kosong, toggle Penelitian/KKM disembunyikan untuk role tersebut
   kkm?: ModuleConfig;
-  // Menu yang tampil di kedua tab (mis. Profil Saya)
+  // Menu yang tampil di kedua tab
   common?: MenuItem[];
 }
+
 
 // =====================================================================
 // KONFIGURASI MENU PER ROLE

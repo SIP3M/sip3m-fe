@@ -12,6 +12,7 @@ import { APP_ROLES } from "@/constant/roles";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
 import DosenLayout from "@/components/layout/DosenLayout";
+import MahasiswaLayout from "@/components/layout/MahasiswaLayout";
 import ReviewerLayout from "@/components/layout/ReviewerLayout";
 import EksternalLayout from "@/components/layout/EksternalLayout";
 
@@ -69,6 +70,7 @@ import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 import PengumumanKKMDosen from "@/features/kkm/PengumumanKKMDosen";
 
 import DashboardDosenKKM from "@/features/dashboard/DashboardDosenKKM";
+import DashboardMahasiswaKKM from "@/features/dashboard/DashboardMahasiswaKKM";
 import KelompokBimbingan from "@/features/kkm/KelompokBimbingan";
 import DetailKelompokBimbingan from "@/features/kkm/DetailKelompokBimbingan";
 import MonitoringKKMDosen from "@/features/kkm/MonitoringKKMDosen";
@@ -77,6 +79,13 @@ import ValidasiLogbookDosen from "@/features/kkm/ValidasiLogbookDosen";
 import DetailValidasiLogbookDosen from "@/features/kkm/DetailValidasiLogbookDosen";
 import LaporanKKMDosen from "@/features/kkm/LaporanKKMDosen";
 import PenilaianMahasiswaDosen from "@/features/kkm/PenilaianMahasiswaDosen";
+
+import KelompokSaya from "@/features/mahasiswa/KelompokSaya";
+import LogbookMahasiswa from "@/features/mahasiswa/LogbookMahasiswa";
+import LaporanMahasiswa from "@/features/mahasiswa/LaporanMahasiswa";
+import NilaiMahasiswa from "@/features/mahasiswa/NilaiMahasiswa";
+import PengumumanMahasiswa from "@/features/mahasiswa/PengumumanMahasiswa";
+import ProfileMahasiswa from "@/features/mahasiswa/ProfileMahasiswa";
 
 export const router = createBrowserRouter([
   {
@@ -374,6 +383,48 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
+      },
+    ],
+  },
+
+  // =========================
+  // MAHASISWA
+  // =========================
+  {
+    path: "mahasiswa-dashboard",
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.MAHASISWA]}>
+        <MahasiswaLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <DashboardMahasiswaKKM />,
+      },
+      {
+        path: "kelompok",
+        element: <KelompokSaya />,
+      },
+      {
+        path: "logbook",
+        element: <LogbookMahasiswa />,
+      },
+      {
+        path: "laporan",
+        element: <LaporanMahasiswa />,
+      },
+      {
+        path: "nilai",
+        element: <NilaiMahasiswa />,
+      },
+      {
+        path: "pengumuman",
+        element: <PengumumanMahasiswa />,
+      },
+      {
+        path: "profile",
+        element: <ProfileMahasiswa />,
       },
     ],
   },
