@@ -11,15 +11,26 @@ import {
   BookOpen,
   Star,
   Megaphone,
+  Lock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
+import {
+  DPL_DENIED_NOTICE,
+  useKkmDplStore,
+} from "@/features/kkm/kkmDpl.store";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
+  const isDplAktif = useKkmDplStore((state) => state.isDplAktif);
+  const setNotice = useKkmDplStore((state) => state.setNotice);
+
+  // Dosen non-DPL tidak boleh membuka modul KKM (status masih null = belum tahu,
+  // akses sementara dibiarkan sampai cek status selesai).
+  const isKkmBlocked = isDplAktif === false;
 
   const isKkmPath = (path: string) => path.startsWith("/dosen-dashboard/kkm");
 
@@ -32,14 +43,21 @@ export default function Sidebar() {
 
   // Sinkronkan tab jika user berpindah halaman via route / back button
   useEffect(() => {
-    if (isKkmPath(location.pathname)) {
+    if (isKkmPath(location.pathname) && !isKkmBlocked) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronisasi tab dengan lokasi URL
       setActiveTab("kkm");
     } else if (!location.pathname.startsWith("/dosen-dashboard/profile")) {
       setActiveTab("penelitian");
     }
-  }, [location.pathname]);
+  }, [location.pathname, isKkmBlocked]);
 
   const handleTabChange = (tab: "penelitian" | "kkm") => {
+    if (tab === "kkm" && isKkmBlocked) {
+      // Tab tetap tampil, tapi akses ditolak + notifikasi.
+      setNotice(DPL_DENIED_NOTICE);
+      return;
+    }
+
     setActiveTab(tab);
     if (tab === "penelitian") {
       navigate("/dosen-dashboard");
@@ -254,13 +272,20 @@ export default function Sidebar() {
             <button
               type="button"
               onClick={() => handleTabChange("kkm")}
-              className={`flex-1 text-sm font-medium py-1.5 rounded-full transition-colors cursor-pointer
+              title={
+                isKkmBlocked
+                  ? "Anda belum ditugaskan sebagai DPL KKM"
+                  : undefined
+              }
+              className={`flex-1 text-sm font-medium py-1.5 rounded-full transition-colors inline-flex items-center justify-center gap-1.5
                 ${
                   activeTab === "kkm"
                     ? "bg-white text-red-600 shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
-                }`}
+                }
+                ${isKkmBlocked ? "opacity-60" : ""}`}
             >
+              {isKkmBlocked && <Lock size={13} />}
               KKM
             </button>
           </div>

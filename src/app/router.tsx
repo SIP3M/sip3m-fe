@@ -7,6 +7,7 @@ import RegisterReviewerPage from "@/features/auth/RegisterReviewerPage";
 import OAuthCallback from "@/features/auth/OauthCallback";
 
 import ProtectedRoute from "@/components/common/ProtectedRoute";
+import DplRouteGuard from "@/components/common/DplRouteGuard";
 import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -314,44 +315,27 @@ export const router = createBrowserRouter([
         element: <DosenDashboard />,
       },
       {
-        path: "kkm/dashboard",
-        element: <DashboardDosenKKM />,
-      },
-      {
-        path: "kkm/kelompok-bimbingan",
-        element: <KelompokBimbingan />,
-      },
-      {
-        path: "kkm/kelompok-bimbingan/:id",
-        element: <DetailKelompokBimbingan />,
-      },
-      {
-        path: "kkm/monitoring",
-        element: <MonitoringKKMDosen />,
-      },
-      {
-        path: "kkm/monitoring/:id",
-        element: <DetailMonitoringKKMDosen />,
-      },
-      {
-        path: "kkm/validasi-logbook",
-        element: <ValidasiLogbookDosen />,
-      },
-      {
-        path: "kkm/validasi-logbook/:id",
-        element: <DetailValidasiLogbookDosen />,
-      },
-      {
-        path: "kkm/laporan",
-        element: <LaporanKKMDosen />,
-      },
-      {
-        path: "kkm/penilaian",
-        element: <PenilaianMahasiswaDosen />,
-      },
-      {
-        path: "kkm/pengumuman",
-        element: <PengumumanKKMDosen />,
+        // Seluruh modul KKM dosen dibungkus guard status DPL.
+        path: "kkm",
+        element: <DplRouteGuard />,
+        children: [
+          { path: "dashboard", element: <DashboardDosenKKM /> },
+          { path: "kelompok-bimbingan", element: <KelompokBimbingan /> },
+          {
+            path: "kelompok-bimbingan/:id",
+            element: <DetailKelompokBimbingan />,
+          },
+          { path: "monitoring", element: <MonitoringKKMDosen /> },
+          { path: "monitoring/:id", element: <DetailMonitoringKKMDosen /> },
+          { path: "validasi-logbook", element: <ValidasiLogbookDosen /> },
+          {
+            path: "validasi-logbook/:id",
+            element: <DetailValidasiLogbookDosen />,
+          },
+          { path: "laporan", element: <LaporanKKMDosen /> },
+          { path: "penilaian", element: <PenilaianMahasiswaDosen /> },
+          { path: "pengumuman", element: <PengumumanKKMDosen /> },
+        ],
       },
       {
         path: "proposals",
