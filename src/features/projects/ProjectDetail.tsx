@@ -15,7 +15,7 @@ import {
   updatePengabdianProjectStatus,
   verifyPengabdianDocument,
 } from "./project.api";
-import { MonitoringProjectDetail } from "./project.types";
+import { MonitoringDocument, MonitoringProjectDetail } from "./project.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -58,6 +58,15 @@ const toFileUrl = (path: string) => {
   if (/^https?:\/\//i.test(path)) return path;
   return `https://sip3m-be.vercel.app/${path.replace(/^\/+/, "")}`;
 };
+
+/**
+ * URL dokumen untuk tombol "Lihat".
+ * - Utama: `public_url` (URL publik Supabase Storage) dari backend.
+ * - Fallback: `file_path` (kompatibel dengan backend yang belum deploy).
+ */
+const toDocumentUrl = (
+  doc: Pick<MonitoringDocument, "file_path" | "public_url">,
+) => doc.public_url || toFileUrl(doc.file_path);
 
 export default function ProjectDetail() {
   const navigate = useNavigate();
@@ -404,7 +413,7 @@ export default function ProjectDetail() {
                   <td className="px-6 py-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <a
-                        href={toFileUrl(doc.file_path)}
+                        href={toDocumentUrl(doc)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm font-medium text-blue-600 hover:underline"

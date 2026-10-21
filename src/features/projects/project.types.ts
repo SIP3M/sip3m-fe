@@ -61,6 +61,7 @@ export interface MonitoringDocument {
   document_type: string;
   title: string;
   file_path: string;
+  public_url?: string | null;
   file_size: number;
   mime_type: string;
   verification_status: "PENDING" | "APPROVED" | "REJECTED" | string;
