@@ -3,7 +3,20 @@ import { useAuthStore } from "@/features/auth/auth.store";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-export default function Navbar() {
+interface NavbarProps {
+  /** Placeholder input pencarian */
+  searchPlaceholder?: string;
+  /** Nilai pencarian (controlled). Bila diisi, input jadi controlled. */
+  search?: string;
+  /** Callback saat nilai pencarian berubah */
+  onSearchChange?: (value: string) => void;
+}
+
+export default function Navbar({
+  searchPlaceholder = "Cari proposal, peneliti, atau dokumen...",
+  search,
+  onSearchChange,
+}: NavbarProps) {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
@@ -32,7 +45,9 @@ export default function Navbar() {
 
           <input
             type="text"
-            placeholder="Cari proposal, peneliti, atau dokumen..."
+            placeholder={searchPlaceholder}
+            value={search}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-gray-100 rounded-lg outline-none text-sm"
           />
         </div>

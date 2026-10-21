@@ -12,9 +12,9 @@ import { APP_ROLES } from "@/constant/roles";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
 import DosenLayout from "@/components/layout/DosenLayout";
-import MahasiswaLayout from "@/components/layout/MahasiswaLayout";
 import ReviewerLayout from "@/components/layout/ReviewerLayout";
 import EksternalLayout from "@/components/layout/EksternalLayout";
+import MahasiswaLayout from "@/components/layout/MahasiswaLayout";
 
 import AdminDashboard from "@/features/dashboard/AdminDashboard";
 import DashboardAdminKKM from "@/features/dashboard/DashboardAdminKKM";
@@ -68,6 +68,7 @@ import EditKelompokKKM from "@/features/kkm/EditKelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 import PengumumanKKMDosen from "@/features/kkm/PengumumanKKMDosen";
+import PilihSkemaKKM from "@/features/kkm/PilihSkemaKKM";
 
 import DashboardDosenKKM from "@/features/dashboard/DashboardDosenKKM";
 import DashboardMahasiswaKKM from "@/features/dashboard/DashboardMahasiswaKKM";
@@ -388,12 +389,19 @@ export const router = createBrowserRouter([
   },
 
   // =========================
-  // MAHASISWA
+  // MAHASISWA — PORTAL KKM
   // =========================
   {
     path: "mahasiswa-dashboard",
     element: (
-      <ProtectedRoute roles={[APP_ROLES.MAHASISWA]}>
+      // Admin/staff juga boleh masuk untuk preview (sesuai akses GET /kkm/skema)
+      <ProtectedRoute
+        roles={[
+          APP_ROLES.MAHASISWA,
+          APP_ROLES.ADMIN_LPPM,
+          APP_ROLES.STAFF_LPPM,
+        ]}
+      >
         <MahasiswaLayout />
       </ProtectedRoute>
     ),
@@ -425,6 +433,11 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <ProfileMahasiswa />,
+      },
+      {
+        // Langkah 1 portal KKM — pemilihan skema (live API /kkm/skema)
+        path: "pilih-skema",
+        element: <PilihSkemaKKM />,
       },
     ],
   },

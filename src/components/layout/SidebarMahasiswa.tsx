@@ -8,6 +8,7 @@ import {
   Bell,
   User,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 
@@ -33,6 +34,12 @@ const MENU_ITEMS: MenuItem[] = [
     icon: LayoutGrid,
     path: "/mahasiswa-dashboard",
     exact: true,
+  },
+  {
+    // Langkah 1 portal KKM: pemilihan skema (live API /kkm/skema)
+    name: "Pilih Skema KKM",
+    icon: ClipboardList,
+    path: "/mahasiswa-dashboard/pilih-skema",
   },
   {
     name: "Kelompok Saya",
