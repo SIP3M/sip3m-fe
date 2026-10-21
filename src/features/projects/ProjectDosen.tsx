@@ -154,7 +154,11 @@ export default function ProjectDosen() {
       await uploadMilestoneDocuments(selectedProject.id, selectedMilestone.id, formData);
 
       setIsModalOpen(false);
-      alert(isDraft ? "Draft berhasil disimpan!" : "Dokumen final berhasil dikirim!");
+      alert(
+        isDraft
+          ? "Draft berhasil disimpan!"
+          : "Dokumen berhasil diunggah dan langsung disetujui otomatis, kecuali laporan akhir yang tetap menunggu persetujuan Admin LPPM.",
+      );
       fetchProjects();
     } catch (err: any) {
       alert(err?.response?.data?.message || err.message || "Gagal mengunggah dokumen.");
