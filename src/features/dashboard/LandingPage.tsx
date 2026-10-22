@@ -40,8 +40,10 @@ import type { Swiper as SwiperType } from "swiper";
 
 // Background gedung universitas (sama untuk semua slide).
 import heroBuilding from "@/assets/images/hero1.jpg";
-// Gambar visual kanan per slide (ilustrasi/foto). Ganti file sesuai desain.
-import heroKkm from "@/assets/images/hero3.jpg";
+// Foto slide 1 (SISTEM INFORMASI LPPM) - foto baru.
+import fotoSlide1LP from "@/assets/images/foto-slide-1LP.png";
+// Foto slide 3 (KKM) - diganti ke foto baru.
+import fotoSlide3LP from "@/assets/images/foto-slide-3LP.png";
 
 import "swiper/css";
 
@@ -83,6 +85,39 @@ export default function LPPMLandingPage() {
   const heroSlides = [
     {
       badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "SISTEM INFORMASI LPPM",
+      subtitle: "Satu Sistem untuk Mengelola Seluruh Kegiatan LPPM",
+      description:
+        "Hubungkan proposal, review, pelaksanaan, monitoring, pelaporan, publikasi, dan berbagai layanan LPPM dalam satu platform digital.",
+      image: fotoSlide1LP,
+      imageType: "photo" as const,
+      primary: { label: "Masuk ke Sistem", icon: "LogIn", to: "/login" },
+      secondary: { label: "Jelajahi Layanan", icon: "BookOpen", href: "#" },
+    },
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "Pengabdian kepada\nMasyarakat",
+      subtitle: "",
+      description:
+        "Kelola pengajuan proposal, pelaksanaan kegiatan, monitoring, hingga pelaporan pengabdian kepada masyarakat secara digital melalui Sistem LPPM.",
+      image: fotoSlide1LP,
+      imageType: "photo" as const,
+      primary: { label: "Jelajahi Berita", icon: "BookOpen", href: "#" },
+      secondary: { label: "Lihat Kabar", icon: "FileText", href: "#" },
+    },
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
+      title: "KULIAH KERJA MAHASISWA (KKM)",
+      subtitle: "Kelola KKM Secara Digital dan Terpadu",
+      description:
+        "Mulai dari pembentukan kelompok, proposal, program kerja, logbook, monitoring, hingga laporan KKM dapat dikelola secara digital melalui Sistem LPPM.",
+      image: fotoSlide3LP,
+      imageType: "photo" as const,
+      primary: { label: "Masuk Modul KKM", icon: "LogIn", to: "/login" },
+      secondary: { label: "Pelajari KKM", icon: "BookOpen", href: "#" },
+    },
+    {
+      badge: "LPPM Universitas Muhammadiyah Cirebon",
       title: "PENELITIAN",
       subtitle: "Dorong Penelitian Berkualitas melalui Sistem Terintegrasi",
       description:
@@ -110,28 +145,6 @@ export default function LPPMLandingPage() {
         href: "#",
       },
       secondary: { label: "Lihat Publikasi", icon: "FileText", href: "#" },
-    },
-    {
-      badge: "LPPM Universitas Muhammadiyah Cirebon",
-      title: "SISTEM INFORMASI LPPM",
-      subtitle: "Satu Sistem untuk Mengelola Seluruh Kegiatan LPPM",
-      description:
-        "Hubungkan proposal, review, pelaksanaan, monitoring, pelaporan, publikasi, dan berbagai layanan LPPM dalam satu platform digital.",
-      image: heroBuilding,
-      imageType: "photo" as const,
-      primary: { label: "Masuk ke Sistem", icon: "LogIn", to: "/login" },
-      secondary: { label: "Jelajahi Layanan", icon: "BookOpen", href: "#" },
-    },
-    {
-      badge: "LPPM Universitas Muhammadiyah Cirebon",
-      title: "KULIAH KERJA MAHASISWA (KKM)",
-      subtitle: "Kelola KKM Secara Digital dan Terpadu",
-      description:
-        "Mulai dari pembentukan kelompok, proposal, program kerja, logbook, monitoring, hingga laporan KKM dapat dikelola secara digital melalui Sistem LPPM.",
-      image: heroKkm,
-      imageType: "photo" as const,
-      primary: { label: "Masuk Modul KKM", icon: "LogIn", to: "/login" },
-      secondary: { label: "Pelajari KKM", icon: "BookOpen", href: "#" },
     },
   ];
 
@@ -343,7 +356,7 @@ export default function LPPMLandingPage() {
                   </span>
 
                   {/* Title */}
-                  <h1 className="mt-4 sm:mt-5 text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase leading-tight drop-shadow-md wrap-break-word">
+                  <h1 className="mt-4 sm:mt-5 text-3xl sm:text-4xl lg:text-5xl font-extrabold uppercase leading-tight drop-shadow-md wrap-break-word whitespace-pre-line">
                     {slide.title}
                   </h1>
 
