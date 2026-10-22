@@ -16,6 +16,7 @@ import {
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
+import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
 import {
   DPL_DENIED_NOTICE,
   useKkmDplStore,
@@ -248,7 +249,7 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col px-6 pt-6 pb-4">
           <img
-            src="/src/assets/images/Logo LPPM UMC 2.png"
+            src={LogoLPPM}
             alt="Logo LPPM UMC"
             className="h-14 w-auto object-contain"
           />

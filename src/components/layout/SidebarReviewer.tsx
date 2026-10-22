@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
+import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
 import { useState } from "react";
 
 export default function Sidebar() {
@@ -80,7 +81,7 @@ export default function Sidebar() {
           <div className="px-6 pt-6 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-3 mb-2">
               <img
-                src="/src/assets/images/Logo LPPM UMC 2.png"
+                src={LogoLPPM}
                 alt="Logo LPPM UMC"
                 className="h-14 w-auto object-contain"
               />

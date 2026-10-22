@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, FormEvent, useRef } from "react";
-import { Link } from "react-router-dom";
 import {
   Check,
   Upload,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { getPengabdianProjects, uploadMilestoneDocuments } from "./project.api";
 import { PengabdianProject, PengabdianMilestone } from "./project.types";
+import ProposalDetailPopup from "./ProposalDetailPopup";
 
 // =====================================================================
 // Konten Panduan — UI ONLY, data statis (belum ada field ini di backend).
@@ -64,6 +64,7 @@ export default function ProjectDosen() {
   const [isPanduanModalOpen, setIsPanduanModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<PengabdianProject | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<PengabdianMilestone | null>(null);
+  const [detailProposalId, setDetailProposalId] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // Files
@@ -432,13 +433,13 @@ export default function ProjectDosen() {
                 "group bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 flex flex-col transition-all";
 
               return proposalId ? (
-                <Link
+                <div
                   key={project.id}
-                  to={`/dosen-dashboard/proposals/${proposalId}`}
                   className={`${cardClass} cursor-pointer hover:border-red-200 hover:shadow-md`}
+                  onClick={() => setDetailProposalId(proposalId)}
                 >
                   {cardContent}
-                </Link>
+                </div>
               ) : (
                 <div key={project.id} className={cardClass}>
                   {cardContent}
@@ -457,6 +458,14 @@ export default function ProjectDosen() {
           </div>
         )}
       </div>
+
+      {/* MODAL: DETAIL PROPOSAL — popup dari card "Proyek Saya" */}
+      {detailProposalId !== null && (
+        <ProposalDetailPopup
+          proposalId={detailProposalId}
+          onClose={() => setDetailProposalId(null)}
+        />
+      )}
 
       {/* PAGINATION */}
       {!isLoading && !error && meta.totalPages > 1 && (

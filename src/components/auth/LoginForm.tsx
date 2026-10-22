@@ -113,12 +113,11 @@ const LoginForm: React.FC<LoginFormProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
+      </div>
 
-        <img
-          src={mumar}
-          alt="Maskot"
-          className="absolute bottom-0 left-0 w-44 xl:w-56 pointer-events-none select-none"
-        />
+      {/* MASKOT BURUNG — posisi baru: di luar frame foto gedung, di pojok kiri bawah kartu UI (overlap) */}
+      <div className="hidden lg:block absolute bottom-0 left-0 w-44 xl:w-56 pointer-events-none select-none">
+        <img src={mumar} alt="Maskot" className="w-full h-auto" />
       </div>
 
       {/* ================= RIGHT ================= */}

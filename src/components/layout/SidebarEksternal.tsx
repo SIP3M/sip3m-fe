@@ -16,6 +16,7 @@ import {
 import { Checkbox } from "radix-ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
+import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
 import { Global } from "recharts";
 
 export default function Sidebar() {
@@ -43,7 +44,7 @@ export default function Sidebar() {
         {/* LOGO */}
         <div className="flex items-center gap-3 px-6 py-6">
           <img
-            src="/src/assets/images/Logo LPPM UMC 2.png"
+            src={LogoLPPM}
             alt="Logo LPPM UMC"
             className="h-14 w-auto object-contain"
           />

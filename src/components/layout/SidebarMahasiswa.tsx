@@ -11,6 +11,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
+import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
 
 interface MenuItem {
   name: string;
@@ -99,7 +100,7 @@ export default function SidebarMahasiswa() {
         {/* LOGO */}
         <div className="flex flex-col px-6 pt-6 pb-4">
           <img
-            src="/src/assets/images/Logo LPPM UMC 2.png"
+            src={LogoLPPM}
             alt="Logo LPPM UMC"
             className="h-14 w-auto object-contain"
           />
