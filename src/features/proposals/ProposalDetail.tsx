@@ -17,7 +17,10 @@ import {
   DollarSign,
   Users2,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { getProposalReviews } from "@/features/reviews/review.api";
+import type { ReviewHistoryItem } from "@/features/reviews/review.types";
+import CatatanReviewerView from "@/features/reviews/components/CatatanReviewerView";
 import {
   assignProposalReviewersAuto,
   getProposalById,
@@ -263,7 +266,32 @@ export default function ProposalDetail() {
   const [isAssigning, setIsAssigning] = useState(false);
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>("informasi");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab") as TabKey | null;
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    tabParam && ["informasi", "tim", "dokumen", "riwayat", "review"].includes(tabParam)
+      ? tabParam
+      : "informasi",
+  );
+  const [reviewHistory, setReviewHistory] = useState<ReviewHistoryItem[]>([]);
+
+  useEffect(() => {
+    if (tabParam && ["informasi", "tim", "dokumen", "riwayat", "review"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (key: TabKey) => {
+    setActiveTab(key);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", key);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const loadProposal = async () => {
     setIsLoading(true);
@@ -618,7 +646,7 @@ export default function ProposalDetail() {
             <button
               key={tab.key}
               type="button"
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === tab.key
                   ? "bg-white text-gray-900 shadow-sm"

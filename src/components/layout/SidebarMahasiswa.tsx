@@ -8,69 +8,63 @@ import {
   Bell,
   User,
   LogOut,
-  ClipboardList,
+  Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { useKkmMahasiswaAccessStore } from "@/features/kkm/kkmMahasiswaAccess.store";
 import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
 
 interface MenuItem {
   name: string;
   icon: typeof LayoutGrid;
   path: string;
-  /**
-   * true = hanya aktif jika path persis sama.
-   * false (default) = aktif juga untuk path anak (mis. /logbook/:id).
-   */
   exact?: boolean;
+  requiresAccess?: boolean;
 }
 
-// =====================================================================
-// MENU MAHASISWA
-// Semua menu aktif (bisa diklik). Halaman masih kosong —
-// ganti element di router.tsx dengan halaman masing-masing.
-// =====================================================================
 const MENU_ITEMS: MenuItem[] = [
   {
     name: "Dashboard KKM",
     icon: LayoutGrid,
     path: "/mahasiswa-dashboard",
     exact: true,
-  },
-  {
-    // Langkah 1 portal KKM: pemilihan skema (live API /kkm/skema)
-    name: "Pilih Skema KKM",
-    icon: ClipboardList,
-    path: "/mahasiswa-dashboard/pilih-skema",
+    requiresAccess: false,
   },
   {
     name: "Kelompok Saya",
     icon: Users,
     path: "/mahasiswa-dashboard/kelompok",
+    requiresAccess: true,
   },
   {
     name: "Logbook Kegiatan",
     icon: BookOpen,
     path: "/mahasiswa-dashboard/logbook",
+    requiresAccess: true,
   },
   {
     name: "Laporan KKM",
     icon: FileText,
     path: "/mahasiswa-dashboard/laporan",
+    requiresAccess: true,
   },
   {
     name: "Nilai & Evaluasi",
     icon: Star,
     path: "/mahasiswa-dashboard/nilai",
+    requiresAccess: true,
   },
   {
     name: "Pengumuman",
     icon: Bell,
     path: "/mahasiswa-dashboard/pengumuman",
+    requiresAccess: false,
   },
   {
-    name: "Profil Saya",
+    name: "Profile Saya",
     icon: User,
     path: "/mahasiswa-dashboard/profile",
+    requiresAccess: false,
   },
 ];
 
@@ -78,6 +72,7 @@ export default function SidebarMahasiswa() {
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
+  const hasAccess = useKkmMahasiswaAccessStore((state) => state.hasAccess);
 
   const isActive = (item: MenuItem) =>
     item.exact
@@ -88,6 +83,14 @@ export default function SidebarMahasiswa() {
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
+  };
+
+  const handleItemClick = (item: MenuItem) => {
+    if (!hasAccess && item.requiresAccess) {
+      navigate("/mahasiswa-dashboard");
+      return;
+    }
+    navigate(item.path);
   };
 
   return (
@@ -116,21 +119,29 @@ export default function SidebarMahasiswa() {
         {/* MENU */}
         <div className="px-3 space-y-1">
           {MENU_ITEMS.map((item) => {
-            const Icon = item.icon;
+            const isLocked = !hasAccess && item.requiresAccess;
+            const Icon = isLocked ? Lock : item.icon;
             const active = isActive(item);
 
             return (
               <div
                 key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm cursor-pointer transition-colors ${
+                onClick={() => handleItemClick(item)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${
                   active
                     ? "bg-red-50 text-red-600 font-medium border-l-4 border-red-600 pl-3"
+                    : isLocked
+                    ? "text-gray-400 hover:bg-gray-50 hover:text-gray-500"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
+                title={
+                  isLocked
+                    ? "Akses modul KKM belum aktif (Menunggu verifikasi admin LPPM)"
+                    : undefined
+                }
               >
                 <Icon size={18} className="shrink-0" />
-                {item.name}
+                <span className="flex-1 truncate">{item.name}</span>
               </div>
             );
           })}

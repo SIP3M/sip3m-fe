@@ -1,4 +1,4 @@
-import { Bell, Search, Menu, LogOut, Shield } from "lucide-react";
+import { Bell, Search, Menu, LogOut, Shield, GraduationCap } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";

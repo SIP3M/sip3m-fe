@@ -25,7 +25,7 @@ export default function MahasiswaLayout() {
         <Navbar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Cari skema KKM, panduan, atau informasi..."
+          searchPlaceholder="Cari proposal, peneliti, atau dokumen..."
         />
 
         <div className="p-4 sm:p-6 flex-1">

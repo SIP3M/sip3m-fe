@@ -8,6 +8,7 @@ import OAuthCallback from "@/features/auth/OauthCallback";
 
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import DplRouteGuard from "@/components/common/DplRouteGuard";
+import MahasiswaKkmRouteGuard from "@/components/common/MahasiswaKkmRouteGuard";
 import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
