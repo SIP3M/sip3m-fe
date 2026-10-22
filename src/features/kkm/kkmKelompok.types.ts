@@ -161,6 +161,26 @@ export interface KkmKelompokDetail {
   prodi: KkmKelompokProdiItem[];
   anggota: KkmKelompokAnggota[];
   dokumen: KkmKelompokDokumen[];
+  /**
+   * Turunan monitoring (progress %, tahapan, indikator, status, logbook).
+   * Dibuat opsional karena BE produksi lama belum mengirim field ini
+   * (aman bila FE ter-deploy sebelum BE).
+   */
+  monitoring?: KkmKelompokMonitoring;
+}
+
+/** Blok `monitoring` di respons GET /kkm/kelompok/:id — semua turunan dari BE. */
+export interface KkmKelompokMonitoring {
+  /** 0–100 — sumber baris "Progress KKM" */
+  progress: number;
+  /** MONITORING_DPL | PROGRAM_KERJA | LOGBOOK_AKTIF | LAPORAN_AKHIR | SELESAI */
+  tahapan: string;
+  tahapan_label: string;
+  indikator: string;
+  indikator_label: string;
+  status: string;
+  status_label: string;
+  logbook: { jumlah: number; delta: number };
 }
 
 export interface GetKkmKelompokDetailResponse {

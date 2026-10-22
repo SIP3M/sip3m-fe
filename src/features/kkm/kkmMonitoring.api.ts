@@ -7,7 +7,10 @@ import type {
 const BASE = "/kkm/monitoring";
 
 /**
- * Monitoring KKM (role: ADMIN_LPPM, STAFF_LPPM — 403 untuk lainnya).
+ * Monitoring KKM (role: ADMIN_LPPM, STAFF_LPPM, DOSEN/DPL).
+ *
+ * Untuk role DOSEN, `dpl_id` dipaksa ke user yang login **di server**
+ * (query param diabaikan) → hanya kelompok bimbingan sendiri yang kembali.
  *
  * Query semua opsional (lihat `KkmMonitoringParams`):
  * - `periode_id` kosong → periode berstatus AKTIF terbaru
