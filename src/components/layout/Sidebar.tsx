@@ -25,6 +25,7 @@ import {
   BookOpen,
   Star,
   Building2,
+  ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -134,19 +135,67 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
   },
 
   // ------------------------------------------------------- ADMIN SISTEM
-  // Hanya modul master data (fakultas & program studi) — tanpa tab KKM.
+  // Manajemen akun + master data — tanpa tab KKM (halaman DPL/desa memakai
+  // komponen reuse KKM pada route master-data).
   [APP_ROLES.ADMIN_SISTEM]: {
     penelitian: {
       groups: [
+        {
+          key: "account",
+          label: "MANAJEMEN AKUN",
+          icon: Users,
+          items: [
+            {
+              name: "Pengguna",
+              icon: Users,
+              path: "/users",
+            },
+            {
+              name: "Role & Permission",
+              icon: ShieldCheck,
+              path: "/admin-dashboard/master-data/role-permission",
+            },
+          ],
+        },
         {
           key: "master",
           label: "MASTER DATA",
           icon: Building2,
           items: [
             {
-              name: "Kelola Fakultas",
+              name: "Dosen",
+              icon: UserCheck,
+              path: "/admin-dashboard/master-data/dosen",
+            },
+            {
+              name: "Mahasiswa",
+              icon: Users,
+              path: "/admin-dashboard/master-data/mahasiswa",
+            },
+            {
+              name: "Reviewer",
+              icon: Star,
+              path: "/admin-dashboard/master-data/reviewer",
+            },
+            {
+              name: "DPL",
+              icon: UserPlus,
+              path: "/admin-dashboard/master-data/dpl",
+            },
+            {
+              name: "Fakultas",
               icon: Building2,
               path: "/admin-dashboard/master-data/fakultas",
+            },
+            {
+              name: "Program Studi",
+              icon: BookOpen,
+              path: "/admin-dashboard/master-data/program-studi",
+            },
+            {
+              name: "Desa & Mitra",
+              icon: MapPin,
+              path: "/admin-dashboard/master-data/desa-mitra",
             },
           ],
         },

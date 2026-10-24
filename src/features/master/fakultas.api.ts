@@ -19,6 +19,8 @@ export interface ProgramStudiItem {
   id: number;
   nama: string;
   fakultas_id: number;
+  /** Hanya dikirim oleh GET /program-studi (daftar datar). */
+  fakultas?: { id: number; nama: string } | null;
   /** Jumlah user pada prodi ini — dipakai guard hapus di BE. */
   _count?: { users: number };
 }
@@ -54,6 +56,14 @@ export const getProgramStudiList = async (
   const res = await api.get<{ data: ProgramStudiItem[] }>(
     `/fakultas/${fakultasId}/program-studi`,
   );
+  return res.data;
+};
+
+/** Seluruh prodi lintas fakultas (untuk halaman Kelola Program Studi datar). */
+export const getAllProgramStudi = async (): Promise<{
+  data: ProgramStudiItem[];
+}> => {
+  const res = await api.get<{ data: ProgramStudiItem[] }>("/program-studi");
   return res.data;
 };
 

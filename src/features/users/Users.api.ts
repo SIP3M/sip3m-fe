@@ -56,6 +56,9 @@ const getCacheKey = (params?: GetUsersParams): string => {
 
   return JSON.stringify({
     page: params?.page || 1,
+    // Status mentah ikut disertakan: "pending" (nonaktif) dan tanpa filter
+    // sama-sama menghasilkan is_active "" — kalau tidak, cache bentrok.
+    status: params?.status || "",
     is_active: isActive,
     roles: params?.roles || "",
     search: params?.search || "",
