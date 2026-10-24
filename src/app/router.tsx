@@ -90,6 +90,8 @@ import NilaiMahasiswa from "@/features/mahasiswa/NilaiMahasiswa";
 import PengumumanMahasiswa from "@/features/mahasiswa/PengumumanMahasiswa";
 import ProfileMahasiswa from "@/features/mahasiswa/ProfileMahasiswa";
 
+import KelolaFakultas from "@/features/master/KelolaFakultas";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -250,6 +252,25 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // =========================
+  // ADMIN SISTEM — master data
+  // Guard terpisah dari ADMIN_LPPM agar ADMIN_SISTEM tidak bisa
+  // membuka halaman admin lain lewat URL langsung.
+  // =========================
+  {
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.ADMIN_SISTEM]}>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "admin-dashboard/master-data/fakultas",
+        element: <KelolaFakultas />,
+      },
+    ],
+  },
+
   // =========================
   // STAFF LPPM
   // =========================

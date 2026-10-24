@@ -24,6 +24,7 @@ import {
   Construction,
   BookOpen,
   Star,
+  Building2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -126,6 +127,27 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
             { name: "Monitoring KKM", icon: Activity, path: "/admin-dashboard/kkm/monitoring" },
             { name: "Laporan KKM", icon: FileText, path: "/admin-dashboard/kkm/laporan" },
             { name: "Pengumuman KKM", icon: Megaphone, path: "/admin-dashboard/kkm/pengumuman" },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ------------------------------------------------------- ADMIN SISTEM
+  // Hanya modul master data (fakultas & program studi) — tanpa tab KKM.
+  [APP_ROLES.ADMIN_SISTEM]: {
+    penelitian: {
+      groups: [
+        {
+          key: "master",
+          label: "MASTER DATA",
+          icon: Building2,
+          items: [
+            {
+              name: "Kelola Fakultas",
+              icon: Building2,
+              path: "/admin-dashboard/master-data/fakultas",
+            },
           ],
         },
       ],
