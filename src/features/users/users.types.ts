@@ -1,7 +1,13 @@
 import { AppRole } from "@/constant/roles";
 
 export type CreateUserRole = AppRole;
-export type UserStatusFilter = "active" | "inactive";
+/**
+ * Filter status GET /users.
+ * - "active"  → is_active = true
+ * - "pending" → is_active = false (istilah BE untuk nonaktif/menunggu)
+ * - "inactive" → legacy FE; BE mengabaikan (difilter client-side di UsersPage)
+ */
+export type UserStatusFilter = "active" | "inactive" | "pending";
 
 /**
  * Referensi fakultas / program studi pada endpoint /users.
@@ -19,6 +25,10 @@ export interface User {
   email: string;
   username: string;
   nidn?: string | null;
+  /** NIDN/NIP/NIM — field `nidn_nip` di BE (unik per user). */
+  bidang_keahlian?: string | null;
+  /** Jumlah penugasan review (ProposalReviewers) — hanya untuk reviewer. */
+  beban_review?: number | null;
   /** Hanya untuk respons GET/POST/PUT /users — selalu { id, nama } | null */
   fakultas?: UserRef;
   /** Field baru di list; sebelumnya kadang angka (id) di detail */

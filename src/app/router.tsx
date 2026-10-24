@@ -91,6 +91,11 @@ import PengumumanMahasiswa from "@/features/mahasiswa/PengumumanMahasiswa";
 import ProfileMahasiswa from "@/features/mahasiswa/ProfileMahasiswa";
 
 import KelolaFakultas from "@/features/master/KelolaFakultas";
+import KelolaProgramStudi from "@/features/master/KelolaProgramStudi";
+import MasterDosen from "@/features/master/MasterDosen";
+import MasterMahasiswa from "@/features/master/MasterMahasiswa";
+import MasterReviewer from "@/features/master/MasterReviewer";
+import RolePermission from "@/features/master/RolePermission";
 
 export const router = createBrowserRouter([
   {
@@ -136,22 +141,6 @@ export const router = createBrowserRouter([
       {
         path: "admin-dashboard/kkm/dashboard", // Dashboard KKM
         element: <DashboardAdminKKM />,
-      },
-      {
-        path: "users",
-        element: <UsersPage />,
-      },
-      {
-        path: "users/add",
-        element: <AddUserPage />,
-      },
-      {
-        path: "users/:id",
-        element: <UserDetailPage />,
-      },
-      {
-        path: "users/:id/edit",
-        element: <EditUserPage />,
       },
       {
         path: "proposals",
@@ -253,6 +242,35 @@ export const router = createBrowserRouter([
     ],
   },
   // =========================
+  // MANAJEMEN PENGGUNA — dipakai bersama ADMIN_LPPM & ADMIN_SISTEM
+  // (halaman users reuse; ADMIN_SISTEM mengelola akun dari menu Pengguna)
+  // =========================
+  {
+    element: (
+      <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM, APP_ROLES.ADMIN_SISTEM]}>
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "users",
+        element: <UsersPage />,
+      },
+      {
+        path: "users/add",
+        element: <AddUserPage />,
+      },
+      {
+        path: "users/:id",
+        element: <UserDetailPage />,
+      },
+      {
+        path: "users/:id/edit",
+        element: <EditUserPage />,
+      },
+    ],
+  },
+  // =========================
   // ADMIN SISTEM — master data
   // Guard terpisah dari ADMIN_LPPM agar ADMIN_SISTEM tidak bisa
   // membuka halaman admin lain lewat URL langsung.
@@ -267,6 +285,36 @@ export const router = createBrowserRouter([
       {
         path: "admin-dashboard/master-data/fakultas",
         element: <KelolaFakultas />,
+      },
+      {
+        path: "admin-dashboard/master-data/program-studi",
+        element: <KelolaProgramStudi />,
+      },
+      {
+        path: "admin-dashboard/master-data/dosen",
+        element: <MasterDosen />,
+      },
+      {
+        path: "admin-dashboard/master-data/mahasiswa",
+        element: <MasterMahasiswa />,
+      },
+      {
+        path: "admin-dashboard/master-data/reviewer",
+        element: <MasterReviewer />,
+      },
+      {
+        // Reuse halaman Manajemen DPL KKM (list, stats, assign, cabut)
+        path: "admin-dashboard/master-data/dpl",
+        element: <DPLKKM />,
+      },
+      {
+        // Reuse halaman Lokasi/Desa KKM
+        path: "admin-dashboard/master-data/desa-mitra",
+        element: <LokasiKKM />,
+      },
+      {
+        path: "admin-dashboard/master-data/role-permission",
+        element: <RolePermission />,
       },
     ],
   },
