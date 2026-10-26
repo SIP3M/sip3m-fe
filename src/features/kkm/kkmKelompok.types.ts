@@ -251,3 +251,55 @@ export const formatDate = (value?: string | null): string => {
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 };
+
+// ─── Kelompok Saya (mahasiswa) — GET /kkm/kelompok/me ────────────────────────
+export type KelompokSayaStatus = KkmKelompokStatus; // AKTIF | BELUM_LENGKAP | BERMASALAH
+
+export interface KelompokSayaAnggota {
+  peserta_id: number;
+  user_id: number;
+  /** NIM */
+  nim: string | null;
+  nama: string;
+  fakultas: string | null;
+  prodi: string | null;
+  /** Status verifikasi peserta: DRAFT | PENDING | VERIFIED | REJECTED */
+  status: string;
+  /** Penanda mahasiswa yang sedang login */
+  is_saya: boolean;
+}
+
+export interface KelompokSayaData {
+  kelompok: {
+    id: number;
+    nama: string;
+    status: KelompokSayaStatus;
+    periode: {
+      id: number;
+      nama_periode: string;
+      tahun_akademik: string;
+      status: string;
+    };
+    lokasi: { desa: string; kecamatan: string; kabupaten: string };
+  };
+  jumlah_anggota: number;
+  dpl: {
+    user_id: number;
+    nama: string;
+    nomor_hp: string | null;
+    fakultas: string | null;
+    prodi: string | null;
+  } | null;
+  anggota: KelompokSayaAnggota[];
+  stats: {
+    /** Entri logbook kelompok pada minggu berjalan (Senin–Minggu) */
+    logbook_minggu_ini: number;
+    /** Jumlah dokumen kelompok terunggah (proposal/logbook/laporan akhir) */
+    dokumen_kelompok: number;
+  };
+}
+
+export interface GetKelompokSayaResponse {
+  message: string;
+  data: KelompokSayaData;
+}
