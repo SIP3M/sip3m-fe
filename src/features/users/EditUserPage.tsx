@@ -180,13 +180,10 @@ export default function EditUserPage() {
     setError(null);
     setFieldErrors({});
 
-    // PUT /users/:id mewajibkan tanggal_lahir valid (YYYY-MM-DD).
-    // Tanpa ini, simpan selalu 400 "Validation failed.".
-    if (!form.tanggal_lahir.trim()) {
-      setError("Tanggal lahir wajib diisi (format YYYY-MM-DD) — wajib oleh API untuk menyimpan user.");
-      return;
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.tanggal_lahir.trim())) {
+    // tanggal_lahir opsional saat edit (BE): tanpa field = tidak diubah,
+    // "" = kosongkan (null). Validasi format hanya jika diisi.
+    const tanggalTrimmed = form.tanggal_lahir.trim();
+    if (tanggalTrimmed && !/^\d{4}-\d{2}-\d{2}$/.test(tanggalTrimmed)) {
       setError("Tanggal lahir harus format YYYY-MM-DD");
       return;
     }
@@ -202,7 +199,7 @@ export default function EditUserPage() {
       fakultas: form.fakultas,
       program_studi: form.program_studi,
       tempat_lahir: form.tempat_lahir.trim() || undefined,
-      // Wajib menurut validasi runtime BE (PUT /users/:id)
+      // Selalu dikirim ("" = kosongkan tanggal; BE: opsional saat edit)
       tanggal_lahir: form.tanggal_lahir.trim(),
       jenis_kelamin: form.jenis_kelamin || undefined,
       alamat: form.alamat.trim() || undefined,
@@ -214,6 +211,8 @@ export default function EditUserPage() {
       Object.entries(payload).filter(([key, value]) => {
         // fakultas/program_studi selalu ikut walau "" ("" = cabut menurut API)
         if (key === "fakultas" || key === "program_studi") return typeof value === "string";
+        // tanggal_lahir selalu ikut walau "" ("" = kosongkan tanggal menurut API)
+        if (key === "tanggal_lahir") return true;
         if (typeof value === "string") return value.length > 0;
         return value !== undefined && value !== null;
       }),
@@ -433,6 +432,36 @@ export default function EditUserPage() {
                     className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Tempat Lahir
+                </label>
+                <Input
+                  name="tempat_lahir"
+                  value={form.tempat_lahir}
+                  onChange={handleChange}
+                  placeholder="Contoh: Cirebon"
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Tanggal Lahir
+                </label>
+                <Input
+                  name="tanggal_lahir"
+                  type="date"
+                  value={form.tanggal_lahir}
+                  onChange={handleChange}
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Kosongkan jika tidak diketahui — boleh dikosongkan saat edit.
+                </p>
               </div>
             </div>
 
