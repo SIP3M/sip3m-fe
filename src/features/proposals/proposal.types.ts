@@ -1,9 +1,7 @@
-export type SumberPendanaan =
-  | "Internal Kampus"
-  | "Kemendikbudristek"
-  | "Mandiri"
-  | "Lainnya";
+/** Jenis opsi dinamis dari master referensi — nilai bebas (string). */
+export type SumberPendanaan = string;
 
+/** Fallback statis saat API master referensi belum/tidak termuat. */
 export const SUMBER_PENDANAAN_OPTIONS: SumberPendanaan[] = [
   "Internal Kampus",
   "Kemendikbudristek",

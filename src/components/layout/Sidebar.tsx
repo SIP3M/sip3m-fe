@@ -26,6 +26,7 @@ import {
   Star,
   Building2,
   ShieldCheck,
+  Tags,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -191,6 +192,11 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
               name: "Program Studi",
               icon: BookOpen,
               path: "/admin-dashboard/master-data/program-studi",
+            },
+            {
+              name: "Skema & Pendanaan",
+              icon: Tags,
+              path: "/admin-dashboard/master-data/referensi",
             },
             {
               name: "Desa & Mitra",
