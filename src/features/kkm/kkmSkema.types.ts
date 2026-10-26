@@ -3,7 +3,8 @@
  *
  * Kontrak BE (Jalur A: 1 kartu = 1 Periode KKM):
  * - Kartu HANYA berisi periode berstatus AKTIF/DIJADWALKAN yang masih dalam
- *   jendela buka_daftar → tutup_daftar → FE tidak perlu filter status/tanggal.
+ *   jendela buka_daftar → tutup_daftar. `status` dipakai FE utk menampilkan
+ *   kartu DIJADWAKAN sbg "segera dibuka" (tombol daftar nonaktif).
  * - `terisi` = peserta VERIFIED, `menunggu` = PENDING, `sisa` = max(0, kuota-terisi)
  * - `stats` & `filters` GLOBAL (identik di semua query — diverifikasi live)
  * - `periode_aktif` bisa null (tanpa efek pada `skema`)
@@ -45,6 +46,8 @@ export interface KkmSkema {
   wilayah: string[];
   /** ISO — batas akhir pendaftaran */
   batas_daftar: string | null;
+  /** AKTIF | DIJADWAKAN — DIJADWAKAN ditampilkan "segera dibuka" (tombol nonaktif) */
+  status: string;
 }
 
 export interface KkmSkemaStats {

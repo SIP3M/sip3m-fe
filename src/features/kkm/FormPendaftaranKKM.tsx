@@ -29,7 +29,7 @@ import type {
   ProgramStudiItem,
 } from "@/features/master/fakultas.api";
 import { getKkmPeriodById } from "./kkmPeriod.api";
-import type { KkmPeriod } from "./kkmPeriod.types";
+import { getKkmSkema } from "./kkmSkema.api";
 import {
   getPendaftaranMe,
   upsertPendaftaran,
@@ -79,6 +79,22 @@ const EMPTY_FORM: FormState = {
   alamat_domisili: "",
 };
 
+/**
+ * Info periode ringkas untuk tampilan form. Sumber berjenjang:
+ * 1) GET /kkm/periods/:id (lengkap), 2) ref periode pada baris pendaftaran
+ * saya, 3) kartu GET /kkm/skema (fallback — endpoint detail dahulu 403 utk
+ * mahasiswa sehingga form gagal memuat periode).
+ */
+interface PeriodeInfo {
+  id: number;
+  nama_periode: string;
+  tahun_akademik: string;
+  jenis: string;
+  status: string;
+  tgl_buka_daftar?: string | null;
+  tgl_tutup_daftar?: string | null;
+}
+
 // ==================== MAIN ====================
 
 /**
@@ -94,7 +110,7 @@ export default function FormPendaftaranKKM() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [me, setMe] = useState<User | null>(null);
-  const [periode, setPeriode] = useState<KkmPeriod | null>(null);
+  const [periode, setPeriode] = useState<PeriodeInfo | null>(null);
   const [row, setRow] = useState<PendaftaranItem | null>(null);
   const [fakultasList, setFakultasList] = useState<FakultasItem[]>([]);
   const [prodiList, setProdiList] = useState<ProgramStudiItem[]>([]);
@@ -136,7 +152,6 @@ export default function FormPendaftaranKKM() {
 
         const meData = meRes?.data ?? null;
         setMe(meData);
-        setPeriode(periodRes?.data ?? null);
         setFakultasList(fakRes.data ?? []);
 
         const mine = rows[0] ?? null;
@@ -149,9 +164,35 @@ export default function FormPendaftaranKKM() {
           alamat_domisili: mine?.alamat_domisili ?? "",
         });
 
-        if (!periodRes?.data && !mine) {
+        // Info periode berjenjang: endpoint detail → ref pada baris saya →
+        // kartu portal /kkm/skema (endpoint detail dahulu 403 utk mahasiswa,
+        // sehingga form gagal memuat nama periode & jendela pendaftaran).
+        let periodeInfo: PeriodeInfo | null = periodRes?.data ?? null;
+        if (!periodeInfo && mine?.periode) periodeInfo = mine.periode;
+        if (!periodeInfo) {
+          const skemaRes = await getKkmSkema().catch(() => null);
+          const card = skemaRes?.skema.find(
+            (s) => String(s.id) === String(periodeId),
+          );
+          if (card) {
+            periodeInfo = {
+              id: card.id,
+              nama_periode: card.nama,
+              tahun_akademik:
+                skemaRes?.periode_aktif?.id === card.id
+                  ? skemaRes.periode_aktif.tahun_akademik
+                  : "",
+              jenis: card.jenis,
+              status: card.status,
+              tgl_buka_daftar: card.tanggal.buka_daftar,
+              tgl_tutup_daftar: card.tanggal.tutup_daftar,
+            };
+          }
+        }
+        if (!cancelled) setPeriode(periodeInfo);
+        if (!periodeInfo) {
           setLoadError(
-            "Periode KKM tidak ditemukan atau Anda tidak berhak mengakses formulir ini.",
+            "Periode KKM tidak dapat dimuat. Kembali ke Pilih Skema dan pastikan periode yang dibuka masih menerima pendaftaran.",
           );
         }
 
@@ -179,9 +220,15 @@ export default function FormPendaftaranKKM() {
   const semester = me?.semester ?? null;
   const semesterOk = semester === SYARAT_SEMESTER;
   const status = row?.status ?? null;
-  /** Boleh mengubah & mengirim: semester 7 + belum PENDING/VERIFIED. */
+  /** Periode menerima pendaftaran (hanya AKTIF — DIJADWAKAN/non-AKTIF dikunci). */
+  const periodeOpen = periode?.status === "AKTIF";
+  /** Boleh mengubah & mengirim: semester 7 + belum PENDING/VERIFIED + periode AKTIF. */
   const editable =
-    !isLoading && semesterOk && status !== "PENDING" && status !== "VERIFIED";
+    !isLoading &&
+    semesterOk &&
+    status !== "PENDING" &&
+    status !== "VERIFIED" &&
+    periodeOpen;
 
   const requiredFilled = useMemo(() => {
     const f = form;
@@ -339,6 +386,16 @@ export default function FormPendaftaranKKM() {
         text: "Pendaftaran sudah dikirim dan sedang menunggu verifikasi admin LPPM (estimasi 1–2 hari kerja). Formulir dikunci sampai keputusan verifikasi.",
       };
     }
+    if (periode && periode.status !== "AKTIF") {
+      return {
+        cls: "border-amber-200 bg-amber-50 text-amber-800",
+        icon: CalendarDays,
+        text:
+          periode.status === "DIJADWALKAN"
+            ? "Pendaftaran pada periode ini belum dibuka (masih dijadwalkan). Formulir terkunci sampai panitia mengaktifkan periode — cek tanggal pembukaan di halaman Pilih Skema."
+            : "Periode ini tidak dalam masa pendaftaran — formulir dikunci.",
+      };
+    }
     if (status === "REJECTED") {
       return {
         cls: "border-red-200 bg-red-50 text-red-800",
@@ -412,7 +469,7 @@ export default function FormPendaftaranKKM() {
           <span className="text-gray-400 font-semibold">&gt;</span>
           <span className="font-bold text-gray-900">Formulir Pendaftaran KKM</span>
         </div>
-        {periode && (
+        {periode && periode.tahun_akademik && (
           <span className="inline-flex items-center gap-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3.5 py-1.5 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
             Tahun Akademik {periode.tahun_akademik}

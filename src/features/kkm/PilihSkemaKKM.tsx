@@ -376,18 +376,28 @@ export default function PilihSkemaKKM() {
             const style = jenisStyle(skema.jenis);
             const range = fmtRangeBulan(skema.tanggal.pelaksanaan, skema.tanggal.penarikan);
             const batas = fmtTanggal(skema.batas_daftar);
+            const buka = fmtTanggal(skema.tanggal.buka_daftar);
             const myStatus = pendaftaranByPeriode.get(skema.id);
+            /** DIJADWAKAN: tampil lengkap tapi tombol daftar nonaktif ("segera dibuka"). */
+            const comingSoon = skema.status === "DIJADWALKAN";
             return (
               <div
                 key={skema.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col"
               >
-                {/* Badge jenis */}
-                <span
-                  className={`inline-flex self-start items-center px-3 py-1 rounded-full text-xs font-semibold ${style.badge}`}
-                >
-                  {jenisLabel(skema.jenis)}
-                </span>
+                {/* Badge jenis + indikasi segera dibuka */}
+                <div className="inline-flex self-start items-center gap-2">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${style.badge}`}
+                  >
+                    {jenisLabel(skema.jenis)}
+                  </span>
+                  {comingSoon && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                      SEGERA DIBUKA
+                    </span>
+                  )}
+                </div>
 
                 <h3 className="mt-3 text-lg font-bold text-gray-900">{skema.nama}</h3>
                 {skema.deskripsi && (
@@ -470,6 +480,21 @@ export default function PilihSkemaKKM() {
                   >
                     ⏳ Menunggu Verifikasi
                   </button>
+                ) : comingSoon ? (
+                  <button
+                    type="button"
+                    disabled
+                    title={
+                      myStatus === "DRAFT" || myStatus === "REJECTED"
+                        ? "Pendaftaran sementara dikunci — draft Anda tersimpan, lanjutkan setelah periode diaktifkan panitia"
+                        : buka
+                          ? `Pendaftaran dijadwalkan dibuka ${buka}`
+                          : "Pendaftaran belum dibuka — segera dibuka"
+                    }
+                    className="mt-4 w-full py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 text-sm font-semibold cursor-not-allowed"
+                  >
+                    ⏰ Segera Dibuka
+                  </button>
                 ) : (
                   <button
                     type="button"
@@ -492,7 +517,13 @@ export default function PilihSkemaKKM() {
                   </button>
                 )}
                 <p className="mt-2 text-center text-xs text-gray-400">
-                  {batas ? `Batas akhir pendaftaran: ${batas}` : "Pendaftaran dibuka terbatas"}
+                  {comingSoon
+                    ? buka
+                      ? `Pendaftaran dibuka ${buka}${batas ? ` • Batas akhir ${batas}` : ""}`
+                      : "Pendaftaran segera dibuka"
+                    : batas
+                      ? `Batas akhir pendaftaran: ${batas}`
+                      : "Pendaftaran dibuka terbatas"}
                 </p>
               </div>
             );
