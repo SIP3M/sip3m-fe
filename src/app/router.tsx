@@ -39,6 +39,7 @@ import ProposalStaff from "@/features/proposals/ProposalStaff";
 import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
 import ReviewListStaff from "@/features/reviews/ReviewListStaff";
 import LogsPage from "@/features/logs/LogsPage";
+import AuditLogPage from "@/features/logs/AuditLogPage";
 
 import ProposalDosen from "@/features/proposals/ProposalDosen";
 import ProjectDosen from "@/features/projects/ProjectDosen";
@@ -315,6 +316,11 @@ export const router = createBrowserRouter([
       {
         path: "admin-dashboard/master-data/role-permission",
         element: <RolePermission />,
+      },
+      {
+        // Audit log — khusus ADMIN_SISTEM (guard blok ini)
+        path: "admin-dashboard/audit-log",
+        element: <AuditLogPage />,
       },
     ],
   },
