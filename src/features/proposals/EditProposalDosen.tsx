@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import { editProposalApi, getProposalById } from "./proposal.api";
-import { SUMBER_PENDANAAN_OPTIONS, type SumberPendanaan } from "./proposal.types";
+import {
+  SUMBER_PENDANAAN_OPTIONS,
+  toSumberPendanaanLabel,
+  toSkemaLabel,
+  type SumberPendanaan,
+} from "./proposal.types";
 import axios from "axios";
 import { normalizeNama, normalizeNidn, normalizeNim, splitList, TIM_DOSEN_MAX, TIM_MHS_MAX, getTimDosenLimitErrors, getTimMhsLimitErrors } from "@/utils/proposal";
 
@@ -32,7 +37,10 @@ export default function EditProposalDosen() {
     | undefined;
 
   const resolveInitialSumberPendanaan = (): SumberPendanaanValue => {
-    const raw = (existingProposal?.sumber_pendanaan as string | null) ?? null;
+    // API mengirim kode enum (INTERNAL_KAMPUS) — normalkan ke label dulu
+    const raw = toSumberPendanaanLabel(
+      (existingProposal?.sumber_pendanaan as string | null) ?? null,
+    );
     if (raw && (SUMBER_PENDANAAN_OPTIONS as string[]).includes(raw)) {
       return raw as SumberPendanaanValue;
     }
@@ -42,7 +50,7 @@ export default function EditProposalDosen() {
   // State Form — Opsi B: ketua dari Peran, tetap butuh field terpisah untuk submit
   const [title, setTitle] = useState(existingProposal?.title || "");
   const [faculty, setFaculty] = useState(existingProposal?.faculty || "");
-  const [skema, setSkema] = useState(existingProposal?.skema || "");
+  const [skema, setSkema] = useState(toSkemaLabel(existingProposal?.skema));
   const [amount, setAmount] = useState(existingProposal?.funding_request_amount || "");
   const [sumberData, setSumberData] = useState(existingProposal?.sumber_data_penelitian || "");
   const [sumberPendanaan, setSumberPendanaan] = useState<SumberPendanaanValue>(
@@ -114,10 +122,13 @@ export default function EditProposalDosen() {
         const p = res.data;
         setTitle(p.title || "");
         setFaculty(p.faculty || "");
-        setSkema(p.skema || "");
+        setSkema(toSkemaLabel(p.skema));
         setAmount(String(p.funding_request_amount ?? ""));
         setSumberData(p.sumber_data_penelitian || "");
-        const raw = (p.sumber_pendanaan as string | null) ?? null;
+        // API mengirim kode enum (INTERNAL_KAMPUS) — normalkan ke label dulu
+        const raw = toSumberPendanaanLabel(
+          (p.sumber_pendanaan as string | null) ?? null,
+        );
         if (raw && (SUMBER_PENDANAAN_OPTIONS as string[]).includes(raw)) {
           setSumberPendanaan(raw as SumberPendanaanValue);
         } else {
@@ -331,9 +342,10 @@ export default function EditProposalDosen() {
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none bg-white"
             >
               <option value="">Pilih</option>
-              <option value="PENELITIAN_PENGEMBANGAN">Penelitian Pengembangan</option>
-              <option value="PENELITIAN_TERAPAN">Penelitian Terapan</option>
-              <option value="PENELITIAN_KOLABORASI">Penelitian Kolaborasi</option>
+              {/* value = label (kontrak BE); jangan pakai kode enum */}
+              <option value="Penelitian Pengembangan">Penelitian Pengembangan</option>
+              <option value="Penelitian Terapan">Penelitian Terapan</option>
+              <option value="Penelitian Kolaborasi">Penelitian Kolaborasi</option>
             </select>
           </div>
         </div>

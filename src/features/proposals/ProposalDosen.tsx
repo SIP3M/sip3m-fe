@@ -33,7 +33,11 @@ import {
   ProposalFormValues,
   SumberPendanaanValue,
 } from "./ProposalDosen.types";
-import { SUMBER_PENDANAAN_OPTIONS } from "./proposal.types";
+import {
+  SUMBER_PENDANAAN_OPTIONS,
+  toSumberPendanaanLabel,
+  toSkemaLabel,
+} from "./proposal.types";
 import {
   normalizeNama,
   normalizeNidn,
@@ -778,7 +782,7 @@ export default function ProposalDosen() {
       title: proposal.title,
       faculty: proposal.faculty || "",
       prodi: (proposal as any).prodi || "",
-      skema: proposal.skema || "",
+      skema: toSkemaLabel(proposal.skema),
       sumber_data_penelitian: proposal.sumber_data_penelitian || "",
       detail_sumber_penelitian: (proposal as any).detail_sumber_penelitian || "",
       tujuan_penelitian: proposal.tujuan_penelitian || "",
@@ -793,7 +797,10 @@ export default function ProposalDosen() {
       proposal_file: null,
       rab_file: null,
     });
-    const rawSumber = (proposal.sumber_pendanaan as string | null) ?? null;
+    // API mengirim kode enum (INTERNAL_KAMPUS) — normalkan ke label dulu
+    const rawSumber = toSumberPendanaanLabel(
+      (proposal.sumber_pendanaan as string | null) ?? null,
+    );
     const isValidSumber = (SUMBER_PENDANAAN_OPTIONS as string[]).includes(
       rawSumber ?? "",
     );
