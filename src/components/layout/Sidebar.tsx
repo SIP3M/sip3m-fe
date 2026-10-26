@@ -199,6 +199,18 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
             },
           ],
         },
+        {
+          key: "system",
+          label: "SISTEM",
+          icon: Settings,
+          items: [
+            {
+              name: "Audit Log",
+              icon: ClipboardList,
+              path: "/admin-dashboard/audit-log",
+            },
+          ],
+        },
       ],
     },
   },
