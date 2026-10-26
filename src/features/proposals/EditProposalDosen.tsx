@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import { editProposalApi, getProposalById } from "./proposal.api";
+import { getReferensiAktif } from "@/features/master/referensi.api";
 import {
+  SKEMA_OPTIONS,
   SUMBER_PENDANAAN_OPTIONS,
   toSumberPendanaanLabel,
   toSkemaLabel,
@@ -37,17 +39,23 @@ export default function EditProposalDosen() {
     | undefined;
 
   const resolveInitialSumberPendanaan = (): SumberPendanaanValue => {
-    // API mengirim kode enum (INTERNAL_KAMPUS) — normalkan ke label dulu
+    // API mengirim label kanonis (kode enum lama dinormalkan) — nilai apa pun
+    // yang tidak kosong diterima (opsi kini dinamis dari master referensi).
     const raw = toSumberPendanaanLabel(
       (existingProposal?.sumber_pendanaan as string | null) ?? null,
     );
-    if (raw && (SUMBER_PENDANAAN_OPTIONS as string[]).includes(raw)) {
+    if (raw) {
       return raw as SumberPendanaanValue;
     }
     return "Pilih";
   };
 
   // State Form — Opsi B: ketua dari Peran, tetap butuh field terpisah untuk submit
+  // Opsi dropdown dinamis dari master referensi (fallback = konstanta statis)
+  const [skemaOpsi, setSkemaOpsi] = useState<string[]>([...SKEMA_OPTIONS]);
+  const [sumberOpsi, setSumberOpsi] = useState<string[]>(
+    SUMBER_PENDANAAN_OPTIONS,
+  );
   const [title, setTitle] = useState(existingProposal?.title || "");
   const [faculty, setFaculty] = useState(existingProposal?.faculty || "");
   const [skema, setSkema] = useState(toSkemaLabel(existingProposal?.skema));
@@ -104,6 +112,28 @@ export default function EditProposalDosen() {
     setFieldErrors(mapped);
   };
 
+  // Opsi skema & sumber pendanaan — live dari master referensi (publik)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchReferensi = async () => {
+      try {
+        const [skemaRes, sumberRes] = await Promise.all([
+          getReferensiAktif("SKEMA"),
+          getReferensiAktif("SUMBER_PENDANAAN"),
+        ]);
+        if (cancelled) return;
+        if (skemaRes.length) setSkemaOpsi(skemaRes.map((r) => r.nama));
+        if (sumberRes.length) setSumberOpsi(sumberRes.map((r) => r.nama));
+      } catch (err) {
+        console.error("Gagal memuat opsi referensi:", err);
+      }
+    };
+    void fetchReferensi();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Pre-fill dari GET /proposals/:id jika navigate tanpa state (refresh / direct link)
   useEffect(() => {
     if (existingProposal?.title) return;
@@ -125,11 +155,11 @@ export default function EditProposalDosen() {
         setSkema(toSkemaLabel(p.skema));
         setAmount(String(p.funding_request_amount ?? ""));
         setSumberData(p.sumber_data_penelitian || "");
-        // API mengirim kode enum (INTERNAL_KAMPUS) — normalkan ke label dulu
+        // API mengirim label kanonis — nilai apa pun yang tidak kosong diterima
         const raw = toSumberPendanaanLabel(
           (p.sumber_pendanaan as string | null) ?? null,
         );
-        if (raw && (SUMBER_PENDANAAN_OPTIONS as string[]).includes(raw)) {
+        if (raw) {
           setSumberPendanaan(raw as SumberPendanaanValue);
         } else {
           setSumberPendanaan("Pilih");
@@ -342,10 +372,12 @@ export default function EditProposalDosen() {
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none bg-white"
             >
               <option value="">Pilih</option>
-              {/* value = label (kontrak BE); jangan pakai kode enum */}
-              <option value="Penelitian Pengembangan">Penelitian Pengembangan</option>
-              <option value="Penelitian Terapan">Penelitian Terapan</option>
-              <option value="Penelitian Kolaborasi">Penelitian Kolaborasi</option>
+              {/* value = label kanonis (kontrak BE) — dinamis dari master referensi */}
+              {skemaOpsi.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -359,7 +391,7 @@ export default function EditProposalDosen() {
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none bg-white"
             >
               <option value="Pilih">Pilih</option>
-              {SUMBER_PENDANAAN_OPTIONS.map((opt) => (
+              {sumberOpsi.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
                 </option>

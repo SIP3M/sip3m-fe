@@ -34,6 +34,7 @@ import {
   SumberPendanaanValue,
 } from "./ProposalDosen.types";
 import {
+  SKEMA_OPTIONS,
   SUMBER_PENDANAAN_OPTIONS,
   toSumberPendanaanLabel,
   toSkemaLabel,
@@ -54,6 +55,7 @@ import DosenAutocomplete from "./components/DosenAutocomplete";
 import MahasiswaAutocomplete from "./components/MahasiswaAutocomplete";
 import { Card, CardContent } from "@/components/ui/card";
 import { getUsers } from "@/features/users/Users.api";
+import { getReferensiAktif } from "@/features/master/referensi.api";
 
 const PAGE_SIZE = 5;
 
@@ -260,6 +262,12 @@ export default function ProposalDosen() {
     useState<SumberPendanaanValue>("Pilih");
   const [fakultasList, setFakultasList] = useState<Fakultas[]>([]);
   const [fakultasLoading, setFakultasLoading] = useState(true);
+  // Opsi dropdown dinamis dari master referensi (ADMIN_SISTEM);
+  // fallback = konstanta statis bila API gagal.
+  const [skemaOpsi, setSkemaOpsi] = useState<string[]>([...SKEMA_OPTIONS]);
+  const [sumberOpsi, setSumberOpsi] = useState<string[]>(
+    SUMBER_PENDANAAN_OPTIONS,
+  );
 
   // ── Anti-double inline errors (BE f0be231) ───────────────────────────────
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -340,6 +348,23 @@ export default function ProposalDosen() {
     };
 
     fetchFakultas();
+  }, []);
+
+  useEffect(() => {
+    // Opsi skema & sumber pendanaan — live dari master referensi (publik)
+    const fetchReferensi = async () => {
+      try {
+        const [skemaRes, sumberRes] = await Promise.all([
+          getReferensiAktif("SKEMA"),
+          getReferensiAktif("SUMBER_PENDANAAN"),
+        ]);
+        if (skemaRes.length) setSkemaOpsi(skemaRes.map((r) => r.nama));
+        if (sumberRes.length) setSumberOpsi(sumberRes.map((r) => r.nama));
+      } catch (err) {
+        console.error("Gagal memuat opsi referensi:", err);
+      }
+    };
+    fetchReferensi();
   }, []);
 
   useEffect(() => {
@@ -766,12 +791,6 @@ export default function ProposalDosen() {
     setIsFormOpen(true);
   };
 
-  const skemaOptions = [
-    "Penelitian Pengembangan",
-    "Penelitian Terapan",
-    "Penelitian Kolaborasi",
-  ];
-
   const openEditForm = (proposal: Proposal) => {
     setError(null);
     setFeedback(null);
@@ -801,9 +820,7 @@ export default function ProposalDosen() {
     const rawSumber = toSumberPendanaanLabel(
       (proposal.sumber_pendanaan as string | null) ?? null,
     );
-    const isValidSumber = (SUMBER_PENDANAAN_OPTIONS as string[]).includes(
-      rawSumber ?? "",
-    );
+    const isValidSumber = (sumberOpsi as string[]).includes(rawSumber ?? "");
     setSumberPendanaan(
       isValidSumber ? (rawSumber as SumberPendanaanValue) : "Pilih",
     );
@@ -1364,7 +1381,7 @@ export default function ProposalDosen() {
                       className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                     >
                       <option value="Pilih">Pilih</option>
-                      {SUMBER_PENDANAAN_OPTIONS.map((opt) => (
+                      {sumberOpsi.map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
                         </option>
@@ -1400,7 +1417,7 @@ export default function ProposalDosen() {
                       className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
                     >
                       <option value="">Pilih</option>
-                      {skemaOptions.map((opt) => (
+                      {skemaOpsi.map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
                         </option>

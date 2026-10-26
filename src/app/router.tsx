@@ -93,6 +93,7 @@ import ProfileMahasiswa from "@/features/mahasiswa/ProfileMahasiswa";
 
 import KelolaFakultas from "@/features/master/KelolaFakultas";
 import KelolaProgramStudi from "@/features/master/KelolaProgramStudi";
+import KelolaReferensi from "@/features/master/KelolaReferensi";
 import MasterDosen from "@/features/master/MasterDosen";
 import MasterMahasiswa from "@/features/master/MasterMahasiswa";
 import MasterReviewer from "@/features/master/MasterReviewer";
@@ -290,6 +291,11 @@ export const router = createBrowserRouter([
       {
         path: "admin-dashboard/master-data/program-studi",
         element: <KelolaProgramStudi />,
+      },
+      {
+        // Skema penelitian & sumber pendanaan (opsi dropdown proposal)
+        path: "admin-dashboard/master-data/referensi",
+        element: <KelolaReferensi />,
       },
       {
         path: "admin-dashboard/master-data/dosen",
