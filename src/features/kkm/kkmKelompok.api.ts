@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import type {
   AddKkmKelompokAnggotaPayload,
+  GetKelompokSayaResponse,
   GetKkmKelompokDetailResponse,
   GetKkmKelompokListResponse,
   GetKkmKelompokStatsResponse,
@@ -47,6 +48,12 @@ export const getKkmKelompokStats = async (
   const res = await api.get<GetKkmKelompokStatsResponse>(`${BASE}/stats`, {
     params: { periode_id },
   });
+  return res.data;
+};
+
+/** GET /kkm/kelompok/me — kelompok mahasiswa yang login (halaman "Kelompok Saya") */
+export const getKelompokSaya = async (): Promise<GetKelompokSayaResponse> => {
+  const res = await api.get<GetKelompokSayaResponse>(`${BASE}/me`);
   return res.data;
 };
 
