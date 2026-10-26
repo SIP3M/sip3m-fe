@@ -1,9 +1,19 @@
 import { create } from "zustand";
-import { getKkmPeserta } from "./kkmPeserta.api";
 import { getKkmPeriodActive } from "./kkmPeriod.api";
+import { getPendaftaranMe } from "./kkmPendaftaran.api";
 import { useAuthStore } from "@/features/auth/auth.store";
 
-export type MahasiswaKkmAccessStatus = "PENDING" | "VERIFIED" | "REJECTED";
+/**
+ * Status akses KKM mahasiswa — berasal dari baris pendaftaran pada periode
+ * aktif (GET /kkm/pendaftaran/me, khusus mahasiswa). NONE = belum mendaftar.
+ * Menu KKM terbuka otomatis saat VERIFIED (verifikasi admin LPPM).
+ */
+export type MahasiswaKkmAccessStatus =
+  | "NONE"
+  | "DRAFT"
+  | "PENDING"
+  | "REJECTED"
+  | "VERIFIED";
 
 interface MahasiswaAccessState {
   hasAccess: boolean;
@@ -15,27 +25,23 @@ interface MahasiswaAccessState {
   checkAccess: () => Promise<void>;
 }
 
+/** Paint awal dari cache lokal (sementara checkAccess berjalan). */
 const getInitialAccess = (): boolean => {
   if (typeof window === "undefined") return false;
   try {
-    const params = new URLSearchParams(window.location.search);
-    const access = params.get("access");
-    if (access === "verified") return true;
-    if (access === "pending") return false;
-
     const stored = localStorage.getItem("kkm_mahasiswa_has_access");
     if (stored === "true") return true;
     if (stored === "false") return false;
   } catch {
     // fallback
   }
-  // Default is false: student has NOT yet received access from Admin LPPM -> Peserta KKM
+  // Default false: akses modul KKM baru terbuka setelah terverifikasi.
   return false;
 };
 
 export const useKkmMahasiswaAccessStore = create<MahasiswaAccessState>((set) => ({
   hasAccess: getInitialAccess(),
-  status: getInitialAccess() ? "VERIFIED" : "PENDING",
+  status: getInitialAccess() ? "VERIFIED" : "NONE",
   isLoading: false,
   checked: false,
 
@@ -45,7 +51,7 @@ export const useKkmMahasiswaAccessStore = create<MahasiswaAccessState>((set) => 
     } catch {
       // ignore
     }
-    set({ hasAccess, status: hasAccess ? "VERIFIED" : "PENDING" });
+    set({ hasAccess, status: hasAccess ? "VERIFIED" : "NONE" });
   },
 
   setStatus: (status) => {
@@ -59,62 +65,40 @@ export const useKkmMahasiswaAccessStore = create<MahasiswaAccessState>((set) => 
   },
 
   checkAccess: async () => {
-    // If URL param explicitly specifies ?access=verified or ?access=pending, respect it
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const access = params.get("access");
-      if (access === "verified") {
-        set({ hasAccess: true, status: "VERIFIED", isLoading: false, checked: true });
-        return;
-      }
-      if (access === "pending") {
-        set({ hasAccess: false, status: "PENDING", isLoading: false, checked: true });
-        return;
-      }
-    }
-
     set({ isLoading: true });
     try {
       const user = useAuthStore.getState().user;
       if (!user) {
-        set({ hasAccess: false, status: "PENDING", isLoading: false, checked: true });
+        set({ hasAccess: false, status: "NONE", isLoading: false, checked: true });
         return;
       }
 
+      // 1) Periode aktif — pendaftaran hanya relevan pada periode ini.
       const activePeriod = await getKkmPeriodActive().catch(() => null);
-      if (activePeriod?.data?.id) {
-        const res = await getKkmPeserta({
-          periode_id: activePeriod.data.id,
-          search: user.username || user.email,
-        }).catch(() => null);
-
-        const myPeserta = res?.data?.find(
-          (p) =>
-            p.user_id === user.id ||
-            p.nim === user.username ||
-            p.email === user.email,
-        );
-
-        if (myPeserta) {
-          const isVerif = myPeserta.status === "VERIFIED";
-          try {
-            localStorage.setItem("kkm_mahasiswa_has_access", String(isVerif));
-          } catch {
-            // ignore
-          }
-          set({
-            hasAccess: isVerif,
-            status: myPeserta.status,
-            isLoading: false,
-            checked: true,
-          });
-          return;
+      if (!activePeriod?.data?.id) {
+        try {
+          localStorage.setItem("kkm_mahasiswa_has_access", "false");
+        } catch {
+          // ignore
         }
+        set({ hasAccess: false, status: "NONE", isLoading: false, checked: true });
+        return;
       }
 
-      set({ hasAccess: false, status: "PENDING", isLoading: false, checked: true });
+      // 2) Pendaftaran saya di periode aktif (endpoint khusus mahasiswa).
+      const rows = await getPendaftaranMe(activePeriod.data.id).catch(() => null);
+      const mine = rows?.[0] ?? null;
+      const status: MahasiswaKkmAccessStatus = mine?.status ?? "NONE";
+      const hasAccess = status === "VERIFIED";
+
+      try {
+        localStorage.setItem("kkm_mahasiswa_has_access", String(hasAccess));
+      } catch {
+        // ignore
+      }
+      set({ hasAccess, status, isLoading: false, checked: true });
     } catch {
-      set({ hasAccess: false, status: "PENDING", isLoading: false, checked: true });
+      set({ hasAccess: false, status: "NONE", isLoading: false, checked: true });
     }
   },
 }));

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   ChevronDown,
   CalendarDays,
@@ -13,6 +13,9 @@ import type {
   GetKkmSkemaResponse,
   SkemaJenis,
 } from "./kkmSkema.types";
+import { getPendaftaranMe } from "./kkmPendaftaran.api";
+import type { PendaftaranStatus } from "./kkmPendaftaran.api";
+import { useAuthStore } from "@/features/auth/auth.store";
 
 // ==================== HELPERS ====================
 
@@ -64,6 +67,9 @@ const jenisStyle = (jenis: string) => {
 
 export default function PilihSkemaKKM() {
   const { search } = useOutletContext<{ search: string }>();
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isMahasiswa = user?.roles?.roles === "MAHASISWA";
 
   // base = fetch TANPA jenis (untuk angka tab), view = fetch DENGAN jenis (kartu)
   const [base, setBase] = useState<GetKkmSkemaResponse | null>(null);
@@ -73,6 +79,30 @@ export default function PilihSkemaKKM() {
 
   const [jenisFilter, setJenisFilter] = useState<SkemaJenis | "">("");
   const [wilayahFilter, setWilayahFilter] = useState("");
+
+  // Status pendaftaran saya per periode — menentukan label/tombol kartu.
+  const [pendaftaranByPeriode, setPendaftaranByPeriode] = useState<
+    Map<number, PendaftaranStatus>
+  >(new Map());
+
+  useEffect(() => {
+    if (!isMahasiswa) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await getPendaftaranMe();
+        if (cancelled) return;
+        const m = new Map<number, PendaftaranStatus>();
+        rows.forEach((r) => m.set(r.periode_id, r.status));
+        setPendaftaranByPeriode(m);
+      } catch {
+        // abaikan — tombol tetap memakai label default
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isMahasiswa]);
 
   useEffect(() => {
     let cancelled = false;
@@ -223,8 +253,9 @@ export default function PilihSkemaKKM() {
         </h1>
         <p className="mt-2 text-sm sm:text-base text-white/90 max-w-3xl leading-relaxed">
           Silakan pilih salah satu skema pengabdian masyarakat di bawah ini yang
-          sesuai dengan minat, program studi, dan kompetensi Anda. Fitur
-          pendaftaran daring sedang disiapkan oleh panitia LPPM.
+          sesuai dengan minat, program studi, dan kompetensi Anda, lalu tekan
+          tombol pendaftaran untuk mengisi formulir daring. Pendaftaran terbuka
+          untuk mahasiswa semester 7.
         </p>
       </div>
 
@@ -345,17 +376,28 @@ export default function PilihSkemaKKM() {
             const style = jenisStyle(skema.jenis);
             const range = fmtRangeBulan(skema.tanggal.pelaksanaan, skema.tanggal.penarikan);
             const batas = fmtTanggal(skema.batas_daftar);
+            const buka = fmtTanggal(skema.tanggal.buka_daftar);
+            const myStatus = pendaftaranByPeriode.get(skema.id);
+            /** DIJADWAKAN: tampil lengkap tapi tombol daftar nonaktif ("segera dibuka"). */
+            const comingSoon = skema.status === "DIJADWALKAN";
             return (
               <div
                 key={skema.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col"
               >
-                {/* Badge jenis */}
-                <span
-                  className={`inline-flex self-start items-center px-3 py-1 rounded-full text-xs font-semibold ${style.badge}`}
-                >
-                  {jenisLabel(skema.jenis)}
-                </span>
+                {/* Badge jenis + indikasi segera dibuka */}
+                <div className="inline-flex self-start items-center gap-2">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${style.badge}`}
+                  >
+                    {jenisLabel(skema.jenis)}
+                  </span>
+                  {comingSoon && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                      SEGERA DIBUKA
+                    </span>
+                  )}
+                </div>
 
                 <h3 className="mt-3 text-lg font-bold text-gray-900">{skema.nama}</h3>
                 {skema.deskripsi && (
@@ -410,17 +452,78 @@ export default function PilihSkemaKKM() {
                   )}
                 </div>
 
-                {/* Tombol placeholder — endpoint POST pendaftaran menyusul (§5) */}
-                <button
-                  type="button"
-                  disabled
-                  title="Fitur pendaftaran sedang disiapkan panitia"
-                  className="mt-4 w-full py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold opacity-50 cursor-not-allowed"
-                >
-                  Daftar Skema Ini →
-                </button>
+                {/* Aksi pendaftaran — mengikuti status pendaftaran saya */}
+                {!isMahasiswa ? (
+                  <button
+                    type="button"
+                    disabled
+                    title="Pendaftaran khusus mahasiswa (semester 7)"
+                    className="mt-4 w-full py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold opacity-50 cursor-not-allowed"
+                  >
+                    Khusus Mahasiswa
+                  </button>
+                ) : myStatus === "VERIFIED" ? (
+                  <button
+                    type="button"
+                    disabled
+                    title="Pendaftaran Anda pada periode ini sudah terverifikasi"
+                    className="mt-4 w-full py-2.5 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-semibold cursor-not-allowed"
+                  >
+                    ✓ Sudah Terdaftar
+                  </button>
+                ) : myStatus === "PENDING" ? (
+                  <button
+                    type="button"
+                    disabled
+                    title="Pendaftaran sudah dikirim — menunggu verifikasi admin LPPM"
+                    className="mt-4 w-full py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold cursor-not-allowed"
+                  >
+                    ⏳ Menunggu Verifikasi
+                  </button>
+                ) : comingSoon ? (
+                  <button
+                    type="button"
+                    disabled
+                    title={
+                      myStatus === "DRAFT" || myStatus === "REJECTED"
+                        ? "Pendaftaran sementara dikunci — draft Anda tersimpan, lanjutkan setelah periode diaktifkan panitia"
+                        : buka
+                          ? `Pendaftaran dijadwalkan dibuka ${buka}`
+                          : "Pendaftaran belum dibuka — segera dibuka"
+                    }
+                    className="mt-4 w-full py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 text-sm font-semibold cursor-not-allowed"
+                  >
+                    ⏰ Segera Dibuka
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/mahasiswa-dashboard/pendaftaran/${skema.id}`)
+                    }
+                    className={`mt-4 w-full py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
+                      myStatus === "DRAFT"
+                        ? "bg-amber-500 hover:bg-amber-600 text-white"
+                        : myStatus === "REJECTED"
+                          ? "bg-red-50 border border-red-300 text-red-700 hover:bg-red-100"
+                          : "bg-red-600 hover:bg-red-700 text-white"
+                    }`}
+                  >
+                    {myStatus === "DRAFT"
+                      ? "Lanjutkan Pendaftaran →"
+                      : myStatus === "REJECTED"
+                        ? "Ajukan Ulang Pendaftaran →"
+                        : "Daftar Skema Ini →"}
+                  </button>
+                )}
                 <p className="mt-2 text-center text-xs text-gray-400">
-                  {batas ? `Batas akhir pendaftaran: ${batas}` : "Pendaftaran dibuka terbatas"}
+                  {comingSoon
+                    ? buka
+                      ? `Pendaftaran dibuka ${buka}${batas ? ` • Batas akhir ${batas}` : ""}`
+                      : "Pendaftaran segera dibuka"
+                    : batas
+                      ? `Batas akhir pendaftaran: ${batas}`
+                      : "Pendaftaran dibuka terbatas"}
                 </p>
               </div>
             );

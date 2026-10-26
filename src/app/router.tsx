@@ -72,6 +72,7 @@ import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 import PengumumanKKMDosen from "@/features/kkm/PengumumanKKMDosen";
 import PilihSkemaKKM from "@/features/kkm/PilihSkemaKKM";
+import FormPendaftaranKKM from "@/features/kkm/FormPendaftaranKKM";
 
 import DashboardDosenKKM from "@/features/dashboard/DashboardDosenKKM";
 import DashboardMahasiswaKKM from "@/features/dashboard/DashboardMahasiswaKKM";
@@ -504,6 +505,11 @@ export const router = createBrowserRouter([
         // Langkah 1 portal KKM — pemilihan skema (live API /kkm/skema)
         path: "pilih-skema",
         element: <PilihSkemaKKM />,
+      },
+      {
+        // Formulir pendaftaran mandiri per periode (mahasiswa semester 7)
+        path: "pendaftaran/:periodeId",
+        element: <FormPendaftaranKKM />,
       },
     ],
   },
