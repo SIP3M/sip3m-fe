@@ -62,6 +62,14 @@ export const upsertPendaftaran = async (
   const res = await api.post<{ message: string; data: PendaftaranItem }>(
     "/kkm/pendaftaran",
     payload,
+    {
+      // Instance `api` punya default Content-Type application/json — tanpa ini
+      // axios mengubah FormData jadi string JSON, berkas `bukti_ukt` hilang dan
+      // server menolak kirim dengan "Bukti pembayaran UKT wajib diunggah".
+      // (Pola sama dgn proposal.api & kkmKelompok.api; browser menambahkan
+      // boundary saat multipart.)
+      headers: { "Content-Type": "multipart/form-data" },
+    },
   );
   return res.data;
 };
