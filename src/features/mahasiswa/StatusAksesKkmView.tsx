@@ -10,6 +10,7 @@ import {
   RotateCw,
   HelpCircle,
   BookOpen,
+  ClipboardList,
   Info,
   Headphones,
   Mail,
@@ -211,9 +212,18 @@ export default function StatusAksesKkmView() {
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <button
             type="button"
+            onClick={() => navigate("/mahasiswa-dashboard/pilih-skema")}
+            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-red-700 transition-colors cursor-pointer"
+          >
+            <ClipboardList size={15} />
+            Pilih Skema KKM
+          </button>
+
+          <button
+            type="button"
             onClick={handleRefreshStatus}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-75"
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-6 py-2.5 text-sm font-semibold text-red-700 shadow-xs hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-75"
           >
             <RotateCw size={15} className={isRefreshing ? "animate-spin" : ""} />
             {isRefreshing ? "Memeriksa..." : "Refresh Status"}

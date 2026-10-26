@@ -9,6 +9,7 @@ import {
   User,
   LogOut,
   Lock,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { useKkmMahasiswaAccessStore } from "@/features/kkm/kkmMahasiswaAccess.store";
@@ -28,6 +29,14 @@ const MENU_ITEMS: MenuItem[] = [
     icon: LayoutGrid,
     path: "/mahasiswa-dashboard",
     exact: true,
+    requiresAccess: false,
+  },
+  {
+    // Langkah 1 portal KKM: pemilihan skema (live API /kkm/skema).
+    // Bagian pendaftaran — tetap bisa dibuka walau akses KKM belum aktif.
+    name: "Pilih Skema KKM",
+    icon: ClipboardList,
+    path: "/mahasiswa-dashboard/pilih-skema",
     requiresAccess: false,
   },
   {
