@@ -11,6 +11,41 @@ export const SUMBER_PENDANAAN_OPTIONS: SumberPendanaan[] = [
   "Lainnya",
 ];
 
+export const SKEMA_OPTIONS = [
+  "Penelitian Pengembangan",
+  "Penelitian Terapan",
+  "Penelitian Kolaborasi",
+] as const;
+
+// API GET mengirim kode enum (PENELITIAN_*/INTERNAL_*), sedangkan form memakai
+// label — nilai dari API harus dinormalkan sebelum dipakai di form/submit.
+const SKEMA_ENUM_TO_LABEL: Record<string, string> = {
+  PENELITIAN_PENGEMBANGAN: "Penelitian Pengembangan",
+  PENELITIAN_TERAPAN: "Penelitian Terapan",
+  PENELITIAN_KOLABORASI: "Penelitian Kolaborasi",
+};
+
+const SUMBER_PENDANAAN_ENUM_TO_LABEL: Record<string, string> = {
+  INTERNAL_KAMPUS: "Internal Kampus",
+  KEMENDIKBUDRISTEK: "Kemendikbudristek",
+  MANDIRI: "Mandiri",
+  LAINNYA: "Lainnya",
+};
+
+/** Normalisasi skema dari API/DB ke label form. Label sudah benar diteruskan. */
+export const toSkemaLabel = (value?: string | null): string => {
+  if (!value) return "";
+  return SKEMA_ENUM_TO_LABEL[value] ?? value;
+};
+
+/** Normalisasi sumber_pendanaan dari API/DB ke label form (null tetap null). */
+export const toSumberPendanaanLabel = (
+  value?: string | null,
+): string | null => {
+  if (!value) return null;
+  return SUMBER_PENDANAAN_ENUM_TO_LABEL[value] ?? value;
+};
+
 export type ProposalStatus =
   | "REVIEW"
   | "SUBMITTED"
