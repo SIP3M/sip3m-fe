@@ -13,6 +13,10 @@ export interface User {
   nomor_hp: string | null;
   is_active: boolean;
   nidn?: string | null;
+  /** NIM mahasiswa (kolom users.nidn_nip) — dari GET /auth/me. */
+  nim?: string | null;
+  /** Semester berjalan mahasiswa — syarat pendaftaran KKM (harus 7). */
+  semester?: number | null;
   fakultas?: string | null;
   program_studi?: string | null;
   instansi?: string | null;
