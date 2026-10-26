@@ -175,6 +175,8 @@ const sanitizeUpdateUserPayload = (data: UpdateUserPayload) => {
     Object.entries(normalized).filter(([key, value]) => {
       // fakultas/program_studi: "" adalah instruksi "cabut" menurut API → selalu ikut
       if (key === "fakultas" || key === "program_studi") return typeof value === "string";
+      // tanggal_lahir: "" adalah instruksi "kosongkan" menurut API → selalu ikut
+      if (key === "tanggal_lahir") return true;
       if (typeof value === "string") {
         return value.length > 0;
       }
