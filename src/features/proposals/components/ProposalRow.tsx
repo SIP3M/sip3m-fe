@@ -13,6 +13,7 @@ const statusStyle: Record<string, string> = {
   REVISI: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
 const getStatusKey = (status: string) =>
@@ -36,6 +37,7 @@ const getStatusLabel = (status: string) => {
     REVISION: "Revision",
     REVISI: "Revisi",
     REJECTED: "Rejected",
+    REVIEW_DONE: "Menunggu Keputusan",
   };
 
   return statusLabel[key] || status;

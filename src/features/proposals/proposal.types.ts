@@ -52,6 +52,7 @@ export type ProposalStatus =
   | "REVISION"
   | "ADMIN_VERIFIED"
   | "UNDER_REVIEW"
+  | "REVIEW_DONE"
   | "REJECTED"
   | "ACCEPTED";
 

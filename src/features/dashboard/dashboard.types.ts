@@ -4,6 +4,7 @@ export type ProposalStatusKey =
   | "ADMIN_VERIFIED"
   | "UNDER_REVIEW"
   | "REVISION"
+  | "REVIEW_DONE"
   | "ACCEPTED"
   | "REJECTED"
   | string;

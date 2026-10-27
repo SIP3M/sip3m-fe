@@ -5,11 +5,14 @@ export type ProposalStatus =
   | "ADMIN_VERIFIED"
   | "UNDER_REVIEW"
   | "REVISION"
+  | "REVIEW_DONE"
   | "ACCEPTED"
   | "REJECTED";
 
-// ─── Review Decision (only these 3 are allowed from reviewer) ────────────────
-export type ReviewDecision = "ACCEPTED" | "REJECTED" | "REVISION";
+// ─── Status hasil review dari reviewer ───────────────────────────────────────
+// REVIEW_DONE = rekomendasi "Layak Didanai" (menunggu keputusan akhir Admin
+// LPPM); REJECTED = keputusan final "Tidak Layak Didanai"; REVISION = revisi.
+export type ReviewDecision = "REVIEW_DONE" | "REJECTED" | "REVISION";
 
 // ─── Assigned Proposal (GET /proposals/assigned) ─────────────────────────────
 export interface AssignedProposal {

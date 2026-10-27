@@ -32,6 +32,7 @@ const formatDate = (iso: string) =>
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   UNDER_REVIEW: { label: "Sedang Direview", bg: "bg-blue-100",   text: "text-blue-700" },
   REVISION:     { label: "Revisi",          bg: "bg-orange-100", text: "text-orange-700" },
+  REVIEW_DONE:  { label: "Menunggu Keputusan", bg: "bg-indigo-100", text: "text-indigo-700" },
   ACCEPTED:     { label: "Diterima",        bg: "bg-green-100",  text: "text-green-700" },
   REJECTED:     { label: "Ditolak",         bg: "bg-red-100",    text: "text-red-700" },
 };
@@ -50,6 +51,7 @@ const FILTER_OPTIONS: { label: string; value: ProposalStatus | "ALL" }[] = [
   { label: "Semua", value: "ALL" },
   { label: "Under Review", value: "UNDER_REVIEW" },
   { label: "Revisi", value: "REVISION" },
+  { label: "Menunggu Keputusan", value: "REVIEW_DONE" },
   { label: "Diterima", value: "ACCEPTED" },
   { label: "Ditolak", value: "REJECTED" },
 ];

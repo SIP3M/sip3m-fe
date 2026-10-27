@@ -311,7 +311,7 @@ export default function ReviewDetailPage() {
             decisionOption,
             notes
           ),
-          status: decisionOption === "APPROVED" ? "ACCEPTED" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
+          status: decisionOption === "APPROVED" ? "REVIEW_DONE" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
         };
         await evaluateProposal(proposalId, payload);
         setDraftSaved(true);
@@ -402,7 +402,8 @@ export default function ReviewDetailPage() {
           const stat = myLatestReview.status;
           if (stat === "REVISION") {
             setDecisionOption("REVISION_MINOR");
-          } else if (stat === "ACCEPTED") {
+          } else if (stat === "ACCEPTED" || stat === "REVIEW_DONE") {
+            // REVIEW_DONE = status baru hasil rekomendasi "Layak Didanai"
             setDecisionOption("APPROVED");
           } else {
             setDecisionOption(stat as "APPROVED" | "REJECTED");
@@ -445,7 +446,7 @@ export default function ReviewDetailPage() {
           decisionOption,
           notes
         ),
-        status: decisionOption === "APPROVED" ? "ACCEPTED" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
+        status: decisionOption === "APPROVED" ? "REVIEW_DONE" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
       };
       await evaluateProposal(proposalId, payload);
       setDraftSaved(true);
@@ -468,7 +469,7 @@ export default function ReviewDetailPage() {
       const payload: EvaluatePayloadFinal = {
         is_draft: false,
         decision: decisionOption as "APPROVED" | "REJECTED" | "REVISION_MINOR" | "REVISION_MAJOR",
-        status: decisionOption === "APPROVED" ? "ACCEPTED" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
+        status: decisionOption === "APPROVED" ? "REVIEW_DONE" : decisionOption === "REVISION_MINOR" || decisionOption === "REVISION_MAJOR" ? "REVISION" : (decisionOption as ReviewDecision),
         score_perumusan: scores.score_perumusan,
         score_tinjauan: scores.score_tinjauan,
         score_metode: scores.score_metode,
@@ -1013,10 +1014,10 @@ export default function ReviewDetailPage() {
               </div>
             </div>
 
-            {/* Keputusan Review Final */}
+            {/* Rekomendasi Reviewer */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
               <h2 className="text-xs font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center justify-between uppercase tracking-wider">
-                <span>Keputusan Review Final</span>
+                <span>Rekomendasi Reviewer</span>
                 <span className="text-red-500 font-black text-xs">*</span>
               </h2>
 
@@ -1024,8 +1025,8 @@ export default function ReviewDetailPage() {
                 {[
                   {
                     val: "APPROVED" as const,
-                    label: "Diterima",
-                    desc: "Proposal dapat langsung dilanjutkan tanpa revisi.",
+                    label: "Layak Didanai",
+                    desc: "Direkomendasikan untuk didanai — keputusan akhir (Diterima/Tolak) oleh Admin LPPM.",
                     activeColor: "ring-2 ring-green-500 border-green-500 bg-green-50/20 shadow-xs",
                   },
                   {
@@ -1042,8 +1043,8 @@ export default function ReviewDetailPage() {
                   },
                   {
                     val: "REJECTED" as const,
-                    label: "Ditolak",
-                    desc: "Proposal tidak memenuhi standar minimal untuk dilanjutkan.",
+                    label: "Tidak Layak Didanai",
+                    desc: "Keputusan final reviewer — proposal langsung ditolak.",
                     activeColor: "ring-2 ring-red-500 border-red-500 bg-red-50/20 shadow-xs",
                   },
                 ].map((opt) => {
@@ -1079,7 +1080,7 @@ export default function ReviewDetailPage() {
                   { label: "Semua indikator telah dinilai", met: isAllScoresFilled },
                   { label: "Semua catatan reviewer diisi", met: isAllIndicatorCommentsFilled },
                   { label: "Rekomendasi akhir diisi", met: isGeneralCommentsFilled },
-                  { label: "Keputusan review dipilih", met: isDecisionSelected },
+                  { label: "Rekomendasi review dipilih", met: isDecisionSelected },
                 ].map((chk, i) => (
                   <div key={i} className="flex items-center gap-3 text-xs font-semibold">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border transition-all ${

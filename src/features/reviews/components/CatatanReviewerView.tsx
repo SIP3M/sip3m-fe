@@ -219,15 +219,15 @@ export default function CatatanReviewerView({
         color: "bg-amber-100 text-amber-700 border-amber-200",
       };
     }
-    if (raw === "APPROVED" || raw === "ACCEPTED") {
+    if (raw === "APPROVED" || raw === "ACCEPTED" || raw === "REVIEW_DONE") {
       return {
-        label: "Diterima / Lolos",
+        label: "Layak Didanai",
         color: "bg-emerald-100 text-emerald-700 border-emerald-200",
       };
     }
     if (raw === "REJECTED") {
       return {
-        label: "Ditolak",
+        label: "Tidak Layak Didanai",
         color: "bg-red-100 text-red-700 border-red-200",
       };
     }
