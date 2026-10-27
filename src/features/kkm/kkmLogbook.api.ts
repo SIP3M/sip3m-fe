@@ -2,6 +2,10 @@ import { api } from "@/services/api";
 import type {
   CreateLogbookResponse,
   GetLogbookSayaResponse,
+  GetLogbookValidasiDetailResponse,
+  GetLogbookValidasiResponse,
+  KkmLogbookStatus,
+  ReviewLogbookResponse,
 } from "./kkmLogbook.types";
 
 const BASE = "/kkm";
@@ -30,6 +34,49 @@ export const createLogbook = async (
     `${BASE}/kelompok/${kelompokId}/logbook`,
     formData,
     { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return res.data;
+};
+
+// ─── Validasi logbook (DPL / admin LPPM) ─────────────────────────────────────
+
+/**
+ * GET /kkm/logbook/validasi — daftar entri lintas kelompok bimbingan
+ * (DOSEN: kelompok bimbingannya; admin/staff: semua).
+ */
+export const getLogbookValidasi = async (params?: {
+  status?: KkmLogbookStatus;
+  page?: number;
+  search?: string;
+}): Promise<GetLogbookValidasiResponse> => {
+  const res = await api.get<GetLogbookValidasiResponse>(`${BASE}/logbook/validasi`, {
+    params,
+  });
+  return res.data;
+};
+
+/** GET /kkm/logbook/validasi/:entryId — detail entri utk halaman detail validasi */
+export const getLogbookValidasiDetail = async (
+  entryId: number,
+): Promise<GetLogbookValidasiDetailResponse> => {
+  const res = await api.get<GetLogbookValidasiDetailResponse>(
+    `${BASE}/logbook/validasi/${entryId}`,
+  );
+  return res.data;
+};
+
+/**
+ * PATCH /kkm/kelompok/:id/logbook/:entryId/review — APPROVED / REVISI.
+ * `catatan` wajib saat REVISI (divalidasi BE); diabaikan saat APPROVED.
+ */
+export const reviewLogbook = async (
+  kelompokId: number,
+  entryId: number,
+  payload: { status: "APPROVED" | "REVISI"; catatan?: string },
+): Promise<ReviewLogbookResponse> => {
+  const res = await api.patch<ReviewLogbookResponse>(
+    `${BASE}/kelompok/${kelompokId}/logbook/${entryId}/review`,
+    payload,
   );
   return res.data;
 };

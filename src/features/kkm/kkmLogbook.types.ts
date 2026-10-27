@@ -44,6 +44,69 @@ export interface CreateLogbookResponse {
   };
 }
 
+// ─── Validasi logbook (DPL / admin LPPM) ─────────────────────────────────────
+
+/** Baris daftar validasi — GET /kkm/logbook/validasi */
+export interface KkmLogbookValidasiRow {
+  id: number;
+  kelompok_id: number;
+  kelompok: { nama: string; desa: string };
+  mahasiswa: { id: number; nama: string; nim: string | null };
+  tanggal: string;
+  judul: string;
+  deskripsi: string;
+  status: KkmLogbookStatus;
+  catatan_revisi: string | null;
+  file_url: string | null;
+  file_size: number | null;
+  created_at: string;
+}
+
+/** GET /kkm/logbook/validasi */
+export interface GetLogbookValidasiResponse {
+  message: string;
+  data: KkmLogbookValidasiRow[];
+  /** Dihitung dari seluruh cakupan (tanpa filter status/search) */
+  stats: { menunggu: number; approved: number; revisi: number };
+  meta: { totalData: number; totalPages: number; currentPage: number; limit: number };
+}
+
+/** GET /kkm/logbook/validasi/:entryId */
+export interface GetLogbookValidasiDetailResponse {
+  message: string;
+  data: {
+    id: number;
+    kelompok_id: number;
+    kelompok: {
+      nama: string;
+      lokasi: { desa: string; kecamatan: string; kabupaten: string };
+    };
+    mahasiswa: { id: number; nama: string; nim: string | null };
+    tanggal: string;
+    judul: string;
+    deskripsi: string;
+    lokasi_kegiatan: string | null;
+    status: KkmLogbookStatus;
+    catatan_revisi: string | null;
+    file_url: string | null;
+    file_size: number | null;
+    reviewer: { id: number; nama: string } | null;
+    reviewed_at: string | null;
+    created_at: string;
+  };
+}
+
+/** PATCH /kkm/kelompok/:id/logbook/:entryId/review */
+export interface ReviewLogbookResponse {
+  message: string;
+  data: {
+    id: number;
+    status: KkmLogbookStatus;
+    catatan_revisi: string | null;
+    reviewed_at: string | null;
+  };
+}
+
 // ─── UI helpers ──────────────────────────────────────────────────────────────
 
 export const KKM_LOGBOOK_STATUS_LABEL: Record<KkmLogbookStatus, string> = {
