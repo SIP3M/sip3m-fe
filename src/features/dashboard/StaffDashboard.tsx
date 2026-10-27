@@ -137,7 +137,6 @@ const AKTIVITAS_TERBARU = [
 const AKSES_CEPAT = [
   { label: "Plotting Reviewer" },
   { label: "Monitoring Proyek" },
-  { label: "Keuangan & Hibah" },
 ];
 // =====================================================================
 

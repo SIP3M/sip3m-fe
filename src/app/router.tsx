@@ -33,12 +33,10 @@ import ProposalDetail from "@/features/proposals/ProposalDetail";
 import ReviewList from "@/features/reviews/ReviewList";
 import ProjectList from "@/features/projects/ProjectList";
 import ProjectDetail from "@/features/projects/ProjectDetail";
-import FinancePage from "@/features/finance/FinancePage";
 import LandingPage from "@/features/dashboard/LandingPage";
 import ProposalStaff from "@/features/proposals/ProposalStaff";
 import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
 import ReviewListStaff from "@/features/reviews/ReviewListStaff";
-import LogsPage from "@/features/logs/LogsPage";
 import AuditLogPage from "@/features/logs/AuditLogPage";
 
 import ProposalDosen from "@/features/proposals/ProposalDosen";
@@ -166,16 +164,8 @@ export const router = createBrowserRouter([
         element: <ProjectDetail />,
       },
       {
-        path: "finance",
-        element: <FinancePage />,
-      },
-      {
         path: "repository-publik",
         element: <PublicationList />,
-      },
-      {
-        path: "logs",
-        element: <LogsPage />,
       },
       {
         path: "settings",
@@ -368,16 +358,8 @@ export const router = createBrowserRouter([
         element: <ProjectDetail />,
       },
       {
-        path: "finance",
-        element: <FinancePage />,
-      },
-      {
         path: "repository-publik",
         element: <PublicationList />,
-      },
-      {
-        path: "logs",
-        element: <LogsPage />,
       },
     ],
   },

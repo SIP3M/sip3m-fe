@@ -3,9 +3,7 @@ import {
   LayoutDashboard,
   UserCheck,
   Activity,
-  Wallet,
   Globe,
-  ClipboardList,
   LogOut,
   ChevronDown,
   FlaskConical,
@@ -47,19 +45,9 @@ export default function Sidebar() {
       path: "/staff-lppm/monitoring-project",
     },
     {
-      name: "Keuangan & Hibah",
-      icon: Wallet,
-      path: "/staff-lppm/finance",
-    },
-    {
       name: "Repository Publik",
       icon: Globe,
       path: "/staff-lppm/repository-publik",
-    },
-    {
-      name: "Audit Logs",
-      icon: ClipboardList,
-      path: "/staff-lppm/logs",
     },
   ];
 

@@ -5,7 +5,6 @@ import {
   FileText,
   UserCheck,
   Activity,
-  Wallet,
   Globe,
   ClipboardList,
   ClipboardCheck,
@@ -88,9 +87,7 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
             { name: "Daftar Proposal", icon: FileText, path: "/proposals" },
             { name: "Plotting Reviewer", icon: UserCheck, path: "/plotting-reviewer" },
             { name: "Monitoring Proyek", icon: Activity, path: "/monitoring-project" },
-            { name: "Keuangan & Hibah", icon: Wallet, path: "/finance" },
             { name: "Repository Publik", icon: Globe, path: "/repository-publik" },
-            { name: "Audit Logs", icon: ClipboardList, path: "/logs" },
           ],
         },
         {
@@ -237,9 +234,7 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
           items: [
             { name: "Plotting Reviewer", icon: UserCheck, path: "/staff-lppm/plotting-reviewer" },
             { name: "Monitoring Proyek", icon: Activity, path: "/staff-lppm/monitoring-project" },
-            { name: "Keuangan & Hibah", icon: Wallet, path: "/staff-lppm/finance" },
             { name: "Repository Publik", icon: Globe, path: "/staff-lppm/repository-publik" },
-            { name: "Audit Logs", icon: ClipboardList, path: "/staff-lppm/logs" },
           ],
         },
       ],
