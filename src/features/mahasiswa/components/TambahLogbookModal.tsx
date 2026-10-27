@@ -1,24 +1,21 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { CheckCircle2, Upload, X } from "lucide-react";
+import axios from "axios";
+import { CheckCircle2, Loader2, Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-export interface LogbookBaru {
-  tanggal: string;
-  durasi: string;
-  aktivitas: string;
-  deskripsi: string;
-  foto?: File | null;
-}
+import { createLogbook } from "@/features/kkm/kkmLogbook.api";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: LogbookBaru) => void;
+  /** ID kelompok mahasiswa (null = belum ada kelompok; tombol simpan dinonaktifkan) */
+  kelompokId: number | null;
+  /** Dipanggil setelah entri tersimpan (untuk refresh daftar) */
+  onSaved: () => void;
 }
 
 /** Style input dipakai bersama agar konsisten antar field */
@@ -29,28 +26,41 @@ const LABEL_CLASS = "mb-1.5 block text-sm font-semibold text-gray-700";
 
 const FORM_AWAL = {
   tanggal: "",
-  durasi: "",
-  aktivitas: "",
+  judul: "",
   deskripsi: "",
+};
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB — sama dgn limit BE
+
+const getErrorMessage = (err: unknown): string => {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { message?: string } | undefined;
+    return data?.message || err.message || "Gagal menyimpan logbook.";
+  }
+  return "Gagal menyimpan logbook.";
 };
 
 export default function TambahLogbookModal({
   open,
   onOpenChange,
-  onSubmit,
+  kelompokId,
+  onSaved,
 }: Props) {
   const [form, setForm] = useState(FORM_AWAL);
-  const [foto, setFoto] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const resetForm = () => {
     setForm(FORM_AWAL);
-    setFoto(null);
+    setFile(null);
     setErrors({});
+    setSaveError(null);
   };
 
   const handleOpenChange = (next: boolean) => {
-    if (!next) resetForm();
+    if (!next && !isSaving) resetForm();
     onOpenChange(next);
   };
 
@@ -64,32 +74,53 @@ export default function TambahLogbookModal({
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
-    setFoto(acceptedFiles[0]);
+    setFile(acceptedFiles[0]);
+    setErrors((prev) => ({ ...prev, file: "" }));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false,
-    accept: { "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"] },
-    maxSize: 5 * 1024 * 1024,
-    onDropRejected: () => setFoto(null),
+    accept: { "application/pdf": [".pdf"] },
+    maxSize: MAX_FILE_BYTES,
+    onDropRejected: () =>
+      setErrors((prev) => ({
+        ...prev,
+        file: "File harus PDF dan ukurannya maksimal 10 MB.",
+      })),
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const nextErrors: Record<string, string> = {};
 
     if (!form.tanggal) nextErrors.tanggal = "Tanggal wajib diisi.";
-    if (!form.durasi) nextErrors.durasi = "Durasi kegiatan wajib diisi.";
-    if (!form.aktivitas) nextErrors.aktivitas = "Nama aktivitas wajib diisi.";
-    if (!form.deskripsi) nextErrors.deskripsi = "Deskripsi kegiatan wajib diisi.";
+    if (form.judul.trim().length < 3) nextErrors.judul = "Nama aktivitas minimal 3 karakter.";
+    if (form.deskripsi.trim().length < 3) nextErrors.deskripsi = "Deskripsi kegiatan minimal 3 karakter.";
 
     setErrors(nextErrors);
-
     if (Object.keys(nextErrors).length > 0) return;
+    if (!kelompokId) {
+      setSaveError("Kelompok Anda belum ditetapkan, logbook belum bisa diisi.");
+      return;
+    }
 
-    // TODO: kirim ke API logbook mahasiswa (belum ada endpoint)
-    onSubmit({ ...form, foto });
-    handleOpenChange(false);
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await createLogbook(kelompokId, {
+        tanggal: form.tanggal, // input type=date → "YYYY-MM-DD" (format ISO utk BE)
+        judul: form.judul.trim(),
+        deskripsi: form.deskripsi.trim(),
+        file,
+      });
+      resetForm();
+      onOpenChange(false);
+      onSaved();
+    } catch (err) {
+      setSaveError(getErrorMessage(err));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -116,45 +147,30 @@ export default function TambahLogbookModal({
 
         {/* FORM */}
         <div className="space-y-4 px-6 pb-6">
-          {/* TANGGAL + DURASI */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="logbook-tanggal" className={LABEL_CLASS}>
-                Tanggal <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="logbook-tanggal"
-                type="text"
-                placeholder="Contoh: 01 Feb 2026"
-                value={form.tanggal}
-                onChange={(event) => handleChange("tanggal", event.target.value)}
-                className={`${FIELD_CLASS} ${
-                  errors.tanggal ? "border-red-300" : ""
-                }`}
-              />
-              {errors.tanggal && (
-                <p className="mt-1 text-xs text-red-500">{errors.tanggal}</p>
-              )}
-            </div>
+          {saveError && (
+            <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600">
+              {saveError}
+            </p>
+          )}
 
-            <div>
-              <label htmlFor="logbook-durasi" className={LABEL_CLASS}>
-                Durasi Kegiatan <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="logbook-durasi"
-                type="text"
-                placeholder="Contoh: 3 jam"
-                value={form.durasi}
-                onChange={(event) => handleChange("durasi", event.target.value)}
-                className={`${FIELD_CLASS} ${
-                  errors.durasi ? "border-red-300" : ""
-                }`}
-              />
-              {errors.durasi && (
-                <p className="mt-1 text-xs text-red-500">{errors.durasi}</p>
-              )}
-            </div>
+          {/* TANGGAL */}
+          <div>
+            <label htmlFor="logbook-tanggal" className={LABEL_CLASS}>
+              Tanggal <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="logbook-tanggal"
+              type="date"
+              value={form.tanggal}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(event) => handleChange("tanggal", event.target.value)}
+              className={`${FIELD_CLASS} ${
+                errors.tanggal ? "border-red-300" : ""
+              }`}
+            />
+            {errors.tanggal && (
+              <p className="mt-1 text-xs text-red-500">{errors.tanggal}</p>
+            )}
           </div>
 
           {/* NAMA AKTIVITAS */}
@@ -166,14 +182,14 @@ export default function TambahLogbookModal({
               id="logbook-aktivitas"
               type="text"
               placeholder="Contoh: Survey Lokasi UMKM"
-              value={form.aktivitas}
-              onChange={(event) => handleChange("aktivitas", event.target.value)}
+              value={form.judul}
+              onChange={(event) => handleChange("judul", event.target.value)}
               className={`${FIELD_CLASS} ${
-                errors.aktivitas ? "border-red-300" : ""
+                errors.judul ? "border-red-300" : ""
               }`}
             />
-            {errors.aktivitas && (
-              <p className="mt-1 text-xs text-red-500">{errors.aktivitas}</p>
+            {errors.judul && (
+              <p className="mt-1 text-xs text-red-500">{errors.judul}</p>
             )}
           </div>
 
@@ -199,32 +215,35 @@ export default function TambahLogbookModal({
             )}
           </div>
 
-          {/* UPLOAD FOTO */}
+          {/* UPLOAD FILE LOGBOOK (PDF) */}
           <div>
-            <p className={LABEL_CLASS}>Upload Foto Dokumentasi</p>
+            <p className={LABEL_CLASS}>
+              Upload File Logbook{" "}
+              <span className="text-xs font-normal text-gray-400">(opsional)</span>
+            </p>
 
             <div
               {...getRootProps()}
               className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors ${
                 isDragActive
                   ? "border-red-400 bg-red-50"
-                  : foto
+                  : file
                     ? "border-green-300 bg-green-50/40"
                     : "border-gray-300 bg-white hover:bg-gray-50"
               }`}
             >
               <input {...getInputProps()} />
 
-              {foto ? (
+              {file ? (
                 <>
                   <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
                     <CheckCircle2 size={20} />
                   </span>
                   <p className="max-w-full truncate text-sm font-semibold text-gray-700">
-                    {foto.name}
+                    {file.name}
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
-                    {(foto.size / 1024 / 1024).toFixed(2)} MB — Klik untuk
+                    {(file.size / 1024 / 1024).toFixed(2)} MB — Klik untuk
                     mengganti
                   </p>
                 </>
@@ -234,14 +253,17 @@ export default function TambahLogbookModal({
                     <Upload size={20} />
                   </span>
                   <p className="text-sm font-medium text-gray-600">
-                    Klik untuk upload foto kegiatan
+                    Klik untuk upload file logbook
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
-                    JPG, PNG — Maks. 5 MB
+                    PDF — Maks. 10 MB
                   </p>
                 </>
               )}
             </div>
+            {errors.file && (
+              <p className="mt-1 text-xs text-red-500">{errors.file}</p>
+            )}
           </div>
         </div>
 
@@ -250,17 +272,20 @@ export default function TambahLogbookModal({
           <button
             type="button"
             onClick={() => handleOpenChange(false)}
-            className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 cursor-pointer"
+            disabled={isSaving}
+            className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
             Batal
           </button>
 
           <button
             type="button"
-            onClick={handleSubmit}
-            className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 cursor-pointer"
+            onClick={() => void handleSubmit()}
+            disabled={isSaving}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Simpan Logbook
+            {isSaving && <Loader2 size={15} className="animate-spin" />}
+            {isSaving ? "Menyimpan..." : "Simpan Logbook"}
           </button>
         </div>
       </DialogContent>
