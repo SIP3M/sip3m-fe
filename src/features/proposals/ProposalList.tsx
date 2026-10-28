@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Download, Filter, Search } from "lucide-react";
 import ProposalRow from "./components/ProposalRow";
-import { Proposal } from "./proposal.types";
+import { Proposal, ProposalStatus } from "./proposal.types";
 import { getAllProposals } from "./proposal.api";
 import Pagination from "@/components/common/Pagination";
 import axios from "axios";
@@ -11,13 +11,24 @@ import { Input } from "@/components/ui/input";
 
 const ITEMS_PER_PAGE = 5;
 
+const STATUS_OPTIONS: { value: ProposalStatus | ""; label: string }[] = [
+  { value: "", label: "Semua status" },
+  { value: "SUBMITTED", label: "Diajukan" },
+  { value: "ADMIN_VERIFIED", label: "Terverifikasi" },
+  { value: "UNDER_REVIEW", label: "Sedang Direview" },
+  { value: "REVISION", label: "Perlu Revisi" },
+  { value: "REVIEW_DONE", label: "Menunggu Keputusan" },
+  { value: "ACCEPTED", label: "Diterima" },
+  { value: "REJECTED", label: "Ditolak" },
+];
+
 export default function ProposalList() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [skemaQuery, setSkemaQuery] = useState("");
-  const [statusQuery, setStatusQuery] = useState("");
+  const [statusQuery, setStatusQuery] = useState<ProposalStatus | "">("");
   const [tahunQuery, setTahunQuery] = useState("2023");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -26,13 +37,21 @@ export default function ProposalList() {
   const [totalItems, setTotalItems] = useState(0);
   const latestRequestId = useRef(0);
 
-  const fetchProposals = async (page = 1, search = "") => {
+  const fetchProposals = async (
+    page = 1,
+    search = "",
+    status: ProposalStatus | "" = "",
+  ) => {
     const requestId = ++latestRequestId.current;
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await getAllProposals({ page, search });
+      const response = await getAllProposals({
+        page,
+        search,
+        status: status || undefined,
+      });
 
       if (requestId !== latestRequestId.current) return;
 
@@ -68,8 +87,8 @@ export default function ProposalList() {
   }, [searchQuery]);
 
   useEffect(() => {
-    void fetchProposals(currentPage, debouncedSearch);
-  }, [currentPage, debouncedSearch]);
+    void fetchProposals(currentPage, debouncedSearch, statusQuery);
+  }, [currentPage, debouncedSearch, statusQuery]);
 
   const handlePageChange = (page: number) => {
     if (page <= 0 || page > totalPages || isLoading) return;
@@ -147,12 +166,17 @@ export default function ProposalList() {
             <div className="relative">
               <select
                 value={statusQuery}
-                onChange={(e) => setStatusQuery(e.target.value)}
+                onChange={(e) => {
+                  setStatusQuery(e.target.value as ProposalStatus | "");
+                  setCurrentPage(1);
+                }}
                 className="appearance-none w-44 h-11 pl-4 pr-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
-                <option value="">Semua status</option>
-                <option value="Review">Review</option>
-                <option value="Disetujui">Disetujui</option>
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
             </div>

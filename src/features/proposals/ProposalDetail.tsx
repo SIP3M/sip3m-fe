@@ -15,6 +15,7 @@ import {
   Loader2,
   MessageSquare,
   DollarSign,
+  Scale,
   Users2,
 } from "lucide-react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -25,6 +26,7 @@ import {
   assignProposalReviewersAuto,
   getProposalById,
   submitProposal,
+  updateProposalStatus,
 } from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -63,6 +65,7 @@ const statusBadgeMap: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
 const getStatusKey = (status: string) =>
@@ -85,6 +88,7 @@ const getStatusLabel = (status: string) => {
     DRAFT: "Draft",
     REVISION: "Revision",
     REJECTED: "Rejected",
+    REVIEW_DONE: "Menunggu Keputusan",
   };
 
   return statusLabel[key] || status;
@@ -231,7 +235,7 @@ const parseReviewNotes = (serialized: string | null | undefined): ParsedReviewNo
 
 const getRekomCardStyle = (decision: string) => {
   const d = decision.toUpperCase();
-  if (d === "APPROVED" || d === "ACCEPTED") return "bg-green-50 border-green-200 text-green-800";
+  if (d === "APPROVED" || d === "ACCEPTED" || d === "REVIEW_DONE") return "bg-green-50 border-green-200 text-green-800";
   if (d === "REJECTED") return "bg-red-50 border-red-200 text-red-800";
   if (d === "REVISION_MAJOR") return "bg-orange-50 border-orange-200 text-orange-800";
   // REVISION_MINOR default — matches screenshot mint green
@@ -265,6 +269,8 @@ export default function ProposalDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
+  const [isDeciding, setIsDeciding] = useState(false);
+  const [decisionNotes, setDecisionNotes] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab") as TabKey | null;
@@ -293,8 +299,8 @@ export default function ProposalDetail() {
     );
   };
 
-  const loadProposal = async () => {
-    setIsLoading(true);
+  const loadProposal = async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setIsLoading(true);
     setFeedback(null);
 
     try {
@@ -306,7 +312,7 @@ export default function ProposalDetail() {
         message: getErrorMessage(err, "Gagal memuat detail proposal."),
       });
     } finally {
-      setIsLoading(false);
+      if (!opts?.silent) setIsLoading(false);
     }
   };
 
@@ -451,6 +457,36 @@ export default function ProposalDetail() {
     }
   };
 
+  const handleAdminDecision = async (status: "ACCEPTED" | "REJECTED") => {
+    if (!proposal) return;
+
+    const confirmMessage =
+      status === "ACCEPTED"
+        ? `Terima proposal "${proposal.title}" secara FINAL (Diterima)? Proyek pengabdian dan 4 milestone akan dibuat otomatis.`
+        : `Tolak proposal "${proposal.title}" secara FINAL (Ditolak)? Proposal tidak dapat direview ulang.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setIsDeciding(true);
+    setFeedback(null);
+
+    try {
+      const res = await updateProposalStatus(proposal.id, {
+        status,
+        notes: decisionNotes.trim() || undefined,
+      });
+      await loadProposal({ silent: true });
+      setDecisionNotes("");
+      setFeedback({ type: "success", message: res.message });
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(err, "Gagal menyimpan keputusan."),
+      });
+    } finally {
+      setIsDeciding(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-8">
@@ -520,6 +556,22 @@ export default function ProposalDetail() {
             </h3>
             <p className="mt-0.5 text-xs text-yellow-700">
               Proposal tidak dapat diedit selama proses review berlangsung.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {statusKey === "REVIEW_DONE" && (
+        <div className="flex items-start gap-3 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4">
+          <Scale size={18} className="mt-0.5 flex-shrink-0 text-indigo-600" />
+          <div>
+            <h3 className="text-sm font-bold text-indigo-800">
+              Review Selesai — Menunggu Keputusan Akhir
+            </h3>
+            <p className="mt-0.5 text-xs text-indigo-700">
+              {isAdmin
+                ? "Reviewer merekomendasikan proposal ini LAYAK DIDANAI. Silakan ambil keputusan akhir (Diterima/Tolak) melalui panel di bawah."
+                : "Reviewer merekomendasikan proposal ini LAYAK DIDANAI. Keputusan akhir (Diterima/Tolak) menunggu persetujuan Admin LPPM."}
             </p>
           </div>
         </div>
@@ -639,6 +691,101 @@ export default function ProposalDetail() {
           </div>
         </div>
       </div>
+
+      {/* Panel keputusan akhir — hanya Admin LPPM, saat status REVIEW_DONE */}
+      {isAdmin && statusKey === "REVIEW_DONE" && (
+        <div className="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Scale size={16} className="text-indigo-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-700">
+                Keputusan Akhir — Admin LPPM
+              </h3>
+            </div>
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+              Menunggu Keputusan
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Rekomendasi Reviewer
+              </p>
+              <p className="mt-1 text-sm font-bold text-emerald-600">
+                Layak Didanai
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                {latestReview?.reviewer?.name
+                  ? `Reviewer: ${latestReview.reviewer.name}`
+                  : "Reviewer LPPM"}
+                {latestReview?.rekomendasi_akhir
+                  ? ` — ${latestReview.rekomendasi_akhir}`
+                  : ""}
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                Keputusan final (Diterima/Tolak) berada di tangan Admin LPPM.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="admin-decision-notes"
+                className="text-xs font-semibold uppercase tracking-wide text-gray-400"
+              >
+                Catatan Keputusan (opsional)
+              </label>
+              <textarea
+                id="admin-decision-notes"
+                value={decisionNotes}
+                onChange={(e) => setDecisionNotes(e.target.value)}
+                maxLength={500}
+                rows={3}
+                placeholder="Catatan keputusan untuk dosen pengusul..."
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+              <p className="mt-1 text-right text-[11px] text-gray-400">
+                {decisionNotes.length}/500
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={isDeciding}
+              onClick={() => void handleAdminDecision("ACCEPTED")}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDeciding ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={16} />
+              )}
+              Terima (Diterima)
+            </button>
+            <button
+              type="button"
+              disabled={isDeciding}
+              onClick={() => void handleAdminDecision("REJECTED")}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isDeciding ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <AlertTriangle size={16} />
+              )}
+              Tolak (Ditolak)
+            </button>
+          </div>
+
+          <p className="mt-3 text-xs text-gray-500">
+            Keputusan bersifat final. Proposal yang <strong>Diterima</strong>{" "}
+            otomatis membuat proyek pengabdian &amp; 4 milestone; proposal yang{" "}
+            <strong>Ditolak</strong> tidak dapat direview ulang.
+          </p>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div className="inline-flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
@@ -893,7 +1040,8 @@ export default function ProposalDetail() {
                   const parsed = parseReviewNotes(latestReview.notes);
                   const decisionLabel =
                     parsed.decisionOpt ||
-                    (latestReview.status === "ACCEPTED"
+                    (latestReview.status === "ACCEPTED" ||
+                    latestReview.status === "REVIEW_DONE"
                       ? "APPROVED"
                       : latestReview.status) ||
                     "-";

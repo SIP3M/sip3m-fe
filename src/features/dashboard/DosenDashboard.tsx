@@ -40,6 +40,7 @@ const proposalStatusLabel: Record<string, string> = {
   REVISION: "Revision",
   REJECTED: "Rejected",
   ADMIN_VERIFIED: "Admin Verified",
+  REVIEW_DONE: "Menunggu Keputusan",
 };
 
 const proposalStatusStyle: Record<string, string> = {
@@ -52,6 +53,7 @@ const proposalStatusStyle: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
 const projectStatusLabel = (status: string) => {
@@ -160,6 +162,11 @@ export default function DosenDashboard() {
         name: "Review",
         value: count(["SUBMITTED", "UNDER_REVIEW", "REVIEW"]),
         color: "#facc15",
+      },
+      {
+        name: "Menunggu Keputusan",
+        value: count(["REVIEW_DONE"]),
+        color: "#6366f1",
       },
       {
         name: "Revisi",

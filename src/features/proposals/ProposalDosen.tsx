@@ -89,6 +89,7 @@ const statusLabelMap: Record<string, string> = {
   REVISION: "Revision",
   REJECTED: "Rejected",
   ADMIN_VERIFIED: "Admin Verified",
+  REVIEW_DONE: "Menunggu Keputusan",
 };
 
 const statusStyleMap: Record<string, string> = {
@@ -101,6 +102,7 @@ const statusStyleMap: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
 const normalizeStatus = (status: string) =>
@@ -1931,6 +1933,7 @@ export default function ProposalDosen() {
               <option value="ADMIN_VERIFIED">Admin Verified</option>
               <option value="APPROVED">Approved</option>
               <option value="ACCEPTED">Accepted</option>
+              <option value="REVIEW_DONE">Menunggu Keputusan</option>
               <option value="DRAFT">Draft</option>
               <option value="REVISION">Revision</option>
               <option value="REJECTED">Rejected</option>

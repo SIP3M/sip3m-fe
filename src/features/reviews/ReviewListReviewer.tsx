@@ -45,6 +45,11 @@ const STATUS_CONFIG: Record<
     text: "text-indigo-700",
   },
   REVISION: { label: "Revision", bg: "bg-orange-100", text: "text-orange-700" },
+  REVIEW_DONE: {
+    label: "Menunggu Keputusan",
+    bg: "bg-indigo-100",
+    text: "text-indigo-700",
+  },
   ACCEPTED: { label: "Accepted", bg: "bg-green-100", text: "text-green-700" },
   REJECTED: { label: "Rejected", bg: "bg-red-100", text: "text-red-700" },
 };
@@ -84,14 +89,15 @@ const FILTER_OPTIONS: { label: string; value: ProposalStatus | "ALL" }[] = [
   { label: "Semua Status", value: "ALL" },
   { label: "Under Review", value: "UNDER_REVIEW" },
   { label: "Revision", value: "REVISION" },
+  { label: "Menunggu Keputusan", value: "REVIEW_DONE" },
   { label: "Accepted", value: "ACCEPTED" },
   { label: "Rejected", value: "REJECTED" },
 ];
 
 const ALL_ASSIGNED_STATUSES: ProposalStatus[] = [
-
   "UNDER_REVIEW",
   "REVISION",
+  "REVIEW_DONE",
   "ACCEPTED",
   "REJECTED",
 ];
@@ -439,7 +445,8 @@ export default function ReviewListReviewer() {
                           </a>
                         )}
 
-                        {item.status !== "ACCEPTED" && (
+                        {item.status !== "ACCEPTED" &&
+                          item.status !== "REVIEW_DONE" && (
                           <button
                             id={`btn-review-${item.id}`}
                             onClick={() =>
