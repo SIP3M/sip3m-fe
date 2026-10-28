@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  CalendarDays,
-  CircleDollarSign,
+  Check,
   CheckCircle2,
-  XCircle,
+  DollarSign,
+  ExternalLink,
+  FileText,
   Loader2,
-  UserRound,
+  Target,
+  XCircle,
 } from "lucide-react";
 import axios from "axios";
 import {
@@ -17,7 +19,6 @@ import {
 } from "./project.api";
 import { MonitoringDocument, MonitoringProjectDetail } from "./project.types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { APP_ROLES } from "@/constant/roles";
 
@@ -34,6 +35,14 @@ const getStatusClassName = (status: string) => {
   return "bg-gray-100 text-gray-600";
 };
 
+const getDocStatusClassName = (status: string) => {
+  const key = status.trim().toUpperCase();
+
+  if (key === "APPROVED") return "bg-green-100 text-green-700";
+  if (key === "REJECTED") return "bg-red-100 text-red-700";
+  return "bg-amber-100 text-amber-700";
+};
+
 const formatDate = (value: string | null) => {
   if (!value) return "-";
 
@@ -45,6 +54,27 @@ const formatDate = (value: string | null) => {
     month: "long",
     year: "numeric",
   });
+};
+
+// Contoh: 01 Sep 2023
+const formatShortDate = (value: string | null) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+// Contoh: 2026-09-10 (jika format di luar ISO, jatuh ke format tanggal biasa)
+const formatMilestoneDate = (value: string | null) => {
+  if (!value) return "-";
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  return formatDate(value);
 };
 
 const formatCurrencyIDR = (value: number) =>
@@ -199,9 +229,15 @@ export default function ProjectDetail() {
     setRejectNotes("");
   };
 
-  const progress = useMemo(
-    () => Math.max(0, Math.min(100, project?.progress_percentage || 0)),
-    [project?.progress_percentage],
+  // Milestone diurutkan berdasarkan urutan; milestone aktif = yang pertama belum COMPLETED
+  const sortedMilestones = useMemo(
+    () => [...(project?.milestones ?? [])].sort((a, b) => a.sequence - b.sequence),
+    [project?.milestones],
+  );
+
+  const activeMilestoneId = useMemo(
+    () => sortedMilestones.find((m) => m.status !== "COMPLETED")?.id ?? null,
+    [sortedMilestones],
   );
 
   if (isLoading) {
@@ -229,24 +265,32 @@ export default function ProjectDetail() {
 
   return (
     <div className="space-y-6 p-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-          </Button>
-          <h1 className="text-3xl font-semibold text-gray-800">
-            {project.title}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Kode Proyek: {project.project_code}
+      {/* HEADER */}
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+        </button>
+
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {project.title}
+            </h1>
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase ${getStatusClassName(project.calculated_status)}`}
+            >
+              {project.calculated_status.replace(/_/g, " ")}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-gray-500">
+            Kode Proyek: {project.project_code} &bull; Dimulai{" "}
+            {formatShortDate(project.start_date)}
           </p>
         </div>
-
-        <span
-          className={`inline-flex rounded-full px-4 py-1.5 text-sm font-medium ${getStatusClassName(project.calculated_status)}`}
-        >
-          {project.calculated_status}
-        </span>
       </div>
 
       {successMessage && (
@@ -261,204 +305,243 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {project.summary && (
-        <Card className="bg-white shadow-sm ring-gray-200/70">
-          <CardContent className="p-6 text-sm text-gray-700">
-            {project.summary}
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        {/* KIRI */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* MILESTONE */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            {sortedMilestones.length === 0 && (
+              <p className="py-6 text-center text-sm text-gray-500">
+                Belum ada milestone.
+              </p>
+            )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-white shadow-sm ring-gray-200/70">
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2 text-gray-500">
-              <UserRound className="h-4 w-4" /> Peneliti
-            </div>
-            <p className="font-medium text-gray-800">
-              {project.user?.name || "-"}
-            </p>
-            <p className="text-xs text-gray-500">
-              NIDN/NIP: {project.user?.nidn_nip || "-"}
-            </p>
-          </CardContent>
-        </Card>
+            <div className="space-y-6">
+              {sortedMilestones.map((milestone) => {
+                const isCompleted = milestone.status === "COMPLETED";
+                const isActive = milestone.id === activeMilestoneId;
 
-        <Card className="bg-white shadow-sm ring-gray-200/70">
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2 text-gray-500">
-              <CalendarDays className="h-4 w-4" /> Periode
-            </div>
-            <p className="text-sm text-gray-800">
-              {formatDate(project.start_date)}
-            </p>
-            <p className="text-xs text-gray-500">
-              s/d {formatDate(project.end_date)}
-            </p>
-          </CardContent>
-        </Card>
+                return (
+                  <div key={milestone.id} className="flex items-start gap-4">
+                    {/* ikon status */}
+                    <div className="mt-0.5 shrink-0">
+                      {isCompleted && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-green-500">
+                          <Check
+                            size={12}
+                            strokeWidth={3}
+                            className="text-green-500"
+                          />
+                        </div>
+                      )}
+                      {isActive && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-blue-500">
+                          <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                        </div>
+                      )}
+                      {!isCompleted && !isActive && (
+                        <div className="h-6 w-6 rounded-full border-2 border-gray-200" />
+                      )}
+                    </div>
 
-        <Card className="bg-white shadow-sm ring-gray-200/70">
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2 text-gray-500">
-              <CircleDollarSign className="h-4 w-4" /> Dana Terealisasi
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p
+                          className={`text-sm ${
+                            isActive
+                              ? "font-bold text-blue-700"
+                              : isCompleted
+                                ? "font-medium text-gray-900"
+                                : "font-medium text-gray-500"
+                          }`}
+                        >
+                          {milestone.title}
+                        </p>
+                        <span className="shrink-0 text-xs text-gray-400">
+                          {formatMilestoneDate(milestone.due_date)}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3">
+                        <span className="flex items-center gap-2 text-xs text-gray-500">
+                          <Target size={14} className="text-gray-400" />
+                          Target progres {milestone.target_percentage}%
+                        </span>
+
+                        {isCompleted && (
+                          <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                            Terverifikasi
+                          </span>
+                        )}
+                        {isActive && (
+                          <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                            Menunggu Upload
+                          </span>
+                        )}
+                        {!isCompleted && !isActive && (
+                          <span className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600">
+                            Terkunci
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <p className="font-medium text-gray-800">
+          </div>
+
+          {/* INFO PENELITI */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-gray-400">Ketua Peneliti</p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">
+                  {project.user?.name || "-"}
+                </p>
+              </div>
+
+              {/* UI placeholder: belum ada field anggota & luaran di data proyek */}
+              <div>
+                <p className="text-xs text-gray-400">Anggota Peneliti</p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">-</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-400">Luaran Wajib</p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">-</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-400">Luaran Tambahan</p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">-</p>
+              </div>
+            </div>
+          </div>
+
+          {/* DOKUMEN (daftar terpisah, verifikasi tetap berfungsi) */}
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-sm font-bold text-gray-900">Dokumen</h2>
+
+            {project.documents.length === 0 && (
+              <p className="py-4 text-center text-sm text-gray-500">
+                Belum ada dokumen.
+              </p>
+            )}
+
+            <div className="space-y-2">
+              {project.documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileText size={16} className="shrink-0 text-gray-400" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-800">
+                        {doc.title}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {doc.document_type} &bull;{" "}
+                        {(doc.file_size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${getDocStatusClassName(doc.verification_status)}`}
+                    >
+                      {doc.verification_status}
+                    </span>
+
+                    <a
+                      href={toDocumentUrl(doc)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-medium text-blue-600 hover:underline"
+                    >
+                      Lihat
+                    </a>
+
+                    {isAdminOrStaff && doc.verification_status === "PENDING" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void handleVerifyDocument(doc.id, "APPROVED")
+                          }
+                          disabled={isVerifyingDocId === doc.id}
+                          className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {isVerifyingDocId === doc.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={12} />
+                          )}
+                          Setujui
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openRejectModal(doc.id)}
+                          disabled={isVerifyingDocId === doc.id}
+                          className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                        >
+                          <XCircle size={12} />
+                          Tolak
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* KANAN */}
+        <div className="space-y-4">
+          {/* DANA TEREALISASI */}
+          <div className="rounded-2xl bg-slate-900 p-6 text-white shadow-sm">
+            <div className="flex items-center gap-2">
+              <DollarSign size={16} className="text-green-400" />
+              <h2 className="text-sm font-bold">Dana Terealisasi</h2>
+            </div>
+
+            <p className="mt-4 text-xs text-slate-400">
+              Total yang telah direalisasikan
+            </p>
+            <p className="mt-1 text-3xl font-bold">
               {formatCurrencyIDR(project.realized_amount)}
             </p>
-            <p className="text-xs text-gray-500">
-              Status pencairan: {project.disbursement_status}
+
+            <p className="mt-4 text-xs text-slate-400">Status pencairan:</p>
+            <p className="mt-0.5 text-xs text-white">
+              {project.disbursement_status}
             </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="bg-white shadow-sm ring-gray-200/70">
-          <CardContent className="space-y-2 p-5">
-            <p className="text-sm text-gray-500">Progress Proyek</p>
-            <div className="h-2 w-full rounded-full bg-gray-200">
-              <div
-                className={`h-2 rounded-full ${progress >= 50 ? "bg-green-500" : "bg-red-500"}`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-sm font-medium text-gray-700">{progress}%</p>
-          </CardContent>
-        </Card>
+          {/* AKSI — UI placeholder, belum terhubung ke fungsi apa pun */}
+          <div className="space-y-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <button
+              type="button"
+              className="flex w-full items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+            >
+              <FileText size={15} className="text-gray-500" />
+              Download Kontrak
+            </button>
+
+            <button
+              type="button"
+              className="flex w-full items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+            >
+              <ExternalLink size={15} className="text-gray-500" />
+              Lihat di Repository
+            </button>
+          </div>
+        </div>
       </div>
-
-      <Card className="bg-white shadow-sm ring-gray-200/70">
-        <CardHeader>
-          <CardTitle>Milestone</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          <table className="w-full min-w-[820px] text-sm">
-            <thead className="bg-gray-50 text-left text-gray-500">
-              <tr>
-                <th className="px-6 py-3">Urutan</th>
-                <th className="px-6 py-3">Judul</th>
-                <th className="px-6 py-3">Target</th>
-                <th className="px-6 py-3">Deadline</th>
-                <th className="px-6 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {project.milestones.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-6 text-center text-gray-500"
-                  >
-                    Belum ada milestone.
-                  </td>
-                </tr>
-              )}
-
-              {project.milestones.map((milestone) => (
-                <tr key={milestone.id} className="border-t">
-                  <td className="px-6 py-3">{milestone.sequence}</td>
-                  <td className="px-6 py-3">{milestone.title}</td>
-                  <td className="px-6 py-3">{milestone.target_percentage}%</td>
-                  <td className="px-6 py-3">
-                    {formatDate(milestone.due_date)}
-                  </td>
-                  <td className="px-6 py-3">{milestone.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white shadow-sm ring-gray-200/70">
-        <CardHeader>
-          <CardTitle>Dokumen</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          <table className="w-full min-w-[800px] text-sm">
-            <thead className="bg-gray-50 text-left text-gray-500">
-              <tr>
-                <th className="px-6 py-3">Dokumen</th>
-                <th className="px-6 py-3">Tipe</th>
-                <th className="px-6 py-3">Ukuran</th>
-                <th className="px-6 py-3">Verifikasi</th>
-                <th className="px-6 py-3">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {project.documents.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-6 text-center text-gray-500"
-                  >
-                    Belum ada dokumen.
-                  </td>
-                </tr>
-              )}
-
-              {project.documents.map((doc) => (
-                <tr key={doc.id} className="border-t">
-                  <td className="px-6 py-3 font-medium text-gray-700">
-                    {doc.title}
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {doc.document_type}
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {(doc.file_size / 1024).toFixed(1)} KB
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {doc.verification_status}
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <a
-                        href={toDocumentUrl(doc)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-medium text-blue-600 hover:underline"
-                      >
-                        Lihat
-                      </a>
-
-                      {isAdminOrStaff &&
-                        doc.verification_status === "PENDING" && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                void handleVerifyDocument(doc.id, "APPROVED")
-                              }
-                              disabled={isVerifyingDocId === doc.id}
-                              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                            >
-                              {isVerifyingDocId === doc.id ? (
-                                <Loader2 size={12} className="animate-spin" />
-                              ) : (
-                                <CheckCircle2 size={12} />
-                              )}
-                              Setujui
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => openRejectModal(doc.id)}
-                              disabled={isVerifyingDocId === doc.id}
-                              className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                            >
-                              <XCircle size={12} />
-                              Tolak
-                            </button>
-                          </>
-                        )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
 
       {isAdminOrStaff && isPendingStatus && (
         <div className="flex justify-end">
