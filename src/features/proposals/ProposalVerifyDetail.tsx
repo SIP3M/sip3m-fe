@@ -19,6 +19,7 @@ const statusBadgeMap: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-500",
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
 const getStatusKey = (status: string) =>
@@ -40,6 +41,7 @@ const getStatusLabel = (status: string) => {
     DRAFT: "Draft",
     REVISION: "Revision",
     REJECTED: "Rejected",
+    REVIEW_DONE: "Menunggu Keputusan",
   };
 
   return map[key] || status;

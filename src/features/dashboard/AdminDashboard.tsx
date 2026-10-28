@@ -57,6 +57,7 @@ const statusLabelMap: Record<string, string> = {
   ADMIN_VERIFIED: "Admin Verified",
   UNDER_REVIEW: "Under Review",
   REVISION: "Revision",
+  REVIEW_DONE: "Menunggu Keputusan",
   ACCEPTED: "Disetujui",
   REJECTED: "Ditolak",
 };
@@ -67,6 +68,7 @@ const statusColorMap: Record<string, string> = {
   ADMIN_VERIFIED: "#3b82f6",
   UNDER_REVIEW: "#f59e0b",
   REVISION: "#fb923c",
+  REVIEW_DONE: "#6366f1",
   ACCEPTED: "#22c55e",
   REJECTED: "#ef4444",
 };

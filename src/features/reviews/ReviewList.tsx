@@ -17,6 +17,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: "SUBMITTED", label: "Submitted" },
   { value: "UNDER_REVIEW", label: "Under Review" },
   { value: "REVISION", label: "Revision" },
+  { value: "REVIEW_DONE", label: "Menunggu Keputusan" },
   { value: "ACCEPTED", label: "Accepted" },
   { value: "REJECTED", label: "Rejected" },
   { value: "APPROVED", label: "Approved" },

@@ -49,11 +49,17 @@ const STATUS_LABELS: Record<
     bg: "bg-blue-100",
     text: "text-blue-700",
   },
+  REVIEW_DONE: {
+    label: "Menunggu Keputusan",
+    bg: "bg-indigo-100",
+    text: "text-indigo-700",
+  },
 };
 
 const ALL_ASSIGNED_STATUSES: ProposalStatus[] = [
   "ADMIN_VERIFIED",
   "REVISION",
+  "REVIEW_DONE",
   "ACCEPTED",
   "REJECTED",
 ];
@@ -62,6 +68,7 @@ const FILTER_OPTIONS: { label: string; value: ProposalStatus | "ALL" }[] = [
   { label: "Semua Status", value: "ALL" },
   { label: "Under Review", value: "UNDER_REVIEW" },
   { label: "Revision", value: "REVISION" },
+  { label: "Menunggu Keputusan", value: "REVIEW_DONE" },
   { label: "Accepted", value: "ACCEPTED" },
   { label: "Rejected", value: "REJECTED" },
 ];

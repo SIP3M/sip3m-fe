@@ -61,6 +61,7 @@ const statusBadgeMap: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
 const getStatusKey = (status: string) =>
@@ -83,6 +84,7 @@ const getStatusLabel = (status: string) => {
     DRAFT: "Draft",
     REVISION: "Revision",
     REJECTED: "Rejected",
+    REVIEW_DONE: "Menunggu Keputusan",
   };
 
   return statusLabel[key] || status;
@@ -229,7 +231,7 @@ const parseReviewNotes = (serialized: string | null | undefined): ParsedReviewNo
 
 const getRekomCardStyle = (decision: string) => {
   const d = decision.toUpperCase();
-  if (d === "APPROVED" || d === "ACCEPTED") return "bg-green-50 border-green-200 text-green-800";
+  if (d === "APPROVED" || d === "ACCEPTED" || d === "REVIEW_DONE") return "bg-green-50 border-green-200 text-green-800";
   if (d === "REJECTED") return "bg-red-50 border-red-200 text-red-800";
   if (d === "REVISION_MAJOR") return "bg-orange-50 border-orange-200 text-orange-800";
   // REVISION_MINOR default — matches screenshot mint green
@@ -889,7 +891,8 @@ export default function ProposalDetailPopup({
                   const parsed = parseReviewNotes(latestReview.notes);
                   const decisionLabel =
                     parsed.decisionOpt ||
-                    (latestReview.status === "ACCEPTED"
+                    (latestReview.status === "ACCEPTED" ||
+                    latestReview.status === "REVIEW_DONE"
                       ? "APPROVED"
                       : latestReview.status) ||
                     "-";
