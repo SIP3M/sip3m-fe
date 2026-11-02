@@ -1,18 +1,27 @@
 import { ChangeEvent, DragEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, UploadCloud } from "lucide-react";
+import { Loader2, UploadCloud } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { registerReviewer } from "./auth.api";
 import { RegisterReviewerPayload } from "./auth.types";
 import {
   ApiErrorResponse,
-  FormInputProps,
-  FormTextareaProps,
-  PasswordInputProps,
   RegisterReviewerForm,
 } from "./RegisterReviewerPage.types";
 import { Button } from "@/components/ui/button";
+
+import bg from "@/assets/images/img-login.png";
+import logo from "@/assets/images/logo.png";
+import {
+  AgreeCheckbox,
+  FieldLabel,
+  FormAlert,
+  PasswordField,
+  RegisterStepper,
+  TextAreaField,
+  TextField,
+} from "./RegisterShared";
 
 const MAX_CV_SIZE_MB = 5;
 const MAX_CV_SIZE_BYTES = MAX_CV_SIZE_MB * 1024 * 1024;
@@ -37,9 +46,6 @@ const RegisterReviewerPage = () => {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const [form, setForm] = useState<RegisterReviewerForm>({
     nama: "",
@@ -175,64 +181,38 @@ const RegisterReviewerPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center py-10">
-      <h1 className="text-[24px] font-semibold text-gray-800">
-        Registrasi Reviewer Eksternal
-      </h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Sistem Informasi LPPM Universitas Muhammadiyah Cirebon
-      </p>
+    <div
+      className="relative flex min-h-screen flex-col items-center bg-cover bg-center px-4 py-8 sm:py-10"
+      style={{ backgroundImage: `url(${bg})` }}
+    >
+      {/* overlay — seragam dengan halaman pilih register */}
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
 
-      <div className="w-162.5 bg-white rounded-2xl shadow-md p-8">
-        {error && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+      {/* HEADER ber-logo — gaya RegisterPage */}
+      <div className="relative z-10 mb-6 flex w-full max-w-2xl items-center gap-4 rounded-[28px] bg-white px-6 py-4 shadow-xl">
+        <img src={logo} alt="" className="w-14 shrink-0" />
+        <div>
+          <h1 className="text-[20px] font-bold tracking-wide text-gray-800">
+            SISTEM INFORMASI LPPM
+          </h1>
+          <p className="text-[13px] font-semibold text-[#e10600]">
+            Universitas Muhammadiyah Cirebon
+          </p>
+          <p className="text-[11px] text-gray-500">
+            Registrasi Reviewer Eksternal — silakan lengkapi 3 langkah berikut
+          </p>
+        </div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl ring-1 ring-gray-100 sm:p-8">
+        <FormAlert message={error} />
 
         {/* STEP */}
         {step <= 3 && (
-          <div className="flex items-center justify-between mb-12 px-6">
-            {["Identitas", "Informasi Profesional", "Akun Login"].map(
-              (label, i) => {
-                const num = i + 1;
-
-                return (
-                  <div key={i} className="flex items-center flex-1">
-                    <div className="flex flex-col items-center relative z-10 bg-white">
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition
-                        ${step > num
-                            ? "bg-[#e10600] border-[#e10600] text-white"
-                            : step === num
-                              ? "border-[#e10600] text-[#e10600]"
-                              : "border-gray-300 text-gray-400"
-                          }`}
-                      >
-                        {step > num ? "✓" : num}
-                      </motion.div>
-
-                      <span className="text-xs mt-2 text-gray-600 text-center w-24">
-                        {label}
-                      </span>
-                    </div>
-
-                    {i < 2 && (
-                      <div className="relative flex-1 h-0.5 mx-2 mt-4">
-                        <div className="absolute inset-0 bg-gray-200" />
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: step > num ? "100%" : "0%" }}
-                          className="absolute inset-0 bg-[#e10600]"
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              },
-            )}
-          </div>
+          <RegisterStepper
+            labels={["Identitas", "Informasi Profesional", "Akun Login"]}
+            current={step}
+          />
         )}
 
         <AnimatePresence mode="wait">
@@ -246,13 +226,25 @@ const RegisterReviewerPage = () => {
               <h2 className="text-[16px] font-semibold mb-4">Identitas</h2>
 
               <div className="space-y-4">
-                <Input
+                <TextField
                   name="nama"
-                  label="Nama Lengkap*"
+                  label="Nama Lengkap"
+                  required
                   onChange={handleChange}
                 />
-                <Input name="email" label="Email*" onChange={handleChange} />
-                <Input name="nohp" label="Nomor HP*" onChange={handleChange} />
+                <TextField
+                  name="email"
+                  type="email"
+                  label="Email"
+                  required
+                  onChange={handleChange}
+                />
+                <TextField
+                  name="nohp"
+                  label="Nomor HP"
+                  required
+                  onChange={handleChange}
+                />
               </div>
             </motion.div>
           )}
@@ -269,25 +261,28 @@ const RegisterReviewerPage = () => {
               </h2>
 
               <div className="space-y-4">
-                <Input
+                <TextField
                   name="instansi"
-                  label="Instansi*"
+                  label="Instansi"
+                  required
                   onChange={handleChange}
                 />
-                <Input
+                <TextField
                   name="bidang"
-                  label="Bidang Keahlian*"
+                  label="Bidang Keahlian"
+                  required
                   onChange={handleChange}
                 />
-                <Textarea
+                <TextAreaField
                   name="pengalaman"
-                  label="Pengalaman Review*"
+                  label="Pengalaman Review"
+                  required
                   onChange={handleChange}
                 />
 
                 {/* DRAG DROP */}
                 <motion.div whileHover={{ scale: 1.01 }} className="transition">
-                  <label className="text-sm text-gray-600">Upload CV*</label>
+                  <FieldLabel label="Upload CV" required />
 
                   <div
                     onDragOver={(e) => {
@@ -348,32 +343,30 @@ const RegisterReviewerPage = () => {
               <h2 className="text-[16px] font-semibold mb-4">Informasi Akun</h2>
 
               <div className="space-y-4">
-                <Input
+                <TextField
                   name="username"
-                  label="Username*"
+                  label="Username"
+                  required
                   onChange={handleChange}
                 />
 
-                <PasswordInput
-                  label="Password*"
+                <PasswordField
+                  label="Password"
                   name="password"
-                  show={showPass}
-                  toggle={() => setShowPass(!showPass)}
+                  required
                   onChange={handleChange}
                 />
 
-                <PasswordInput
-                  label="Konfirmasi Password*"
+                <PasswordField
+                  label="Konfirmasi Password"
                   name="confirm"
-                  show={showConfirm}
-                  toggle={() => setShowConfirm(!showConfirm)}
+                  required
                   onChange={handleChange}
                 />
 
-                <label className="text-sm flex gap-2">
-                  <input type="checkbox" name="agree" onChange={handleChange} />
+                <AgreeCheckbox name="agree" onChange={handleChange}>
                   Saya menyetujui kebijakan privasi
-                </label>
+                </AgreeCheckbox>
               </div>
             </motion.div>
           )}
@@ -391,7 +384,7 @@ const RegisterReviewerPage = () => {
                 type="button"
                 variant="outline"
                 onClick={back}
-                className="w-full border-[#e10600] text-[#e10600] hover:bg-red-50"
+                className="h-11 w-full rounded-lg border-[#e10600] text-[#e10600] hover:bg-red-50"
               >
                 Kembali
               </Button>
@@ -411,7 +404,7 @@ const RegisterReviewerPage = () => {
                   (step === 2 && !isStep2Valid) ||
                   (step === 3 && !isStep3Valid)
                 }
-                className={`w-full text-white transition ${(step === 1 && !isStep1Valid) ||
+                className={`h-11 w-full rounded-lg text-white transition ${(step === 1 && !isStep1Valid) ||
                   (step === 2 && !isStep2Valid) ||
                   (step === 3 && !isStep3Valid) ||
                   loading
@@ -419,11 +412,19 @@ const RegisterReviewerPage = () => {
                   : "bg-[#e10600]"
                   }`}
               >
-                {step === 3
-                  ? loading
-                    ? "Mendaftarkan..."
-                    : "Daftar sebagai Reviewer"
-                  : "Lanjut"}
+                {loading ? (
+                  <>
+                    <Loader2
+                      className="mr-1.5 h-4 w-4 animate-spin"
+                      aria-hidden
+                    />
+                    Mendaftarkan...
+                  </>
+                ) : step === 3 ? (
+                  "Daftar sebagai Reviewer"
+                ) : (
+                  "Lanjut"
+                )}
               </Button>
             </motion.div>
           </div>
@@ -445,7 +446,7 @@ const RegisterReviewerPage = () => {
             </p>
             <Button
               type="button"
-              className="w-full bg-[#e10600] text-white"
+              className="h-11 w-full rounded-lg bg-[#e10600] text-white hover:bg-[#c10500]"
               onClick={() => navigate("/")}
             >
               Kembali ke Login
@@ -458,56 +459,3 @@ const RegisterReviewerPage = () => {
 };
 
 export default RegisterReviewerPage;
-
-/* COMPONENTS */
-
-const Input = ({ label, ...props }: FormInputProps) => (
-  <div>
-    <label className="text-sm text-gray-600">{label}</label>
-    <input
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]
-      focus:outline-none focus:ring-2 focus:ring-[#e10600]/30
-      focus:border-[#e10600] transition"
-    />
-  </div>
-);
-
-const Textarea = ({ label, ...props }: FormTextareaProps) => (
-  <div>
-    <label className="text-sm text-gray-600">{label}</label>
-    <textarea
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9]
-      focus:outline-none focus:ring-2 focus:ring-[#e10600]/30
-      focus:border-[#e10600] transition"
-    />
-  </div>
-);
-
-const PasswordInput = ({
-  label,
-  show,
-  toggle,
-  ...props
-}: PasswordInputProps) => (
-  <div>
-    <label className="text-sm text-gray-600">{label}</label>
-    <div className="relative">
-      <input
-        {...props}
-        type={show ? "text" : "password"}
-        className="w-full mt-1 px-4 py-2 pr-10 border rounded-xl bg-[#f9f9f9]
-        focus:outline-none focus:ring-2 focus:ring-[#e10600]/30
-        focus:border-[#e10600] transition"
-      />
-      <button
-        type="button"
-        onClick={toggle}
-        className="absolute right-3 top-3 text-gray-500 hover:text-[#e10600]"
-      >
-        {show ? <Eye size={18} /> : <EyeOff size={18} />}
-      </button>
-    </div>
-  </div>
-);
