@@ -11,13 +11,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
-import type { InputProps, RegisterDosenForm, TextareaProps } from "./RegisterDosenPage.types";
+import type { InputProps, RegisterDosenFieldErrors, RegisterDosenForm, TextareaProps } from "./RegisterDosenPage.types";
+import {
+  mapBackendFieldErrors,
+  stepHasErrors,
+  validateStep1,
+  validateStep2,
+  validateStep3,
+} from "./RegisterDosenPage.validation";
 
 const RegisterDosenPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<RegisterDosenFieldErrors>({});
 
   // State untuk Data Master
   const [fakultasList, setFakultasList] = useState<MasterData[]>([]);
@@ -84,6 +92,15 @@ const RegisterDosenPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Bersihkan error field yang sedang diperbaiki
+    setFieldErrors((prev) => {
+      const key = name as keyof RegisterDosenForm;
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   // Handler khusus untuk komponen Combobox Shadcn
@@ -94,6 +111,14 @@ const RegisterDosenPage = () => {
       // Jika yang diganti adalah fakultas, reset prodi agar tidak nyangkut data lama
       ...(name === "fakultas" && { prodi: "" }),
     }));
+
+    setFieldErrors((prev) => {
+      const key = name as keyof RegisterDosenForm;
+      const next = { ...prev };
+      delete next[key];
+      if (name === "fakultas") delete next.prodi;
+      return next;
+    });
   };
 
   const nextStep = () => {
@@ -105,11 +130,17 @@ const RegisterDosenPage = () => {
     setStep((prev) => prev - 1);
   };
 
-  const isStep1Valid = Boolean(form.nama && form.tempat && form.tanggal && form.jk && form.alamat && form.nohp);
-  const isStep2Valid = Boolean(form.nidn && form.fakultas && form.prodi);
-  const isStep3Valid = Boolean(form.username && form.email.includes("@") && form.password && form.confirm && form.password === form.confirm && form.agree);
+  const goNext = () => {
+    const errors = step === 1 ? validateStep1(form) : validateStep2(form);
+    setFieldErrors(errors);
+    if (!stepHasErrors(errors)) nextStep();
+  };
 
   const handleSubmit = async () => {
+    const errors = validateStep3(form);
+    setFieldErrors(errors);
+    if (stepHasErrors(errors)) return;
+
     setLoading(true);
     setError("");
 
@@ -135,7 +166,13 @@ const RegisterDosenPage = () => {
       setStep(4);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || err.message);
+        const data = err.response?.data as
+          | { message?: string; errors?: Record<string, string[] | undefined> }
+          | undefined;
+
+        // Tampilkan error per-field dari validasi backend (jika ada)
+        if (data?.errors) setFieldErrors(mapBackendFieldErrors(data.errors));
+        setError(data?.message || err.message);
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -184,9 +221,9 @@ const RegisterDosenPage = () => {
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
-                <Input name="nama" label="Nama Lengkap*" value={form.nama} onChange={handleChange}/>
-                <Input name="tempat" label="Tempat Lahir*" value={form.tempat} onChange={handleChange}/>
-                <Input name="tanggal" type="date" label="Tanggal Lahir*" value={form.tanggal} onChange={handleChange}/>
+                <Input name="nama" label="Nama Lengkap*" value={form.nama} onChange={handleChange} error={fieldErrors.nama}/>
+                <Input name="tempat" label="Tempat Lahir*" value={form.tempat} onChange={handleChange} error={fieldErrors.tempat}/>
+                <Input name="tanggal" type="date" label="Tanggal Lahir*" value={form.tanggal} onChange={handleChange} error={fieldErrors.tanggal}/>
                 
                 <div>
                   <label className="text-sm text-gray-600">Jenis Kelamin*</label>
@@ -200,16 +237,17 @@ const RegisterDosenPage = () => {
                       <span className="text-sm">Perempuan</span>
                     </label>
                   </div>
+                  {fieldErrors.jk && <p className="text-red-500 text-xs mt-1">{fieldErrors.jk}</p>}
                 </div>
 
-                <Textarea name="alamat" label="Alamat*" value={form.alamat} onChange={handleChange}/>
-                <Input name="nohp" label="Nomor HP*" value={form.nohp} onChange={handleChange}/>
+                <Textarea name="alamat" label="Alamat" value={form.alamat} onChange={handleChange} error={fieldErrors.alamat}/>
+                <Input name="nohp" label="Nomor HP*" value={form.nohp} onChange={handleChange} error={fieldErrors.nohp}/>
               </motion.div>
             )}
 
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
-                <Input name="nidn" label="NIDN*" value={form.nidn} onChange={handleChange}/>
+                <Input name="nidn" label="NIDN*" value={form.nidn} onChange={handleChange} error={fieldErrors.nidn}/>
                 
                 {/* Searchable Dropdown Fakultas */}
                 <SearchableSelect 
@@ -218,6 +256,7 @@ const RegisterDosenPage = () => {
                   value={form.fakultas} 
                   onChange={(val) => handleSelectChange("fakultas", val)}
                   placeholder="Cari Fakultas..."
+                  error={fieldErrors.fakultas}
                 />
 
                 {/* Searchable Dropdown Prodi (Disabled jika fakultas belum dipilih) */}
@@ -228,6 +267,7 @@ const RegisterDosenPage = () => {
                   onChange={(val) => handleSelectChange("prodi", val)}
                   placeholder={isLoadingMaster ? "Memuat..." : "Cari Program Studi..."}
                   disabled={!form.fakultas}
+                  error={fieldErrors.prodi}
                 />
 
               </motion.div>
@@ -235,15 +275,18 @@ const RegisterDosenPage = () => {
 
             {step === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
-                <Input name="username" label="Username*" value={form.username} onChange={handleChange}/>
-                <Input name="email" type="email" label="Email*" value={form.email} onChange={handleChange}/>
-                <Input name="password" type="password" label="Password*" value={form.password} onChange={handleChange}/>
-                <Input name="confirm" type="password" label="Konfirmasi Password*" value={form.confirm} onChange={handleChange}/>
+                <Input name="username" label="Username*" value={form.username} onChange={handleChange} error={fieldErrors.username}/>
+                <Input name="email" type="email" label="Email*" value={form.email} onChange={handleChange} error={fieldErrors.email}/>
+                <Input name="password" type="password" label="Password*" value={form.password} onChange={handleChange} error={fieldErrors.password}/>
+                <Input name="confirm" type="password" label="Konfirmasi Password*" value={form.confirm} onChange={handleChange} error={fieldErrors.confirm}/>
 
-                <label className="flex gap-2 text-sm">
-                  <input type="checkbox" name="agree" checked={form.agree} onChange={handleChange} />
-                  Saya menyetujui kebijakan privasi
-                </label>
+                <div>
+                  <label className="flex gap-2 text-sm">
+                    <input type="checkbox" name="agree" checked={form.agree} onChange={handleChange} />
+                    Saya menyetujui kebijakan privasi
+                  </label>
+                  {fieldErrors.agree && <p className="text-red-500 text-xs mt-1">{fieldErrors.agree}</p>}
+                </div>
 
                 {error && <motion.p initial={{ x: -10 }} animate={{ x: 0 }} className="text-red-500 text-sm">{error}</motion.p>}
               </motion.div>
@@ -255,8 +298,8 @@ const RegisterDosenPage = () => {
               Kembali
             </button>
             <button
-              onClick={() => { if (step === 3) return handleSubmit(); nextStep(); }}
-              disabled={loading || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid) || (step === 3 && !isStep3Valid)}
+              onClick={() => { if (step === 3) return handleSubmit(); goNext(); }}
+              disabled={loading}
               className="w-full py-2 rounded-xl text-white bg-[#e10600] disabled:opacity-50 hover:bg-[#c10500] transition-colors"
             >
               {loading ? "Memproses..." : step === 3 ? "Daftar" : "Lanjut"}
@@ -272,23 +315,25 @@ export default RegisterDosenPage;
 
 /* ================= CUSTOM COMPONENTS ================= */
 
-const Input = ({ label, ...props }: InputProps) => (
+const Input = ({ label, error, ...props }: InputProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <input
       {...props}
       className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9] focus:outline-none focus:ring-2 focus:ring-[#e10600]/30 focus:border-[#e10600] transition"
     />
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
-const Textarea = ({ label, ...props }: TextareaProps) => (
+const Textarea = ({ label, error, ...props }: TextareaProps) => (
   <div>
     <label className="text-sm text-gray-600">{label}</label>
     <textarea
       {...props}
       className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9] focus:outline-none focus:ring-2 focus:ring-[#e10600]/30 focus:border-[#e10600] transition"
     />
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
@@ -299,7 +344,8 @@ const SearchableSelect = ({
   value, 
   onChange, 
   placeholder,
-  disabled = false
+  disabled = false,
+  error
 }: { 
   label: string; 
   options: MasterData[]; 
@@ -307,6 +353,7 @@ const SearchableSelect = ({
   onChange: (value: string) => void;
   placeholder: string;
   disabled?: boolean;
+  error?: string;
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -361,6 +408,7 @@ const SearchableSelect = ({
           </Command>
         </PopoverContent>
       </Popover>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 };
