@@ -4,14 +4,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { registerDosen, getFakultas, getProdiByFakultas, MasterData } from "./auth.api";
 import { RegisterDosenPayload } from "./auth.types";
 import axios from "axios";
-import { CheckCircle, ChevronsUpDown, Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// Import komponen shadcn (Sesuaikan path-nya jika berbeda)
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import bg from "@/assets/images/img-login.png";
+import logo from "@/assets/images/logo.png";
 
-import type { InputProps, RegisterDosenFieldErrors, RegisterDosenForm, TextareaProps } from "./RegisterDosenPage.types";
+import type { RegisterDosenFieldErrors, RegisterDosenForm } from "./RegisterDosenPage.types";
+import {
+  AgreeCheckbox,
+  FieldError,
+  FieldLabel,
+  FormAlert,
+  PasswordField,
+  RegisterStepper,
+  SearchableSelect,
+  TextAreaField,
+  TextField,
+} from "./RegisterShared";
 import {
   mapBackendFieldErrors,
   stepHasErrors,
@@ -19,6 +29,8 @@ import {
   validateStep2,
   validateStep3,
 } from "./RegisterDosenPage.validation";
+
+const STEPPER_LABELS = ["Data Diri", "Keakademian", "Akun & Keamanan"];
 
 const RegisterDosenPage = () => {
   const navigate = useNavigate();
@@ -122,10 +134,14 @@ const RegisterDosenPage = () => {
   };
 
   const nextStep = () => {
-    if (step < 4) setStep((prev) => prev + 1);
+    if (step < 4) {
+      setError("");
+      setStep((prev) => prev + 1);
+    }
   };
 
   const prevStep = () => {
+    setError("");
     if (step === 1) return navigate("/register");
     setStep((prev) => prev - 1);
   };
@@ -154,7 +170,7 @@ const RegisterDosenPage = () => {
         nomor_hp: form.nohp,
         nidn: form.nidn,
         // Konversi ke Number agar sesuai dengan relasi database Int di backend
-        fakultas_id: Number(form.fakultas), 
+        fakultas_id: Number(form.fakultas),
         program_studi_id: Number(form.prodi),
         username: form.username,
         password: form.password,
@@ -184,231 +200,169 @@ const RegisterDosenPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] flex flex-col items-center py-10">
-      {step !== 4 && (
-        <>
-          <h1 className="text-[24px] font-semibold text-gray-800">Registrasi Dosen</h1>
-          <p className="text-gray-500 text-sm mb-6">Sistem Informasi LPPM Universitas Muhammadiyah Cirebon</p>
+    <div
+      className="relative flex min-h-screen flex-col items-center bg-cover bg-center px-4 py-8 sm:py-10"
+      style={{ backgroundImage: `url(${bg})` }}
+    >
+      {/* overlay — seragam dengan halaman pilih register */}
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
 
-          <div className="flex justify-center items-center gap-3 mb-6">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm transition-all duration-300 ${step === s ? "bg-[#e10600] text-white scale-110" : step > s ? "bg-green-100 text-green-600" : "bg-gray-200 text-gray-500"}`}>
-                  {step > s ? <CheckCircle size={16} /> : s}
-                </div>
-                {s !== 3 && <div className={`w-10 h-[2px] ${step > s ? "bg-green-400" : "bg-gray-300"}`} />}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {step === 4 && (
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-[500px] bg-white rounded-2xl shadow-md p-10 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-green-600 text-2xl">✓</span>
-          </div>
-          <h2 className="text-xl font-semibold mb-3">Registrasi Berhasil</h2>
-          <p className="text-gray-500 text-sm mb-6">Silakan menunggu verifikasi dari Admin LPPM.</p>
-          <button onClick={() => navigate("/")} className="w-full bg-[#e10600] text-white py-3 rounded-xl hover:scale-105 transition-transform">
-            Kembali ke Beranda
-          </button>
-        </motion.div>
-      )}
-
-      {step !== 4 && (
-        <div className="w-[500px] bg-white rounded-2xl shadow-md p-8">
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
-                <Input name="nama" label="Nama Lengkap*" value={form.nama} onChange={handleChange} error={fieldErrors.nama}/>
-                <Input name="tempat" label="Tempat Lahir*" value={form.tempat} onChange={handleChange} error={fieldErrors.tempat}/>
-                <Input name="tanggal" type="date" label="Tanggal Lahir*" value={form.tanggal} onChange={handleChange} error={fieldErrors.tanggal}/>
-                
-                <div>
-                  <label className="text-sm text-gray-600">Jenis Kelamin*</label>
-                  <div className="flex gap-4 mt-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="jk" value="Laki-laki" checked={form.jk === "Laki-laki"} onChange={handleChange} className="accent-[#e10600]" />
-                      <span className="text-sm">Laki-laki</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="jk" value="Perempuan" checked={form.jk === "Perempuan"} onChange={handleChange} className="accent-[#e10600]" />
-                      <span className="text-sm">Perempuan</span>
-                    </label>
-                  </div>
-                  {fieldErrors.jk && <p className="text-red-500 text-xs mt-1">{fieldErrors.jk}</p>}
-                </div>
-
-                <Textarea name="alamat" label="Alamat" value={form.alamat} onChange={handleChange} error={fieldErrors.alamat}/>
-                <Input name="nohp" label="Nomor HP*" value={form.nohp} onChange={handleChange} error={fieldErrors.nohp}/>
-              </motion.div>
-            )}
-
-            {step === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
-                <Input name="nidn" label="NIDN*" value={form.nidn} onChange={handleChange} error={fieldErrors.nidn}/>
-                
-                {/* Searchable Dropdown Fakultas */}
-                <SearchableSelect 
-                  label="Fakultas*" 
-                  options={fakultasList} 
-                  value={form.fakultas} 
-                  onChange={(val) => handleSelectChange("fakultas", val)}
-                  placeholder="Cari Fakultas..."
-                  error={fieldErrors.fakultas}
-                />
-
-                {/* Searchable Dropdown Prodi (Disabled jika fakultas belum dipilih) */}
-                <SearchableSelect 
-                  label="Program Studi*" 
-                  options={prodiList} 
-                  value={form.prodi} 
-                  onChange={(val) => handleSelectChange("prodi", val)}
-                  placeholder={isLoadingMaster ? "Memuat..." : "Cari Program Studi..."}
-                  disabled={!form.fakultas}
-                  error={fieldErrors.prodi}
-                />
-
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
-                <Input name="username" label="Username*" value={form.username} onChange={handleChange} error={fieldErrors.username}/>
-                <Input name="email" type="email" label="Email*" value={form.email} onChange={handleChange} error={fieldErrors.email}/>
-                <Input name="password" type="password" label="Password*" value={form.password} onChange={handleChange} error={fieldErrors.password}/>
-                <Input name="confirm" type="password" label="Konfirmasi Password*" value={form.confirm} onChange={handleChange} error={fieldErrors.confirm}/>
-
-                <div>
-                  <label className="flex gap-2 text-sm">
-                    <input type="checkbox" name="agree" checked={form.agree} onChange={handleChange} />
-                    Saya menyetujui kebijakan privasi
-                  </label>
-                  {fieldErrors.agree && <p className="text-red-500 text-xs mt-1">{fieldErrors.agree}</p>}
-                </div>
-
-                {error && <motion.p initial={{ x: -10 }} animate={{ x: 0 }} className="text-red-500 text-sm">{error}</motion.p>}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="flex gap-4 mt-8">
-            <button onClick={prevStep} className="w-full border border-[#e10600] text-[#e10600] py-2 rounded-xl hover:bg-red-50 transition-colors">
-              Kembali
-            </button>
-            <button
-              onClick={() => { if (step === 3) return handleSubmit(); goNext(); }}
-              disabled={loading}
-              className="w-full py-2 rounded-xl text-white bg-[#e10600] disabled:opacity-50 hover:bg-[#c10500] transition-colors"
-            >
-              {loading ? "Memproses..." : step === 3 ? "Daftar" : "Lanjut"}
-            </button>
+      <div className="relative z-10 flex w-full max-w-lg flex-col items-center">
+        {/* HEADER ber-logo — gaya RegisterPage */}
+        <div className="mb-6 flex w-full items-center gap-4 rounded-[28px] bg-white px-6 py-4 shadow-xl">
+          <img src={logo} alt="" className="w-14 shrink-0" />
+          <div>
+            <h1 className="text-[20px] font-bold tracking-wide text-gray-800">
+              SISTEM INFORMASI LPPM
+            </h1>
+            <p className="text-[13px] font-semibold text-[#e10600]">
+              Universitas Muhammadiyah Cirebon
+            </p>
+            <p className="text-[11px] text-gray-500">
+              Registrasi Dosen — silakan lengkapi 3 langkah berikut
+            </p>
           </div>
         </div>
-      )}
+
+        {/* SUKSES */}
+        {step === 4 && (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full rounded-2xl bg-white p-8 text-center shadow-xl ring-1 ring-gray-100 sm:p-10"
+          >
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <Check size={32} className="text-green-600" aria-hidden />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold text-gray-800">
+              Registrasi Berhasil
+            </h2>
+            <p className="mb-6 text-sm text-gray-500">
+              Silakan menunggu verifikasi dari Admin LPPM.
+            </p>
+            <Button
+              onClick={() => navigate("/")}
+              className="h-11 w-full rounded-lg bg-[#e10600] text-white hover:bg-[#c10500]"
+            >
+              Kembali ke Beranda
+            </Button>
+          </motion.div>
+        )}
+
+        {/* FORM */}
+        {step !== 4 && (
+          <div className="w-full rounded-2xl bg-white p-6 shadow-xl ring-1 ring-gray-100 sm:p-8">
+            <FormAlert message={error} />
+
+            <RegisterStepper labels={STEPPER_LABELS} current={step} />
+
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
+                  <TextField name="nama" label="Nama Lengkap" required value={form.nama} onChange={handleChange} error={fieldErrors.nama} />
+                  <TextField name="tempat" label="Tempat Lahir" required value={form.tempat} onChange={handleChange} error={fieldErrors.tempat} />
+                  <TextField name="tanggal" type="date" label="Tanggal Lahir" required value={form.tanggal} onChange={handleChange} error={fieldErrors.tanggal} />
+
+                  <div>
+                    <FieldLabel label="Jenis Kelamin" required />
+                    <div className="flex gap-4">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                        <input type="radio" name="jk" value="Laki-laki" checked={form.jk === "Laki-laki"} onChange={handleChange} className="h-4 w-4 accent-[#e10600]" />
+                        Laki-laki
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                        <input type="radio" name="jk" value="Perempuan" checked={form.jk === "Perempuan"} onChange={handleChange} className="h-4 w-4 accent-[#e10600]" />
+                        Perempuan
+                      </label>
+                    </div>
+                    <FieldError error={fieldErrors.jk} />
+                  </div>
+
+                  <TextAreaField name="alamat" label="Alamat" value={form.alamat} onChange={handleChange} error={fieldErrors.alamat} />
+                  <TextField name="nohp" label="Nomor HP" required value={form.nohp} onChange={handleChange} error={fieldErrors.nohp} />
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
+                  <TextField name="nidn" label="NIDN" required value={form.nidn} onChange={handleChange} error={fieldErrors.nidn} />
+
+                  {/* Searchable Dropdown Fakultas */}
+                  <SearchableSelect
+                    label="Fakultas"
+                    required
+                    options={fakultasList}
+                    value={form.fakultas}
+                    onChange={(val) => handleSelectChange("fakultas", val)}
+                    placeholder="Cari Fakultas..."
+                    error={fieldErrors.fakultas}
+                  />
+
+                  {/* Searchable Dropdown Prodi (Disabled jika fakultas belum dipilih) */}
+                  <SearchableSelect
+                    label="Program Studi"
+                    required
+                    options={prodiList}
+                    value={form.prodi}
+                    onChange={(val) => handleSelectChange("prodi", val)}
+                    placeholder={isLoadingMaster ? "Memuat..." : "Cari Program Studi..."}
+                    disabled={!form.fakultas}
+                    error={fieldErrors.prodi}
+                  />
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4 }} className="space-y-4">
+                  <TextField name="username" label="Username" required value={form.username} onChange={handleChange} error={fieldErrors.username} />
+                  <TextField name="email" type="email" label="Email" required value={form.email} onChange={handleChange} error={fieldErrors.email} />
+                  <PasswordField name="password" label="Password" required value={form.password} onChange={handleChange} error={fieldErrors.password} />
+                  <PasswordField name="confirm" label="Konfirmasi Password" required value={form.confirm} onChange={handleChange} error={fieldErrors.confirm} />
+
+                  <AgreeCheckbox name="agree" checked={form.agree} onChange={handleChange} error={fieldErrors.agree}>
+                    Saya menyetujui kebijakan privasi
+                  </AgreeCheckbox>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="mt-8 flex gap-4">
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  className="h-11 w-full rounded-lg border-[#e10600] text-[#e10600] hover:bg-red-50"
+                >
+                  Kembali
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                <Button
+                  type="button"
+                  onClick={() => { if (step === 3) return handleSubmit(); goNext(); }}
+                  disabled={loading}
+                  className="h-11 w-full rounded-lg bg-[#e10600] text-white hover:bg-[#c10500]"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />
+                      Memproses...
+                    </>
+                  ) : step === 3 ? (
+                    "Daftar"
+                  ) : (
+                    "Lanjut"
+                  )}
+                </Button>
+              </motion.div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 export default RegisterDosenPage;
-
-/* ================= CUSTOM COMPONENTS ================= */
-
-const Input = ({ label, error, ...props }: InputProps) => (
-  <div>
-    <label className="text-sm text-gray-600">{label}</label>
-    <input
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9] focus:outline-none focus:ring-2 focus:ring-[#e10600]/30 focus:border-[#e10600] transition"
-    />
-    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-  </div>
-);
-
-const Textarea = ({ label, error, ...props }: TextareaProps) => (
-  <div>
-    <label className="text-sm text-gray-600">{label}</label>
-    <textarea
-      {...props}
-      className="w-full mt-1 px-4 py-2 border rounded-xl bg-[#f9f9f9] focus:outline-none focus:ring-2 focus:ring-[#e10600]/30 focus:border-[#e10600] transition"
-    />
-    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-  </div>
-);
-
-// Komponen baru pengganti <Select> standar, menggunakan Shadcn UI Combobox
-const SearchableSelect = ({ 
-  label, 
-  options, 
-  value, 
-  onChange, 
-  placeholder,
-  disabled = false,
-  error
-}: { 
-  label: string; 
-  options: MasterData[]; 
-  value: string; 
-  onChange: (value: string) => void;
-  placeholder: string;
-  disabled?: boolean;
-  error?: string;
-}) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="flex flex-col">
-      <label className="text-sm text-gray-600 mb-1">{label}</label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            disabled={disabled}
-            className={cn(
-              "flex w-full items-center justify-between px-4 py-2 border rounded-xl bg-[#f9f9f9] transition text-left",
-              "focus:outline-none focus:ring-2 focus:ring-[#e10600]/30 focus:border-[#e10600]",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-            role="combobox"
-            aria-expanded={open}
-          >
-            {value
-              ? options.find((opt) => opt.id.toString() === value)?.nama
-              : <span className="text-gray-500">{placeholder}</span>}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0 max-w-[400px] border-none shadow-lg">
-          <Command>
-            <CommandInput placeholder="Cari..." className="focus:ring-0 border-none" />
-            <CommandList>
-              <CommandEmpty>Tidak ditemukan.</CommandEmpty>
-              <CommandGroup>
-                {options.map((opt) => (
-                  <CommandItem
-                    key={opt.id}
-                    value={opt.nama} // cmdk mencari berdasarkan value ini
-                    onSelect={() => {
-                      onChange(opt.id.toString());
-                      setOpen(false);
-                    }}
-                    className="cursor-pointer hover:bg-gray-100"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === opt.id.toString() ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {opt.nama}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-    </div>
-  );
-};

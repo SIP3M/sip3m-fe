@@ -41,7 +41,7 @@ const RegisterPage = () => {
       >
         {/* HEADER */}
         <div className="bg-white rounded-[28px] shadow-xl px-6 py-4 flex items-center gap-4 mb-10">
-          <img src={logo} className="w-14" />
+          <img src={logo} alt="" className="w-14" />
 
           <div>
             <h1 className="text-[20px] font-bold text-gray-800 tracking-wide">
@@ -57,9 +57,9 @@ const RegisterPage = () => {
         </div>
 
         {/* CARD */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* DOSEN */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition">
+          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition">
             <div className="flex items-center gap-3 mb-2">
               <div className="bg-red-50 p-2 rounded-lg">
                 <GraduationCap className="text-[#e10600]" size={20} />
@@ -97,7 +97,7 @@ const RegisterPage = () => {
           </div>
 
           {/* REVIEWER */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition">
+          <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition">
             <div className="flex items-center gap-3 mb-2">
               <div className="bg-red-50 p-2 rounded-lg">
                 <UserCheck className="text-[#e10600]" size={20} />
