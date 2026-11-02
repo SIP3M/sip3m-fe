@@ -22,6 +22,8 @@ export const validateStep1 = (form: RegisterDosenForm): RegisterDosenFieldErrors
     errors.nama = "Nama lengkap minimal 3 karakter.";
   } else if (form.nama.length > 100) {
     errors.nama = "Nama lengkap hanya boleh maksimal 100 karakter.";
+  } else if (!/[A-Za-z]/.test(form.nama)) {
+    errors.nama = "Nama harus mengandung minimal 1 huruf.";
   }
 
   if (!form.tempat.trim()) {
@@ -36,6 +38,8 @@ export const validateStep1 = (form: RegisterDosenForm): RegisterDosenFieldErrors
     errors.tanggal = "Tanggal lahir tidak valid.";
   } else if (new Date(form.tanggal) > new Date()) {
     errors.tanggal = "Tanggal lahir tidak boleh di masa depan.";
+  } else if (new Date(form.tanggal).getFullYear() < 1940) {
+    errors.tanggal = "Tanggal lahir tidak boleh sebelum tahun 1940.";
   }
 
   if (!form.jk) {
@@ -49,8 +53,12 @@ export const validateStep1 = (form: RegisterDosenForm): RegisterDosenFieldErrors
 
   if (!form.nohp.trim()) {
     errors.nohp = "Nomor HP wajib diisi.";
-  } else if (form.nohp.length > 20) {
+  } else if (form.nohp.trim().length > 20) {
     errors.nohp = "Nomor HP hanya boleh maksimal 20 karakter.";
+  } else if (!/^\+?\d{9,15}$/.test(form.nohp.replace(/[\s-]/g, ""))) {
+    // Standar sistem (sama dengan isValidPhone pendaftaran KKM):
+    // digit, boleh diawali +, 9–15 digit (spasi/dash diabaikan).
+    errors.nohp = "Nomor HP tidak valid. Gunakan 9–15 digit (boleh diawali +).";
   }
 
   return errors;
@@ -66,6 +74,8 @@ export const validateStep2 = (form: RegisterDosenForm): RegisterDosenFieldErrors
     errors.nidn = "NIDN hanya boleh maksimal 20 karakter.";
   } else if (!NIDN_REGEX.test(nidn)) {
     errors.nidn = "NIDN hanya boleh berisi angka.";
+  } else if (nidn.length < 6) {
+    errors.nidn = "NIDN minimal 6 digit.";
   }
 
   if (!form.fakultas) {
@@ -103,6 +113,8 @@ export const validateStep3 = (form: RegisterDosenForm): RegisterDosenFieldErrors
     errors.password = "Password harus minimal 8 karakter.";
   } else if (form.password.length > 100) {
     errors.password = "Password hanya boleh maksimal 100 karakter.";
+  } else if (!/[A-Za-z]/.test(form.password) || !/\d/.test(form.password)) {
+    errors.password = "Password harus mengandung minimal 1 huruf dan 1 angka.";
   }
 
   if (form.confirm.length < 8) {
