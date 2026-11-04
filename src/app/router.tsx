@@ -81,7 +81,7 @@ import DetailMonitoringKKMDosen from "@/features/kkm/DetailMonitoringKKMDosen";
 import ValidasiLogbookDosen from "@/features/kkm/ValidasiLogbookDosen";
 import DetailValidasiLogbookDosen from "@/features/kkm/DetailValidasiLogbookDosen";
 import LaporanKKMDosen from "@/features/kkm/LaporanKKMDosen";
-import PenilaianMahasiswaDosen from "@/features/kkm/PenilaianMahasiswaDosen";
+import PenilaianMahasiswaDplPage from "@/features/kkm/PenilaianMahasiswaDplPage";
 
 import KelompokSaya from "@/features/mahasiswa/KelompokSaya";
 import LogbookMahasiswa from "@/features/mahasiswa/LogbookMahasiswa";
@@ -406,7 +406,7 @@ export const router = createBrowserRouter([
             element: <DetailValidasiLogbookDosen />,
           },
           { path: "laporan", element: <LaporanKKMDosen /> },
-          { path: "penilaian", element: <PenilaianMahasiswaDosen /> },
+          { path: "penilaian", element: <PenilaianMahasiswaDplPage /> },
           { path: "pengumuman", element: <PengumumanKKMDosen /> },
         ],
       },
