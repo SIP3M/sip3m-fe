@@ -14,6 +14,8 @@ import axios from "axios";
 interface GetAllProposalsParams {
   page?: number;
   search?: string;
+  skema?: string;
+  tahun?: number | string;
   status?: ProposalStatus;
 }
 
@@ -26,10 +28,19 @@ export const getAllProposals = async (
     params: {
       page: params?.page ?? 1,
       search: params?.search?.trim() || undefined,
+      skema: params?.skema?.trim() || undefined,
+      tahun: params?.tahun ? Number(params.tahun) : undefined,
       status: params?.status?.trim() || undefined,
     },
   });
 
+  return res.data;
+};
+
+export const exportProposalsExcel = async (): Promise<Blob> => {
+  const res = await api.get("/proposals/export/excel", {
+    responseType: "blob",
+  });
   return res.data;
 };
 
