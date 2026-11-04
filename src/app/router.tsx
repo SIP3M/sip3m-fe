@@ -8,7 +8,6 @@ import OAuthCallback from "@/features/auth/OauthCallback";
 
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import DplRouteGuard from "@/components/common/DplRouteGuard";
-import MahasiswaKkmRouteGuard from "@/components/common/MahasiswaKkmRouteGuard";
 import { APP_ROLES } from "@/constant/roles";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -69,6 +68,7 @@ import EditKelompokKKM from "@/features/kkm/EditKelompokKKM";
 import LaporanKKM from "@/features/kkm/LaporanKKM";
 import PengumumanKKM from "@/features/kkm/PengumumanKKM";
 import PengumumanKKMDosen from "@/features/kkm/PengumumanKKMDosen";
+import BuatPengumumanKKM from "@/features/kkm/BuatPengumumanKKM";
 import PilihSkemaKKM from "@/features/kkm/PilihSkemaKKM";
 import FormPendaftaranKKM from "@/features/kkm/FormPendaftaranKKM";
 
@@ -232,6 +232,10 @@ export const router = createBrowserRouter([
         path: "admin-dashboard/kkm/pengumuman",
         element: <PengumumanKKM />,
       },
+      {
+        path: "admin-dashboard/kkm/pengumuman/baru",
+        element: <BuatPengumumanKKM />,
+      },
     ],
   },
   // =========================
@@ -360,6 +364,10 @@ export const router = createBrowserRouter([
       {
         path: "repository-publik",
         element: <PublicationList />,
+      },
+      {
+        path: "kkm/pengumuman",
+        element: <PengumumanKKM />,
       },
     ],
   },
