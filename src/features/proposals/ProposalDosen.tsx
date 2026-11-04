@@ -59,6 +59,11 @@ import { getReferensiAktif } from "@/features/master/referensi.api";
 
 const PAGE_SIZE = 5;
 
+// Batas kolom funding_request_amount di database (PostgreSQL INTEGER / INT4).
+// Melebihi batas ini membuat request gagal di backend.
+const FUNDING_MAX = 2147483647;
+const FUNDING_MAX_MESSAGE = "Nominal pengajuan dana maksimal Rp2.147.483.647.";
+
 const defaultFormValues: ProposalFormValues = {
   title: "",
   faculty: "",
@@ -1068,6 +1073,21 @@ export default function ProposalDosen() {
       return;
     }
 
+    // Nominal pengajuan dana: batas kolom INTEGER di DB (INT4) = 2.147.483.647.
+    // Tanpa cek ini, angka besar lolos FE lalu backend membalas error server.
+    const fundingRaw = formValues.funding_request_amount.trim();
+    if (fundingRaw) {
+      const fundingValue = Number(fundingRaw);
+      if (!Number.isFinite(fundingValue) || fundingValue > FUNDING_MAX) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          funding_request_amount: FUNDING_MAX_MESSAGE,
+        }));
+        setError(FUNDING_MAX_MESSAGE);
+        return;
+      }
+    }
+
     if (formValues.proposal_file && !isPdfFile(formValues.proposal_file)) {
       setError("File proposal harus PDF.");
       return;
@@ -1474,11 +1494,25 @@ export default function ProposalDosen() {
                           ...prev,
                           funding_request_amount: cleaned,
                         }));
+                        if (fieldErrors.funding_request_amount) {
+                          setFieldErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.funding_request_amount;
+                            return next;
+                          });
+                        }
                       }}
                       placeholder="15.000.000"
+                      maxLength={10}
+                      inputMode="numeric"
                       className="h-11 w-full pl-12 rounded-xl border border-gray-300"
                     />
                   </div>
+                  {fieldErrors.funding_request_amount && (
+                    <p className="text-xs text-red-600">
+                      {fieldErrors.funding_request_amount}
+                    </p>
+                  )}
                 </div>
 
               </div>

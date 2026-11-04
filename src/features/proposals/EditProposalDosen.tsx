@@ -15,6 +15,11 @@ import { normalizeNama, normalizeNidn, normalizeNim, splitList, TIM_DOSEN_MAX, T
 
 type SumberPendanaanValue = SumberPendanaan | "Pilih";
 
+// Batas kolom funding_request_amount di database (PostgreSQL INTEGER / INT4).
+// Melebihi batas ini membuat request gagal di backend.
+const FUNDING_MAX = 2147483647;
+const FUNDING_MAX_MESSAGE = "Nominal pengajuan dana maksimal Rp2.147.483.647.";
+
 export default function EditProposalDosen() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -256,6 +261,21 @@ export default function EditProposalDosen() {
       }
     }
 
+    // Nominal pengajuan dana: batas kolom INTEGER di DB (INT4) = 2.147.483.647.
+    // Tanpa cek ini, angka besar lolos FE lalu backend membalas error server.
+    const amountTrim = String(amount ?? "").trim();
+    if (amountTrim) {
+      const amountValue = Number(amountTrim);
+      if (!Number.isFinite(amountValue) || amountValue > FUNDING_MAX) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          funding_request_amount: FUNDING_MAX_MESSAGE,
+        }));
+        setErrorMsg(FUNDING_MAX_MESSAGE);
+        return;
+      }
+    }
+
     setIsSaving(true);
     setErrorMsg("");
 
@@ -405,10 +425,29 @@ export default function EditProposalDosen() {
             <input
               type="number"
               required
+              min={0}
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:outline-none"
+              onChange={(e) => {
+                setAmount(e.target.value);
+                if (fieldErrors.funding_request_amount) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.funding_request_amount;
+                    return next;
+                  });
+                }
+              }}
+              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none ${
+                fieldErrors.funding_request_amount
+                  ? "border-red-300 focus:border-red-500 bg-red-50/40"
+                  : "border-gray-300 focus:border-red-500"
+              }`}
             />
+            {fieldErrors.funding_request_amount && (
+              <p className="mt-1 text-xs text-red-600">
+                {fieldErrors.funding_request_amount}
+              </p>
+            )}
           </div>
         </div>
 
