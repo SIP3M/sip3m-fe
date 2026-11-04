@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Download, Filter, Search } from "lucide-react";
 import ProposalRow from "./components/ProposalRow";
 import { Proposal, ProposalStatus } from "./proposal.types";
-import { getAllProposals } from "./proposal.api";
+import { getAllProposals, exportProposalsExcel } from "./proposal.api";
+import { getReferensiAktif } from "@/features/master/referensi.api";
 import Pagination from "@/components/common/Pagination";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,21 +26,38 @@ const STATUS_OPTIONS: { value: ProposalStatus | ""; label: string }[] = [
 export default function ProposalList() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [skemaQuery, setSkemaQuery] = useState("");
   const [statusQuery, setStatusQuery] = useState<ProposalStatus | "">("");
-  const [tahunQuery, setTahunQuery] = useState("2023");
+  const [tahunQuery, setTahunQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [skemaOptions, setSkemaOptions] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const latestRequestId = useRef(0);
 
+  useEffect(() => {
+    const fetchSkemaList = async () => {
+      try {
+        const items = await getReferensiAktif("SKEMA");
+        setSkemaOptions(items.map((i) => i.nama));
+      } catch {
+        // Fallback jika gagal memuat master referensi
+        setSkemaOptions(["Penelitian Dasar", "Penelitian Terapan", "Pengabdian"]);
+      }
+    };
+    void fetchSkemaList();
+  }, []);
+
   const fetchProposals = async (
     page = 1,
     search = "",
+    skema = "",
+    tahun = "",
     status: ProposalStatus | "" = "",
   ) => {
     const requestId = ++latestRequestId.current;
@@ -50,6 +68,8 @@ export default function ProposalList() {
       const response = await getAllProposals({
         page,
         search,
+        skema: skema || undefined,
+        tahun: tahun || undefined,
         status: status || undefined,
       });
 
@@ -87,13 +107,35 @@ export default function ProposalList() {
   }, [searchQuery]);
 
   useEffect(() => {
-    void fetchProposals(currentPage, debouncedSearch, statusQuery);
-  }, [currentPage, debouncedSearch, statusQuery]);
+    void fetchProposals(currentPage, debouncedSearch, skemaQuery, tahunQuery, statusQuery);
+  }, [currentPage, debouncedSearch, skemaQuery, tahunQuery, statusQuery]);
 
   const handlePageChange = (page: number) => {
     if (page <= 0 || page > totalPages || isLoading) return;
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await exportProposalsExcel();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Daftar_Proposal_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err)
+        ? err.response?.data?.message || "Gagal export excel"
+        : "Gagal export excel";
+      alert(msg);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -109,15 +151,19 @@ export default function ProposalList() {
           </p>
         </div>
 
-        <Button variant="outline" className="cursor-pointer px-4 py-2 rounded-lg text-sm shadow transition">
+        <Button
+          variant="outline"
+          className="cursor-pointer px-4 py-2 rounded-lg text-sm shadow transition"
+          onClick={handleExportExcel}
+          disabled={isExporting}
+        >
           <Download className="mr-2 h-4 w-4" />
-          Export Excel
+          {isExporting ? "Mengunduh..." : "Export Excel"}
         </Button>
       </div>
 
       {/* FILTER BAR */}
 
-      {/* FILTER BAR */}
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 md:flex-nowrap items-center">
@@ -137,12 +183,18 @@ export default function ProposalList() {
             <div className="relative">
               <select
                 value={skemaQuery}
-                onChange={(e) => setSkemaQuery(e.target.value)}
+                onChange={(e) => {
+                  setSkemaQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="appearance-none w-44 h-11 pl-4 pr-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
                 <option value="">Semua Skema</option>
-                <option value="Penelitian Dasar">Penelitian Dasar</option>
-                <option value="Pengabdian">Pengabdian</option>
+                {skemaOptions.map((skema) => (
+                  <option key={skema} value={skema}>
+                    {skema}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
             </div>
@@ -151,9 +203,13 @@ export default function ProposalList() {
             <div className="relative">
               <select
                 value={tahunQuery}
-                onChange={(e) => setTahunQuery(e.target.value)}
+                onChange={(e) => {
+                  setTahunQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="appearance-none w-44 h-11 pl-4 pr-9 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
+                <option value="">Semua Tahun</option>
                 <option value="2023">Tahun 2023</option>
                 <option value="2024">Tahun 2024</option>
                 <option value="2025">Tahun 2025</option>
