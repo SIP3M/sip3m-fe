@@ -1,7 +1,6 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
   Bell,
   BookOpen,
   CalendarDays,
@@ -12,7 +11,6 @@ import {
   FileText,
   GraduationCap,
   MapPin,
-  Upload,
   Users,
 } from "lucide-react";
 import {
@@ -26,6 +24,9 @@ import {
 } from "recharts";
 import StatusAksesKkmView from "@/features/mahasiswa/StatusAksesKkmView";
 import { useKkmMahasiswaAccessStore } from "@/features/kkm/kkmMahasiswaAccess.store";
+import { getPengumumanSaya } from "@/features/kkm/pengumuman.api";
+import type { Pengumuman } from "@/features/kkm/pengumuman.types";
+import { formatTanggalPengumuman } from "@/utils/pengumuman";
 
 /** Jumlah logbook yang disubmit tiap minggu (total = 19) */
 const LOGBOOK_PER_MINGGU = [
@@ -86,26 +87,34 @@ const DEADLINE = [
   },
 ];
 
-/** Pengumuman dari admin/DPL */
-const PENGUMUMAN = [
-  {
-    judul: "Jadwal monitoring DPL minggu depan",
-    tanggal: "15 Feb 2026",
-  },
-  {
-    judul: "Deadline laporan tengah diperpanjang",
-    tanggal: "18 Feb 2026",
-  },
-];
+/** Pengumuman dari admin/DPL — diambil dari API (lihat bagian widget) */
 
 export default function DashboardMahasiswaKKM() {
   const navigate = useNavigate();
   const hasAccess = useKkmMahasiswaAccessStore((state) => state.hasAccess);
   const checkAccess = useKkmMahasiswaAccessStore((state) => state.checkAccess);
 
+  // Pengumuman terbaru yang menyasar saya (max 4 ditampilkan)
+  const [pengumuman, setPengumuman] = useState<Pengumuman[]>([]);
+
   useEffect(() => {
     void checkAccess();
   }, [checkAccess]);
+
+  useEffect(() => {
+    if (!hasAccess) return;
+    let alive = true;
+    getPengumumanSaya()
+      .then((res) => {
+        if (alive) setPengumuman(res.data);
+      })
+      .catch(() => {
+        // widget non-kritis — diamkan bila gagal
+      });
+    return () => {
+      alive = false;
+    };
+  }, [hasAccess]);
 
   // Jika mahasiswa belum mendapatkan akses dari admin LPPM -> peserta KKM,
   // tampilkan halaman verifikasi berkas persis sesuai desain Screenshot 2026-10-22 103009.png
@@ -472,17 +481,31 @@ export default function DashboardMahasiswaKKM() {
             </h2>
 
             <div className="mt-4 space-y-4">
-              {PENGUMUMAN.map((item) => (
-                <div key={item.judul} className="flex items-start gap-2.5">
-                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500" />
-                  <div>
+              {pengumuman.slice(0, 4).map((item) => (
+                <div key={item.id} className="flex items-start gap-2.5">
+                  <span
+                    className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                      item.read_at ? "bg-gray-300" : "bg-red-500"
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-800">
                       {item.judul}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">{item.tanggal}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {formatTanggalPengumuman(
+                        item.published_at ?? item.created_at,
+                      )}
+                    </p>
                   </div>
                 </div>
               ))}
+
+              {pengumuman.length === 0 && (
+                <p className="text-sm text-gray-400">
+                  Belum ada pengumuman untuk Anda.
+                </p>
+              )}
             </div>
 
             <button

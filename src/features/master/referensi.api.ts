@@ -6,7 +6,10 @@ import { api } from "@/services/api";
  * - GET /referensi/:jenis        — publik, hanya opsi aktif (form proposal).
  * - GET/POST /master/referensi…  — ADMIN_SISTEM (guard di BE).
  */
-export type JenisReferensi = "SKEMA" | "SUMBER_PENDANAAN";
+export type JenisReferensi =
+  | "SKEMA"
+  | "SUMBER_PENDANAAN"
+  | "KATEGORI_PENGUMUMAN";
 
 export interface ReferensiItem {
   id: number;

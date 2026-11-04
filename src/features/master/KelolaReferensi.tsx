@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Coins,
   Loader2,
+  Megaphone,
   Pencil,
   Plus,
   Power,
@@ -46,11 +47,11 @@ export default function KelolaReferensi() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Skema &amp; Sumber Pendanaan
+          Master Referensi
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Kelola opsi dropdown Skema Penelitian dan Sumber Pendanaan pada form
-          proposal
+          Kelola opsi dropdown Skema Penelitian &amp; Sumber Pendanaan pada form
+          proposal, serta Kategori Pengumuman pada form buat pengumuman KKM
         </p>
       </div>
 
@@ -88,6 +89,14 @@ export default function KelolaReferensi() {
         onToast={setToast}
         onAuthError={handleAuthError}
       />
+      <ReferensiCard
+        jenis="KATEGORI_PENGUMUMAN"
+        title="Kategori Pengumuman"
+        icon={Megaphone}
+        onToast={setToast}
+        onAuthError={handleAuthError}
+        usageLabel="form buat pengumuman"
+      />
     </div>
   );
 }
@@ -102,12 +111,15 @@ function ReferensiCard({
   icon: Icon,
   onToast,
   onAuthError,
+  usageLabel = "form proposal",
 }: {
   jenis: JenisReferensi;
   title: string;
   icon: typeof ClipboardList;
   onToast: (t: ToastMsg) => void;
   onAuthError: (status?: number) => void;
+  /** Formulir yang memakai opsi ini (untuk teks bantuan/hapus) */
+  usageLabel?: string;
 }) {
   const [rows, setRows] = useState<ReferensiItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,7 +221,7 @@ function ReferensiCard({
 
   const handleDelete = async (row: ReferensiItem) => {
     const ok = window.confirm(
-      `Hapus opsi "${row.nama}"?\n\nCatatan: opsi yang sudah dipakai proposal tidak bisa dihapus — nonaktifkan saja.`,
+      `Hapus opsi "${row.nama}"?\n\nCatatan: opsi yang sudah dipakai ${usageLabel} tidak bisa dihapus — nonaktifkan saja.`,
     );
     if (!ok) return;
 
@@ -360,7 +372,7 @@ function ReferensiCard({
                       }`}
                       title={
                         row.is_aktif
-                          ? "Nonaktifkan (hilang dari form proposal)"
+                          ? `Nonaktifkan (hilang dari ${usageLabel})`
                           : "Aktifkan kembali"
                       }
                     >
