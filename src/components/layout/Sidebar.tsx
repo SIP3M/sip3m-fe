@@ -90,12 +90,6 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
             { name: "Repository Publik", icon: Globe, path: "/repository-publik" },
           ],
         },
-        {
-          key: "system",
-          label: "SYSTEM",
-          icon: Settings,
-          items: [{ name: "Pengaturan Sistem", icon: Settings, path: "/settings" }],
-        },
       ],
     },
     kkm: {
