@@ -5,6 +5,7 @@ import {
   Clock,
   Eye,
   FileText,
+  Lock,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -16,12 +17,15 @@ import { getLogbookSaya } from "@/features/kkm/kkmLogbook.api";
 import {
   formatLogbookFileSize,
   KKM_LOGBOOK_STATUS_LABEL,
+  type GetLogbookSayaResponse,
   type KkmLogbookEntry,
   type KkmLogbookStatus,
 } from "@/features/kkm/kkmLogbook.types";
 
 // =====================================================================
-// Halaman "Logbook Kegiatan" mahasiswa — terhubung ke GET /kkm/logbook/me.
+// Halaman "Logbook Individu" mahasiswa — terhubung ke GET /kkm/logbook/me.
+// Unggahan dikunci permanen setelah deadline_logbook_individu + jam
+// (diatur admin LPPM) atau saat periode berstatus SELESAI.
 // =====================================================================
 
 const STATUS_CONFIG: Record<
@@ -53,6 +57,10 @@ export default function LogbookMahasiswa() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [belumAda, setBelumAda] = useState(false);
+  const [deadline, setDeadline] = useState<
+    GetLogbookSayaResponse["data"]["deadline"] | null
+  >(null);
+  const [bisaTambah, setBisaTambah] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detail, setDetail] = useState<KkmLogbookEntry | null>(null);
@@ -65,6 +73,8 @@ export default function LogbookMahasiswa() {
       const res = await getLogbookSaya();
       setEntries(res.data.entries);
       setKelompokId(res.data.kelompok.id);
+      setDeadline(res.data.deadline ?? null);
+      setBisaTambah(res.data.bisa_tambah ?? true);
     } catch (err) {
       // 404 = mahasiswa belum tergabung kelompok mana pun → empty-state khusus.
       if (axios.isAxiosError(err) && err.response?.status === 404) {
@@ -121,7 +131,7 @@ export default function LogbookMahasiswa() {
       {/* HEADER */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Logbook Kegiatan</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Logbook Individu</h1>
           <p className="text-sm text-gray-500 mt-1">
             Catat setiap kegiatan KKM Anda secara rutin
           </p>
@@ -130,13 +140,55 @@ export default function LogbookMahasiswa() {
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          disabled={belumAda}
+          disabled={belumAda || !bisaTambah}
+          title={
+            bisaTambah
+              ? undefined
+              : (deadline?.alasan ?? "Unggahan logbook sudah terkunci.")
+          }
           className="inline-flex items-center gap-2 self-start rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(220,38,38,0.25)] transition-colors hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
-          <Plus size={16} />
+          {bisaTambah ? <Plus size={16} /> : <Lock size={16} />}
           Tambah Logbook
         </button>
       </div>
+
+      {/* BANNER DEADLINE */}
+      {deadline?.ada && (
+        <div
+          className={`mb-6 flex items-start gap-3 rounded-2xl border px-5 py-4 ${
+            deadline.terkunci
+              ? "border-red-200 bg-red-50"
+              : "border-amber-200 bg-amber-50"
+          }`}
+        >
+          {deadline.terkunci ? (
+            <Lock size={18} className="mt-0.5 shrink-0 text-red-500" />
+          ) : (
+            <Clock size={18} className="mt-0.5 shrink-0 text-amber-600" />
+          )}
+          <div>
+            <p
+              className={`text-sm font-bold ${
+                deadline.terkunci ? "text-red-600" : "text-amber-700"
+              }`}
+            >
+              {deadline.terkunci
+                ? "Unggahan logbook individu sudah terkunci"
+                : "Batas akhir unggah logbook individu"}
+            </p>
+            <p
+              className={`mt-0.5 text-xs ${
+                deadline.terkunci ? "text-red-500" : "text-amber-600"
+              }`}
+            >
+              {deadline.terkunci
+                ? deadline.alasan
+                : `Deadline: ${deadline.tampil} — setelah waktu ini logbook tidak dapat ditambah/diubah.`}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* LOADING */}
       {isLoading && (

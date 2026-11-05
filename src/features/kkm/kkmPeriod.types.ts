@@ -14,6 +14,20 @@ export interface KkmPeriod {
   tgl_pelaksanaan?: string | null;
   tgl_penarikan?: string | null;
   deadline_laporan?: string | null;
+  /** Deadline logbook individu (YYYY-MM-DD) — diatur admin LPPM */
+  deadline_logbook_individu?: string | null;
+  /** "HH:mm" — jam tutup deadline logbook individu */
+  jam_logbook_individu?: string | null;
+  /** 1 = Senin .. 7 = Minggu — hari deadline mingguan logbook kelompok */
+  logbook_kelompok_hari?: number | null;
+  /** "HH:mm" — jam tutup logbook kelompok tiap minggu */
+  logbook_kelompok_jam?: string | null;
+  /** Deadline laporan individu (YYYY-MM-DD) */
+  deadline_laporan_individu?: string | null;
+  /** "HH:mm" */
+  jam_laporan_individu?: string | null;
+  /** "HH:mm" — jam tutup laporan kelompok (tanggal pada deadline_laporan) */
+  jam_laporan_kelompok?: string | null;
   target_peserta: number;
   minimal_semester?: number | null;
   maks_anggota_kelompok: number;
@@ -61,6 +75,20 @@ export interface KkmPeriodPayload {
   tgl_pelaksanaan?: string | null;
   tgl_penarikan?: string | null;
   deadline_laporan?: string | null;
+  /** Deadline logbook individu (YYYY-MM-DD) */
+  deadline_logbook_individu?: string | null;
+  /** "HH:mm" — jam tutup deadline logbook individu */
+  jam_logbook_individu?: string | null;
+  /** 1 = Senin .. 7 = Minggu — hari deadline mingguan logbook kelompok */
+  logbook_kelompok_hari?: number | null;
+  /** "HH:mm" — jam tutup logbook kelompok tiap minggu */
+  logbook_kelompok_jam?: string | null;
+  /** Deadline laporan individu (YYYY-MM-DD) */
+  deadline_laporan_individu?: string | null;
+  /** "HH:mm" */
+  jam_laporan_individu?: string | null;
+  /** "HH:mm" — jam tutup laporan kelompok (tanggal pada deadline_laporan) */
+  jam_laporan_kelompok?: string | null;
   target_peserta?: number;
   minimal_semester?: number | null;
   maks_anggota_kelompok?: number;
@@ -89,6 +117,17 @@ export interface ApiErrorResponse {
 
 export const KKM_JENIS_OPTIONS: KkmJenis[] = ["REGULER", "TEMATIK"];
 export const KKM_STATUS_OPTIONS: KkmStatus[] = ["DRAFT", "AKTIF", "DIJADWALKAN", "SELESAI"];
+
+/** Hari deadline mingguan logbook kelompok — 1 = Senin .. 7 = Minggu (ISO-8601). */
+export const KKM_HARI_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "Senin" },
+  { value: 2, label: "Selasa" },
+  { value: 3, label: "Rabu" },
+  { value: 4, label: "Kamis" },
+  { value: 5, label: "Jumat" },
+  { value: 6, label: "Sabtu" },
+  { value: 7, label: "Minggu" },
+];
 
 // Untuk FE select Tahun Akademik: generate 2020/2021 ... 2035/2036
 export const TAHUN_AKADEMIK_OPTIONS: string[] = Array.from({ length: 20 }, (_, i) => {

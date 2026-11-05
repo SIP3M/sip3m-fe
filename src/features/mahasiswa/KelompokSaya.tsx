@@ -280,8 +280,16 @@ export default function KelompokSaya() {
                       </p>
                     </div>
 
-                    <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
-                      Anggota
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                        a.jabatan === "KETUA"
+                          ? "bg-red-100 text-red-700"
+                          : a.jabatan === "SEKRETARIS"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {a.jabatan_label ?? "Anggota"}
                     </span>
                   </div>
                 ))}

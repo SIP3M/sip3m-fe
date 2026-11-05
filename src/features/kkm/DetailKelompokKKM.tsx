@@ -17,9 +17,16 @@ import {
 } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { useAuthStore } from "@/features/auth/auth.store";
-import { getKkmKelompokById, removeKkmKelompokAnggota } from "./kkmKelompok.api";
+import {
+  getKkmKelompokById,
+  removeKkmKelompokAnggota,
+  setKkmKelompokJabatan,
+} from "./kkmKelompok.api";
 import {
   formatDate,
+  KKM_JABATAN_LABEL,
+  KKM_JABATAN_OPTIONS,
+  type KkmJabatanKelompok,
   type KkmKelompokAnggota,
   type KkmKelompokDetail,
   type KkmKelompokVerifikasiStatus,
@@ -93,6 +100,7 @@ export default function DetailKelompokKKM() {
   const [viewAnggota, setViewAnggota] = useState<KkmKelompokAnggota | null>(null);
   const [moveAnggotaId, setMoveAnggotaId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [jabatanSavingId, setJabatanSavingId] = useState<number | null>(null);
 
   const showToast = (type: "success" | "error", text: string) => {
     setToast({ type, text });
@@ -144,6 +152,26 @@ export default function DetailKelompokKKM() {
       showToast("error", getKkmErrorMessage(err, "Gagal menghapus anggota."));
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  // Tetapkan jabatan (KETUA / SEKRETARIS / ANGGOTA) — admin LPPM.
+  // KETUA & SEKRETARIS unik per kelompok: pejabat lama otomatis digeser
+  // jadi ANGGOTA oleh BE.
+  const handleChangeJabatan = async (
+    anggota: KkmKelompokAnggota,
+    jabatan: KkmJabatanKelompok,
+  ) => {
+    if (jabatan === anggota.jabatan) return;
+    setJabatanSavingId(anggota.peserta_id);
+    try {
+      const res = await setKkmKelompokJabatan(kelompokId, anggota.peserta_id, jabatan);
+      showToast("success", res.message || "Jabatan kelompok diperbarui.");
+      await fetchDetail();
+    } catch (err: unknown) {
+      showToast("error", getKkmErrorMessage(err, "Gagal mengubah jabatan."));
+    } finally {
+      setJabatanSavingId(null);
     }
   };
 
@@ -511,6 +539,9 @@ export default function DetailKelompokKKM() {
                     <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Jabatan
+                    </th>
                     <th className="no-print px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Aksi
                     </th>
@@ -519,7 +550,7 @@ export default function DetailKelompokKKM() {
                 <tbody className="divide-y divide-gray-100">
                   {filteredAnggota.length === 0 ? (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className="px-6 py-10 text-center text-gray-500">
                           <Users size={28} className="mx-auto text-gray-300 mb-2" />
                           <p className="text-sm font-medium">
@@ -555,6 +586,32 @@ export default function DetailKelompokKKM() {
                           </td>
                           <td className="px-5 py-3">
                             <AnggotaStatusBadge status={a.status} />
+                          </td>
+                          <td className="px-5 py-3">
+                            <select
+                              value={a.jabatan ?? "ANGGOTA"}
+                              onChange={(e) =>
+                                void handleChangeJabatan(
+                                  a,
+                                  e.target.value as KkmJabatanKelompok,
+                                )
+                              }
+                              disabled={!canMutate || jabatanSavingId === a.peserta_id}
+                              title="Tetapkan jabatan — hanya Ketua & Sekretaris yang boleh mengunggah logbook/laporan kelompok"
+                              className={`w-full rounded-lg border px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer ${
+                                a.jabatan === "KETUA"
+                                  ? "border-red-200 bg-red-50 text-red-700"
+                                  : a.jabatan === "SEKRETARIS"
+                                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                                    : "border-gray-200 bg-white text-gray-600"
+                              }`}
+                            >
+                              {KKM_JABATAN_OPTIONS.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {KKM_JABATAN_LABEL[opt]}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td className="no-print px-5 py-3">
                             <div className="flex items-center justify-center gap-1">
