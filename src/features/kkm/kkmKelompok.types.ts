@@ -4,6 +4,13 @@
 export type KkmKelompokStatus = "AKTIF" | "BELUM_LENGKAP" | "BERMASALAH";
 export type KkmKelompokKomposisi = "SEIMBANG" | "DOMINASI" | "PERLU_PENYESUAIAN";
 export type KkmKelompokVerifikasiStatus = "VERIFIED" | "PENDING" | "REJECTED";
+
+/**
+ * Jabatan anggota dalam kelompok (ditetapkan admin LPPM).
+ * Hanya KETUA & SEKRETARIS yang boleh mengunggah logbook & laporan kelompok.
+ */
+export type KkmJabatanKelompok = "ANGGOTA" | "KETUA" | "SEKRETARIS";
+
 export type KkmKelompokDokumenType =
   | "PROPOSAL_PROGRAM_KERJA"
   | "LOGBOOK_KELOMPOK"
@@ -110,6 +117,8 @@ export interface KkmKelompokAnggota {
   fakultas: string | null;
   prodi: string | null;
   status: KkmKelompokVerifikasiStatus;
+  jabatan: KkmJabatanKelompok;
+  jabatan_label: string;
 }
 
 export interface KkmKelompokDokumen {
@@ -160,6 +169,11 @@ export interface KkmKelompokDetail {
   gender: KkmKelompokGender;
   prodi: KkmKelompokProdiItem[];
   anggota: KkmKelompokAnggota[];
+  /** Pejabat kelompok (hanya KETUA & SEKRETARIS) — untuk info akses upload. */
+  pimpinan?: {
+    ketua: { peserta_id: number; nama: string; nim: string | null }[];
+    sekretaris: { peserta_id: number; nama: string; nim: string | null }[];
+  };
   dokumen: KkmKelompokDokumen[];
   /**
    * Turunan monitoring (progress %, tahapan, indikator, status, logbook).
@@ -201,8 +215,52 @@ export interface AddKkmKelompokAnggotaPayload {
 
 export interface KkmKelompokMessageResponse {
   message: string;
-  data?: { count?: number; id?: number; dpl_id?: number | null } | null;
+  data?:
+    | { count?: number; id?: number; dpl_id?: number | null }
+    | {
+        peserta_id: number;
+        jabatan: KkmJabatanKelompok;
+        jabatan_label: string;
+        nama: string;
+        nim: string | null;
+        sebelumnya: KkmJabatanKelompok;
+      }
+    | null;
 }
+
+/** PATCH /kkm/kelompok/:id/anggota/:pesertaId/jabatan */
+export interface SetKkmKelompokJabatanPayload {
+  jabatan: KkmJabatanKelompok;
+}
+
+export interface SetKkmKelompokJabatanResponse {
+  message: string;
+  data: {
+    peserta_id: number;
+    jabatan: KkmJabatanKelompok;
+    jabatan_label: string;
+    nama: string;
+    nim: string | null;
+    sebelumnya: KkmJabatanKelompok;
+  };
+}
+
+export const KKM_JABATAN_OPTIONS: KkmJabatanKelompok[] = [
+  "ANGGOTA",
+  "KETUA",
+  "SEKRETARIS",
+];
+
+export const KKM_JABATAN_LABEL: Record<KkmJabatanKelompok, string> = {
+  ANGGOTA: "Anggota",
+  KETUA: "Ketua",
+  SEKRETARIS: "Sekretaris",
+};
+
+/** Jabatan yang berhak mengunggah logbook & laporan kelompok. */
+export const isJabatanPenunggah = (
+  jabatan?: KkmJabatanKelompok | null,
+): boolean => jabatan === "KETUA" || jabatan === "SEKRETARIS";
 
 export interface UploadKkmKelompokDokumenResponse {
   message: string;
@@ -265,6 +323,9 @@ export interface KelompokSayaAnggota {
   prodi: string | null;
   /** Status verifikasi peserta: DRAFT | PENDING | VERIFIED | REJECTED */
   status: string;
+  /** Jabatan dalam kelompok (ANGGOTA | KETUA | SEKRETARIS) */
+  jabatan: KkmJabatanKelompok;
+  jabatan_label: string;
   /** Penanda mahasiswa yang sedang login */
   is_saya: boolean;
 }
@@ -291,6 +352,12 @@ export interface KelompokSayaData {
     prodi: string | null;
   } | null;
   anggota: KelompokSayaAnggota[];
+  /** Jabatan mahasiswa yang login — dipakai sidebar untuk mengunci menu
+   *  "Logbook Kelompok" & "Laporan Kelompok" (hanya Ketua/Sekretaris). */
+  jabatan_saya?: KkmJabatanKelompok;
+  jabatan_saya_label?: string;
+  /** true bila mahasiswa yang login boleh mengunggah logbook & laporan kelompok */
+  boleh_unggah_kelompok?: boolean;
   stats: {
     /** Entri logbook kelompok pada minggu berjalan (Senin–Minggu) */
     logbook_minggu_ini: number;

@@ -84,6 +84,54 @@ export function validateKkmPeriodPayload(payload: KkmPeriodPayload): Record<stri
     }
   }
 
+  // ── Pengaturan deadline unggahan (diatur admin LPPM) ──────────────────────
+  const JAM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const jamKeys: (keyof KkmPeriodPayload)[] = [
+    "jam_logbook_individu",
+    "logbook_kelompok_jam",
+    "jam_laporan_individu",
+    "jam_laporan_kelompok",
+  ];
+  for (const k of jamKeys) {
+    const v = (payload as unknown as Record<string, unknown>)[k];
+    if (typeof v === "string" && v.trim() && !JAM_REGEX.test(v.trim())) {
+      errors[k] = "Format jam harus HH:mm, contoh 23:59";
+    }
+  }
+
+  if (payload.logbook_kelompok_hari != null && payload.logbook_kelompok_hari !== 0) {
+    const n = Number(payload.logbook_kelompok_hari);
+    if (!Number.isInteger(n) || n < 1 || n > 7) {
+      errors.logbook_kelompok_hari = "Hari tidak valid (1 = Senin .. 7 = Minggu)";
+    }
+  }
+
+  // Deadline logbook individu harus berada di rentang pelaksanaan → penarikan.
+  if (payload.deadline_logbook_individu) {
+    const d = new Date(payload.deadline_logbook_individu);
+    if (payload.tgl_pelaksanaan) {
+      const p = new Date(payload.tgl_pelaksanaan);
+      if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d < p) {
+        errors.deadline_logbook_individu = "Tidak boleh lebih awal dari Tanggal Pelaksanaan";
+      }
+    }
+    if (payload.tgl_penarikan) {
+      const p = new Date(payload.tgl_penarikan);
+      if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d > p) {
+        errors.deadline_logbook_individu = "Tidak boleh melewati Tanggal Penarikan";
+      }
+    }
+  }
+
+  // Deadline laporan individu dibuka setelah penarikan → tidak boleh lebih awal.
+  if (payload.deadline_laporan_individu && payload.tgl_penarikan) {
+    const d = new Date(payload.deadline_laporan_individu);
+    const p = new Date(payload.tgl_penarikan);
+    if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d < p) {
+      errors.deadline_laporan_individu = "Tidak boleh lebih awal dari Tanggal Penarikan";
+    }
+  }
+
   return errors;
 }
 

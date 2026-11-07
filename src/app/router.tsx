@@ -84,7 +84,9 @@ import PenilaianMahasiswaDplPage from "@/features/kkm/PenilaianMahasiswaDplPage"
 
 import KelompokSaya from "@/features/mahasiswa/KelompokSaya";
 import LogbookMahasiswa from "@/features/mahasiswa/LogbookMahasiswa";
-import LaporanMahasiswa from "@/features/mahasiswa/LaporanMahasiswa";
+import LogbookKelompokMahasiswa from "@/features/mahasiswa/LogbookKelompokMahasiswa";
+import LaporanIndividuMahasiswa from "@/features/mahasiswa/LaporanIndividuMahasiswa";
+import LaporanKelompokMahasiswa from "@/features/mahasiswa/LaporanKelompokMahasiswa";
 import NilaiMahasiswa from "@/features/mahasiswa/NilaiMahasiswa";
 import PengumumanMahasiswa from "@/features/mahasiswa/PengumumanMahasiswa";
 import ProfileMahasiswa from "@/features/mahasiswa/ProfileMahasiswa";
@@ -467,12 +469,34 @@ export const router = createBrowserRouter([
         element: <KelompokSaya />,
       },
       {
+        // Indeks menu Logbook — arahkan ke submenu Individu.
         path: "logbook",
+        element: <Navigate to="individu" replace />,
+      },
+      {
+        // Submenu: Logbook Individu (entri + review DPL)
+        path: "logbook/individu",
         element: <LogbookMahasiswa />,
       },
       {
+        // Submenu: Logbook Kelompok (PDF mingguan — ketua/sekretaris)
+        path: "logbook/kelompok",
+        element: <LogbookKelompokMahasiswa />,
+      },
+      {
+        // Indeks menu Laporan — arahkan ke submenu Individu.
         path: "laporan",
-        element: <LaporanMahasiswa />,
+        element: <Navigate to="individu" replace />,
+      },
+      {
+        // Submenu: Laporan Individu (1 PDF per mahasiswa)
+        path: "laporan/individu",
+        element: <LaporanIndividuMahasiswa />,
+      },
+      {
+        // Submenu: Laporan Kelompok (dokumen LAPORAN_AKHIR)
+        path: "laporan/kelompok",
+        element: <LaporanKelompokMahasiswa />,
       },
       {
         path: "nilai",

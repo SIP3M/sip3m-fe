@@ -4,7 +4,7 @@ import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import { createKkmPeriod, getKkmPeriodById, updateKkmPeriod } from "./kkmPeriod.api";
 import type { KkmPeriodPayload, KkmJenis, KkmStatus } from "./kkmPeriod.types";
-import { KKM_JENIS_OPTIONS, TAHUN_AKADEMIK_OPTIONS } from "./kkmPeriod.types";
+import { KKM_HARI_OPTIONS, KKM_JENIS_OPTIONS, TAHUN_AKADEMIK_OPTIONS } from "./kkmPeriod.types";
 import { validateKkmPeriodPayload, validateTahunAkademik } from "./kkmPeriod.validation";
 
 type Mode = "create" | "edit";
@@ -43,6 +43,15 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
   const [tglPelaksanaan, setTglPelaksanaan] = useState("");
   const [tglPenarikan, setTglPenarikan] = useState("");
   const [deadlineLaporan, setDeadlineLaporan] = useState("");
+
+  // Section B2 - Deadline Unggahan (logbook & laporan, individu & kelompok)
+  const [deadlineLogbookIndividu, setDeadlineLogbookIndividu] = useState("");
+  const [jamLogbookIndividu, setJamLogbookIndividu] = useState("23:59");
+  const [logbookKelompokHari, setLogbookKelompokHari] = useState<string>("");
+  const [logbookKelompokJam, setLogbookKelompokJam] = useState("23:59");
+  const [deadlineLaporanIndividu, setDeadlineLaporanIndividu] = useState("");
+  const [jamLaporanIndividu, setJamLaporanIndividu] = useState("23:59");
+  const [jamLaporanKelompok, setJamLaporanKelompok] = useState("23:59");
 
   // Section C - Peserta
   const [targetPeserta, setTargetPeserta] = useState<string>("0");
@@ -109,6 +118,19 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
         setTglPelaksanaan(p.tgl_pelaksanaan ? p.tgl_pelaksanaan.slice(0, 10) : "");
         setTglPenarikan(p.tgl_penarikan ? p.tgl_penarikan.slice(0, 10) : "");
         setDeadlineLaporan(p.deadline_laporan ? p.deadline_laporan.slice(0, 10) : "");
+        setDeadlineLogbookIndividu(
+          p.deadline_logbook_individu ? p.deadline_logbook_individu.slice(0, 10) : "",
+        );
+        setJamLogbookIndividu(p.jam_logbook_individu || "23:59");
+        setLogbookKelompokHari(
+          p.logbook_kelompok_hari != null ? String(p.logbook_kelompok_hari) : "",
+        );
+        setLogbookKelompokJam(p.logbook_kelompok_jam || "23:59");
+        setDeadlineLaporanIndividu(
+          p.deadline_laporan_individu ? p.deadline_laporan_individu.slice(0, 10) : "",
+        );
+        setJamLaporanIndividu(p.jam_laporan_individu || "23:59");
+        setJamLaporanKelompok(p.jam_laporan_kelompok || "23:59");
         setTargetPeserta(String(p.target_peserta ?? 0));
         setMinimalSemester(p.minimal_semester != null ? String(p.minimal_semester) : "");
         setMaksAnggotaKelompok(String(p.maks_anggota_kelompok ?? 10));
@@ -146,6 +168,13 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
       tgl_pelaksanaan: tglPelaksanaan || null,
       tgl_penarikan: tglPenarikan || null,
       deadline_laporan: deadlineLaporan || null,
+      deadline_logbook_individu: deadlineLogbookIndividu || null,
+      jam_logbook_individu: deadlineLogbookIndividu ? jamLogbookIndividu : null,
+      logbook_kelompok_hari: logbookKelompokHari === "" ? null : Number(logbookKelompokHari),
+      logbook_kelompok_jam: logbookKelompokHari === "" ? null : logbookKelompokJam,
+      deadline_laporan_individu: deadlineLaporanIndividu || null,
+      jam_laporan_individu: deadlineLaporanIndividu ? jamLaporanIndividu : null,
+      jam_laporan_kelompok: deadlineLaporan ? jamLaporanKelompok : null,
       target_peserta: targetPeserta === "" ? 0 : Number(targetPeserta),
       minimal_semester: minimalSemester === "" ? null : Number(minimalSemester),
       maks_anggota_kelompok: maksAnggotaKelompok === "" ? 10 : Number(maksAnggotaKelompok),
@@ -395,6 +424,176 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-3">Jika diisi harus urut: Buka Daftar &lt; Tutup Daftar &lt; Pembekalan &lt; Pelaksanaan &lt; Penarikan &lt; Deadline Laporan</p>
+          </div>
+
+          {/* Section B2 - Deadline Unggahan (Logbook & Laporan) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-sm font-bold text-gray-800 mb-1 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">B2</span>
+              Deadline Unggahan Logbook &amp; Laporan
+            </h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Atur kapan mahasiswa/Ketua-Sekretaris boleh mengunggah. Setelah
+              batas waktu lewat, unggahan dikunci permanen.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Logbook Individu */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Logbook Individu
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Batas Waktu</label>
+                    <input
+                      type="date"
+                      value={deadlineLogbookIndividu}
+                      onChange={(e) => setDeadlineLogbookIndividu(e.target.value)}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${fieldErrors.deadline_logbook_individu ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jam Tutup</label>
+                    <input
+                      type="time"
+                      value={jamLogbookIndividu}
+                      onChange={(e) => setJamLogbookIndividu(e.target.value)}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${fieldErrors.jam_logbook_individu ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Wajib di antara Tanggal Pelaksanaan dan Tanggal Penarikan.
+                </p>
+                {fieldErrors.deadline_logbook_individu && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.deadline_logbook_individu}</p>
+                )}
+                {fieldErrors.jam_logbook_individu && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.jam_logbook_individu}</p>
+                )}
+              </div>
+
+              {/* Logbook Kelompok */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Logbook Kelompok (Mingguan)
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Hari Deadline</label>
+                    <select
+                      value={logbookKelompokHari}
+                      onChange={(e) => setLogbookKelompokHari(e.target.value)}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 ${fieldErrors.logbook_kelompok_hari ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    >
+                      <option value="">Belum diatur</option>
+                      {KKM_HARI_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={String(opt.value)}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jam Tutup</label>
+                    <input
+                      type="time"
+                      value={logbookKelompokJam}
+                      onChange={(e) => setLogbookKelompokJam(e.target.value)}
+                      disabled={logbookKelompokHari === ""}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:text-gray-400 ${fieldErrors.logbook_kelompok_jam ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Diunggah Ketua/Sekretaris — minggu ke-1 mulai dari Tanggal
+                  Pelaksanaan, minggu terakhir berakhir di Tanggal Penarikan.
+                </p>
+                {fieldErrors.logbook_kelompok_hari && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.logbook_kelompok_hari}</p>
+                )}
+                {fieldErrors.logbook_kelompok_jam && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.logbook_kelompok_jam}</p>
+                )}
+              </div>
+
+              {/* Laporan Individu */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Laporan Individu
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Batas Waktu</label>
+                    <input
+                      type="date"
+                      value={deadlineLaporanIndividu}
+                      onChange={(e) => setDeadlineLaporanIndividu(e.target.value)}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${fieldErrors.deadline_laporan_individu ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jam Tutup</label>
+                    <input
+                      type="time"
+                      value={jamLaporanIndividu}
+                      onChange={(e) => setJamLaporanIndividu(e.target.value)}
+                      disabled={!deadlineLaporanIndividu}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:text-gray-400 ${fieldErrors.jam_laporan_individu ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Dibuka otomatis setelah Tanggal Penarikan. Kosongkan = tanpa
+                  batas waktu.
+                </p>
+                {fieldErrors.deadline_laporan_individu && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.deadline_laporan_individu}</p>
+                )}
+                {fieldErrors.jam_laporan_individu && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.jam_laporan_individu}</p>
+                )}
+              </div>
+
+              {/* Laporan Kelompok */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Laporan Kelompok
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Batas Waktu (pakai Deadline Laporan Akhir)
+                    </label>
+                    <input
+                      type="date"
+                      value={deadlineLaporan}
+                      readOnly
+                      disabled
+                      className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jam Tutup</label>
+                    <input
+                      type="time"
+                      value={jamLaporanKelompok}
+                      onChange={(e) => setJamLaporanKelompok(e.target.value)}
+                      disabled={!deadlineLaporan}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:text-gray-400 ${fieldErrors.jam_laporan_kelompok ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Dibuka setelah Tanggal Penarikan; diunggah Ketua/Sekretaris
+                  (admin LPPM tetap boleh untuk koreksi).
+                </p>
+                {fieldErrors.jam_laporan_kelompok && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.jam_laporan_kelompok}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Section C - Pengaturan Peserta */}

@@ -5,8 +5,10 @@ import type {
   GetKkmKelompokDetailResponse,
   GetKkmKelompokListResponse,
   GetKkmKelompokStatsResponse,
+  KkmJabatanKelompok,
   KkmKelompokListParams,
   KkmKelompokMessageResponse,
+  SetKkmKelompokJabatanResponse,
   UpdateKkmKelompokPayload,
   UploadKkmKelompokDokumenResponse,
 } from "./kkmKelompok.types";
@@ -114,5 +116,22 @@ export const deleteKkmKelompokDokumen = async (
   docId: number | string,
 ): Promise<KkmKelompokMessageResponse> => {
   const res = await api.delete<KkmKelompokMessageResponse>(`${BASE}/dokumen/${docId}`);
+  return res.data;
+};
+
+/**
+ * PATCH /kkm/kelompok/:id/anggota/:pesertaId/jabatan — admin LPPM menetapkan
+ * KETUA / SEKRETARIS / ANGGOTA. KETUA & SEKRETARIS unik per kelompok:
+ * menetapkan pejabat baru otomatis menggeser pejabat lama jadi ANGGOTA.
+ */
+export const setKkmKelompokJabatan = async (
+  id: number | string,
+  pesertaId: number | string,
+  jabatan: KkmJabatanKelompok,
+): Promise<SetKkmKelompokJabatanResponse> => {
+  const res = await api.patch<SetKkmKelompokJabatanResponse>(
+    `${BASE}/${id}/anggota/${pesertaId}/jabatan`,
+    { jabatan },
+  );
   return res.data;
 };

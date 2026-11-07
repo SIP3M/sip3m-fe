@@ -1,45 +1,34 @@
 import { useCallback, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { CheckCircle2, Loader2, Upload, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { formatBerkasSize } from "@/features/kkm/kkmLogbookKelompok.types";
 
-/** Format file yang boleh diunggah */
-const ACCEPTED = {
-  "application/pdf": [".pdf"],
-  "application/msword": [".doc"],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
-    ".docx",
-  ],
-};
+/** Semua unggahan logbook & laporan KKM hanya menerima PDF. */
+const ACCEPTED = { "application/pdf": [".pdf"] };
 
-/** Batas ukuran file: 20 MB */
-const MAX_SIZE = 20 * 1024 * 1024;
+/** Batas ukuran mengikuti BE: 10 MB. */
+const MAX_SIZE = 10 * 1024 * 1024;
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Judul modal: "Upload Laporan" atau "Upload Ulang Laporan" */
+  /** Judul modal, mis. "Unggah Logbook Minggu ke-3" */
   title: string;
-  /** Jenis laporan, mis. "Laporan Tengah" */
-  jenisLaporan: string;
-  /** Catatan revisi dari reviewer (hanya mode upload ulang) */
-  catatanRevisi?: string | null;
-  /** Tampilkan spinner di tombol submit */
+  /** Baris keterangan di bawah judul, mis. rentang tanggal minggu ini */
+  subtitle?: string | null;
+  /** Info batas waktu (deadline / jendela unggah) */
+  info?: string | null;
   isLoading?: boolean;
-  /** Dipanggil setelah file valid dipilih & tombol submit diklik */
   onSubmit: (file: File) => void;
 }
 
-export default function UploadLaporanModal({
+export default function UploadPdfModal({
   open,
   onOpenChange,
   title,
-  jenisLaporan,
-  catatanRevisi,
+  subtitle,
+  info,
   isLoading = false,
   onSubmit,
 }: Props) {
@@ -47,7 +36,6 @@ export default function UploadLaporanModal({
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  /** Reset form saat popup ditutup */
   const resetForm = () => {
     setFile(null);
     setError(null);
@@ -61,19 +49,21 @@ export default function UploadLaporanModal({
   const onDrop = useCallback(
     (
       acceptedFiles: File[],
-      fileRejections: readonly { file: File; errors: readonly { message: string }[] }[],
+      fileRejections: readonly {
+        file: File;
+        errors: readonly { message: string }[];
+      }[],
     ) => {
       if (fileRejections.length > 0) {
         const rejected = fileRejections[0];
         setFile(null);
         setError(
           rejected.file.size > MAX_SIZE
-            ? "Ukuran file melebihi batas 20 MB."
-            : "Format file harus PDF atau DOCX.",
+            ? `Ukuran file melebihi batas ${formatBerkasSize(MAX_SIZE)}.`
+            : "Format file harus PDF.",
         );
         return;
       }
-
       if (acceptedFiles.length === 0) return;
       setFile(acceptedFiles[0]);
       setError(null);
@@ -96,7 +86,6 @@ export default function UploadLaporanModal({
       return;
     }
     onSubmit(file);
-    resetForm();
   };
 
   return (
@@ -105,8 +94,6 @@ export default function UploadLaporanModal({
         ref={contentRef}
         showCloseButton={false}
         onOpenAutoFocus={(event) => {
-          // Fokus diarahkan ke isi dialog (bukan tombol pertama) supaya
-          // tidak muncul outline fokus otomatis saat popup dibuka
           event.preventDefault();
           contentRef.current?.focus();
         }}
@@ -118,7 +105,7 @@ export default function UploadLaporanModal({
             <DialogTitle className="text-base font-bold text-gray-900">
               {title}
             </DialogTitle>
-            <p className="mt-0.5 text-xs text-gray-500">{jenisLaporan}</p>
+            {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
           </div>
 
           <button
@@ -133,19 +120,13 @@ export default function UploadLaporanModal({
 
         {/* BODY */}
         <div className="space-y-4 px-6 pb-4">
-          {/* CATATAN REVISI */}
-          {catatanRevisi && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-xs font-bold text-red-600">
-                Catatan Revisi dari Reviewer
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-red-600">
-                {catatanRevisi}
-              </p>
+          {info && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-xs font-bold text-amber-700">Batas Waktu</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-700">{info}</p>
             </div>
           )}
 
-          {/* DROPZONE */}
           <div
             {...getRootProps()}
             className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors ${
@@ -167,7 +148,7 @@ export default function UploadLaporanModal({
                   {file.name}
                 </p>
                 <p className="mt-1 text-xs text-gray-400">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                  {formatBerkasSize(file.size)}
                 </p>
               </>
             ) : (
@@ -178,9 +159,7 @@ export default function UploadLaporanModal({
                 <p className="text-sm font-semibold text-gray-700">
                   Drag &amp; drop file di sini
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  PDF, DOCX — Maks. 20 MB
-                </p>
+                <p className="mt-1 text-xs text-gray-400">PDF — Maks. 10 MB</p>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -216,7 +195,7 @@ export default function UploadLaporanModal({
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
           >
             {isLoading && <Loader2 size={15} className="animate-spin" />}
-            Upload Sekarang
+            Unggah Sekarang
           </button>
         </div>
       </DialogContent>

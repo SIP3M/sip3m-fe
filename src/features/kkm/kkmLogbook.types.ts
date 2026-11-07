@@ -26,6 +26,20 @@ export interface GetLogbookSayaResponse {
       nama: string;
       periode: { id: number; nama_periode: string; status: string };
     };
+    /** Jabatan mahasiswa yang login (ANGGOTA | KETUA | SEKRETARIS) */
+    jabatan?: string;
+    /** Batas akhir unggah logbook individu (diatur admin LPPM) */
+    deadline?: {
+      ada: boolean;
+      ditutup_pada: string | null;
+      /** "Senin, 12 Januari 2026 23:59" */
+      tampil: string | null;
+      /** true bila deadline sudah lewat → form tambah dikunci */
+      terkunci: boolean;
+      alasan: string | null;
+    };
+    /** false bila deadline lewat / periode sudah SELESAI */
+    bisa_tambah?: boolean;
     /** Entri milik sendiri, terbaru dulu */
     entries: KkmLogbookEntry[];
   };
