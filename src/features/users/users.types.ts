@@ -38,6 +38,7 @@ export interface User {
   jenis_kelamin?: string | null;
   alamat?: string | null;
   nomor_hp?: string | null;
+  semester?: number | null;
   is_active: boolean;
   created_at: string;
   roles: {
@@ -62,6 +63,7 @@ export interface CreateUserPayload {
   jenis_kelamin?: string;
   alamat?: string;
   nomor_hp?: string;
+  semester?: number;
   is_active?: boolean;
 }
 
@@ -81,6 +83,7 @@ export interface UpdateUserPayload {
   jenis_kelamin?: string;
   alamat?: string;
   nomor_hp?: string;
+  semester?: number;
   is_active?: boolean;
 }
 
