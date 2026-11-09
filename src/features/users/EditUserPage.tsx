@@ -18,10 +18,12 @@ import { CreateUserPayload, User } from "./users.types";
 
 const ROLE_OPTIONS: AppRole[] = [
   APP_ROLES.ADMIN_LPPM,
+  APP_ROLES.ADMIN_SISTEM,
   APP_ROLES.STAFF_LPPM,
   APP_ROLES.DOSEN,
   APP_ROLES.REVIEWER,
   APP_ROLES.REVIEWER_EKSTERNAL,
+  APP_ROLES.MAHASISWA,
 ];
 
 export default function EditUserPage() {
@@ -52,6 +54,7 @@ export default function EditUserPage() {
     jenis_kelamin: "",
     alamat: "",
     nomor_hp: "",
+    semester: "",
     is_active: true,
   });
 
@@ -133,6 +136,7 @@ export default function EditUserPage() {
           jenis_kelamin: user.jenis_kelamin || "",
           alamat: user.alamat || "",
           nomor_hp: user.nomor_hp || "",
+          semester: user.semester ? String(user.semester) : "",
           is_active: user.is_active,
         });
       } catch (err: unknown) {
@@ -188,6 +192,20 @@ export default function EditUserPage() {
       return;
     }
 
+    // Validasi semester untuk MAHASISWA
+    if (form.roles === "MAHASISWA") {
+      const semesterTrimmed = form.semester.trim();
+      if (!semesterTrimmed) {
+        setError("Semester wajib diisi untuk role MAHASISWA (1-14)");
+        return;
+      }
+      const semesterNum = Number(semesterTrimmed);
+      if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 14) {
+        setError("Semester harus angka antara 1 dan 14");
+        return;
+      }
+    }
+
     const payload: CreateUserPayload = {
       name: form.name.trim(),
       email: form.email.trim(),
@@ -204,6 +222,7 @@ export default function EditUserPage() {
       jenis_kelamin: form.jenis_kelamin || undefined,
       alamat: form.alamat.trim() || undefined,
       nomor_hp: form.nomor_hp.trim() || undefined,
+      semester: form.semester ? Number(form.semester) : undefined,
       is_active: form.is_active,
     };
 
@@ -464,6 +483,28 @@ export default function EditUserPage() {
                 </p>
               </div>
             </div>
+
+            {/* SEMESTER (hanya untuk MAHASISWA) */}
+            {form.roles === "MAHASISWA" && (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Semester <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  name="semester"
+                  value={form.semester}
+                  onChange={handleChange}
+                  placeholder="1-14"
+                  min="1"
+                  max="14"
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Wajib diisi untuk role MAHASISWA (1-14).
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

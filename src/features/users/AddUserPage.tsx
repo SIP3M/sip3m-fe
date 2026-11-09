@@ -27,6 +27,7 @@ const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
   "DOSEN",
   "REVIEWER",
   "REVIEWER_EKSTERNAL",
+  "MAHASISWA",
 ];
 
 export default function AddUserPage() {
@@ -61,6 +62,7 @@ export default function AddUserPage() {
     jenis_kelamin: "",
     alamat: "",
     nomor_hp: "",
+    semester: "",
     is_active: true,
   });
 
@@ -210,6 +212,19 @@ export default function AddUserPage() {
       return false;
     }
 
+    // Validasi semester wajib untuk MAHASISWA
+    if (form.roles === "MAHASISWA") {
+      if (!form.semester.trim()) {
+        setError("Semester wajib diisi untuk role MAHASISWA (1-14)");
+        return false;
+      }
+      const semesterNum = Number(form.semester);
+      if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 14) {
+        setError("Semester harus angka antara 1 dan 14");
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -240,6 +255,7 @@ export default function AddUserPage() {
         jenis_kelamin: form.jenis_kelamin || undefined,
         alamat: form.alamat.trim() || undefined,
         nomor_hp: form.nomor_hp.trim() || undefined,
+        semester: form.semester ? Number(form.semester) : undefined,
         is_active: form.is_active,
       };
 
@@ -607,6 +623,29 @@ export default function AddUserPage() {
                 Hak akses akan disesuaikan dengan peran yang dipilih.
               </p>
             </div>
+
+            {/* SEMESTER (hanya untuk MAHASISWA) */}
+            {form.roles === "MAHASISWA" && (
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Semester <span className="text-red-500">*</span>
+                </label>
+
+                <Input
+                  type="number"
+                  name="semester"
+                  value={form.semester}
+                  onChange={handleChange}
+                  placeholder="1-14"
+                  min="1"
+                  max="14"
+                  className="mt-2 w-full bg-gray-50 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Wajib diisi untuk role MAHASISWA (1-14).
+                </p>
+              </div>
+            )}
 
             {/* STATUS AKUN */}
             <div>
