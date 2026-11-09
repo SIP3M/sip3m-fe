@@ -14,10 +14,10 @@ export interface KkmPeriod {
   tgl_pelaksanaan?: string | null;
   tgl_penarikan?: string | null;
   deadline_laporan?: string | null;
-  /** Deadline logbook individu (YYYY-MM-DD) — diatur admin LPPM */
-  deadline_logbook_individu?: string | null;
-  /** "HH:mm" — jam tutup deadline logbook individu */
-  jam_logbook_individu?: string | null;
+  /** 1 = Senin .. 7 = Minggu — hari deadline mingguan logbook individu */
+  logbook_individu_hari?: number | null;
+  /** "HH:mm" — jam tutup logbook individu tiap minggu */
+  logbook_individu_jam?: string | null;
   /** 1 = Senin .. 7 = Minggu — hari deadline mingguan logbook kelompok */
   logbook_kelompok_hari?: number | null;
   /** "HH:mm" — jam tutup logbook kelompok tiap minggu */
@@ -75,10 +75,10 @@ export interface KkmPeriodPayload {
   tgl_pelaksanaan?: string | null;
   tgl_penarikan?: string | null;
   deadline_laporan?: string | null;
-  /** Deadline logbook individu (YYYY-MM-DD) */
-  deadline_logbook_individu?: string | null;
-  /** "HH:mm" — jam tutup deadline logbook individu */
-  jam_logbook_individu?: string | null;
+  /** 1 = Senin .. 7 = Minggu — hari deadline mingguan logbook individu */
+  logbook_individu_hari?: number | null;
+  /** "HH:mm" — jam tutup logbook individu tiap minggu */
+  logbook_individu_jam?: string | null;
   /** 1 = Senin .. 7 = Minggu — hari deadline mingguan logbook kelompok */
   logbook_kelompok_hari?: number | null;
   /** "HH:mm" — jam tutup logbook kelompok tiap minggu */

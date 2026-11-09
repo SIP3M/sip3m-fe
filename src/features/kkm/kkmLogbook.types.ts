@@ -17,6 +17,16 @@ export interface KkmLogbookEntry {
   created_at: string;
 }
 
+export interface MingguLogbookIndividu {
+  minggu_ke: number;
+  tanggal_mulai: string; // YYYY-MM-DD
+  tanggal_batas: string; // YYYY-MM-DD
+  deadline: string; // ISO datetime
+  deadline_tampil: string; // "Senin, 12 Januari 2026 23:59"
+  status: "BELUM_DIBUKA" | "TERBUKA" | "TERKUNCI";
+  jumlah_entri: number;
+}
+
 /** GET /kkm/logbook/me */
 export interface GetLogbookSayaResponse {
   message: string;
@@ -28,20 +38,28 @@ export interface GetLogbookSayaResponse {
     };
     /** Jabatan mahasiswa yang login (ANGGOTA | KETUA | SEKRETARIS) */
     jabatan?: string;
-    /** Batas akhir unggah logbook individu (diatur admin LPPM) */
+    /** Informasi deadline & status logbook individu (mingguan atau global) */
     deadline?: {
       ada: boolean;
       ditutup_pada: string | null;
       /** "Senin, 12 Januari 2026 23:59" */
       tampil: string | null;
-      /** true bila deadline sudah lewat → form tambah dikunci */
+      /** true bila periode selesai atau minggu aktif habis */
       terkunci: boolean;
+      /** Minggu aktif (terbuka sekarang) — null jika belum ada/sudah lewat */
+      minggu_ke: number | null;
       alasan: string | null;
     };
-    /** false bila deadline lewat / periode sudah SELESAI */
+    /** false bila terkunci / periode sudah SELESAI */
     bisa_tambah?: boolean;
-    /** Entri milik sendiri, terbaru dulu */
-    entries: KkmLogbookEntry[];
+    /** Total minggu (0 jika admin belum set hari/jam mingguan) */
+    minggu_total?: number;
+    /** Minggu yang sedang terbuka (null jika tidak ada/sudah lewat) */
+    minggu_aktif?: number | null;
+    /** Jadwal mingguan lengkap (kosong jika belum diatur admin) */
+    jadwal_minggu?: MingguLogbookIndividu[];
+    /** Entri milik sendiri, terbaru dulu — tambah minggu_ke jika per-minggu */
+    entries: (KkmLogbookEntry & { minggu_ke?: number | null })[];
   };
 }
 

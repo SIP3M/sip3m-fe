@@ -87,7 +87,7 @@ export function validateKkmPeriodPayload(payload: KkmPeriodPayload): Record<stri
   // ── Pengaturan deadline unggahan (diatur admin LPPM) ──────────────────────
   const JAM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
   const jamKeys: (keyof KkmPeriodPayload)[] = [
-    "jam_logbook_individu",
+    "logbook_individu_jam",
     "logbook_kelompok_jam",
     "jam_laporan_individu",
     "jam_laporan_kelompok",
@@ -99,27 +99,26 @@ export function validateKkmPeriodPayload(payload: KkmPeriodPayload): Record<stri
     }
   }
 
+  // Logbook individu: mingguan (hari 1-7 + jam)
+  if (payload.logbook_individu_hari != null && payload.logbook_individu_hari !== 0) {
+    const n = Number(payload.logbook_individu_hari);
+    if (!Number.isInteger(n) || n < 1 || n > 7) {
+      errors.logbook_individu_hari = "Hari tidak valid (1 = Senin .. 7 = Minggu)";
+    }
+  }
+
+  if (payload.logbook_individu_jam) {
+    const v = payload.logbook_individu_jam.trim();
+    if (v && !JAM_REGEX.test(v)) {
+      errors.logbook_individu_jam = "Format jam harus HH:mm, contoh 23:59";
+    }
+  }
+
+  // Logbook kelompok: mingguan (hari 1-7 + jam)
   if (payload.logbook_kelompok_hari != null && payload.logbook_kelompok_hari !== 0) {
     const n = Number(payload.logbook_kelompok_hari);
     if (!Number.isInteger(n) || n < 1 || n > 7) {
       errors.logbook_kelompok_hari = "Hari tidak valid (1 = Senin .. 7 = Minggu)";
-    }
-  }
-
-  // Deadline logbook individu harus berada di rentang pelaksanaan → penarikan.
-  if (payload.deadline_logbook_individu) {
-    const d = new Date(payload.deadline_logbook_individu);
-    if (payload.tgl_pelaksanaan) {
-      const p = new Date(payload.tgl_pelaksanaan);
-      if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d < p) {
-        errors.deadline_logbook_individu = "Tidak boleh lebih awal dari Tanggal Pelaksanaan";
-      }
-    }
-    if (payload.tgl_penarikan) {
-      const p = new Date(payload.tgl_penarikan);
-      if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d > p) {
-        errors.deadline_logbook_individu = "Tidak boleh melewati Tanggal Penarikan";
-      }
     }
   }
 
