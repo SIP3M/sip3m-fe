@@ -20,6 +20,7 @@ export interface MonitoringProjectListItem {
   progress_percentage: number;
   milestone_berikutnya: string | null;
   calculated_status: CalculatedProjectStatus;
+  realized_amount: number | null;
 }
 
 export interface MonitoringMeta {
@@ -86,6 +87,7 @@ export interface MonitoringProjectDetail {
   disbursement_status: string;
   realized_amount: number;
   disbursed_at: string | null;
+  funding_request_amount: number;
   user: {
     name: string;
     nidn_nip: string | null;

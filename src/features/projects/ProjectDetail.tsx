@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import {
+  disburseProject,
   getMonitoringProjectById,
   updatePengabdianProjectStatus,
   verifyPengabdianDocument,
@@ -106,6 +107,7 @@ export default function ProjectDetail() {
   const isAdminOrStaff =
     user?.roles?.roles === APP_ROLES.ADMIN_LPPM ||
     user?.roles?.roles === APP_ROLES.STAFF_LPPM;
+  const isAdminLppm = user?.roles?.roles === APP_ROLES.ADMIN_LPPM;
 
   const [project, setProject] = useState<MonitoringProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,6 +118,10 @@ export default function ProjectDetail() {
   const [isVerifyingDocId, setIsVerifyingDocId] = useState<number | null>(null);
   const [rejectDocId, setRejectDocId] = useState<number | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
+  const [isDisburseModalOpen, setIsDisburseModalOpen] = useState(false);
+  const [disburseAmount, setDisburseAmount] = useState("");
+  const [isDisbursing, setIsDisbursing] = useState(false);
+  const [disburseError, setDisburseError] = useState<string | null>(null);
 
   const loadDetail = useCallback(async () => {
     setIsLoading(true);
@@ -227,6 +233,59 @@ export default function ProjectDetail() {
   const openRejectModal = (documentId: number) => {
     setRejectDocId(documentId);
     setRejectNotes("");
+  };
+
+  const openDisburseModal = () => {
+    if (!isAdminLppm || !project) return;
+    setDisburseAmount(
+      project.realized_amount ? String(project.realized_amount) : "",
+    );
+    setDisburseError(null);
+    setIsDisburseModalOpen(true);
+  };
+
+  const handleDisburse = async () => {
+    if (!project || !isAdminLppm) return;
+
+    const amount = Number(disburseAmount);
+    if (!disburseAmount.trim() || Number.isNaN(amount)) {
+      setDisburseError("Nominal wajib diisi.");
+      return;
+    }
+    if (amount <= 0) {
+      setDisburseError("Nominal harus lebih dari 0.");
+      return;
+    }
+    if (project.funding_request_amount && amount > project.funding_request_amount) {
+      setDisburseError(
+        `Nominal melebihi dana pengajuan (${formatCurrencyIDR(project.funding_request_amount)}).`,
+      );
+      return;
+    }
+
+    setIsDisbursing(true);
+    setDisburseError(null);
+
+    try {
+      const response = await disburseProject(project.id, amount);
+      setSuccessMessage(
+        response.message || "Dana terealisasi berhasil disimpan.",
+      );
+      setIsDisburseModalOpen(false);
+      await loadDetail();
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message ||
+          err.message ||
+          "Gagal menyimpan dana terealisasi."
+        : err instanceof Error
+          ? err.message
+          : "Gagal menyimpan dana terealisasi.";
+
+      setDisburseError(message);
+    } finally {
+      setIsDisbursing(false);
+    }
   };
 
   // Milestone diurutkan berdasarkan urutan; milestone aktif = yang pertama belum COMPLETED
@@ -520,6 +579,29 @@ export default function ProjectDetail() {
             <p className="mt-0.5 text-xs text-white">
               {project.disbursement_status}
             </p>
+
+            {project.funding_request_amount > 0 && (
+              <>
+                <p className="mt-4 text-xs text-slate-400">
+                  Dana pengajuan (maksimum):
+                </p>
+                <p className="mt-0.5 text-xs text-white">
+                  {formatCurrencyIDR(project.funding_request_amount)}
+                </p>
+              </>
+            )}
+
+            {isAdminLppm && (
+              <button
+                type="button"
+                onClick={openDisburseModal}
+                className="mt-5 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 cursor-pointer"
+              >
+                {project.disbursement_status === "TERCAIRKAN"
+                  ? "Edit Dana Terealisasi"
+                  : "Input Dana Terealisasi"}
+              </button>
+            )}
           </div>
 
           {/* AKSI — UI placeholder, belum terhubung ke fungsi apa pun */}
@@ -633,6 +715,75 @@ export default function ProjectDetail() {
                 disabled={rejectDocId === null}
               >
                 Tolak Dokumen
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAdminLppm && isDisburseModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {project.disbursement_status === "TERCAIRKAN"
+                ? "Edit Dana Terealisasi"
+                : "Input Dana Terealisasi"}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Nominal yang disimpan akan langsung menandai pencairan dana
+              (TERCAIRKAN). Anda dapat mengubahnya kembali kapan saja.
+            </p>
+
+            <label className="mt-4 block text-sm font-medium text-gray-700">
+              Nominal (Rp)
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              step={1000}
+              value={disburseAmount}
+              onChange={(e) => {
+                setDisburseAmount(e.target.value);
+                setDisburseError(null);
+              }}
+              placeholder="Contoh: 5000000"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
+            />
+
+            {project.funding_request_amount > 0 && (
+              <p className="mt-2 text-xs text-gray-500">
+                Maksimum:{" "}
+                {formatCurrencyIDR(project.funding_request_amount)}
+              </p>
+            )}
+
+            {disburseError && (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {disburseError}
+              </p>
+            )}
+
+            <div className="mt-5 flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (isDisbursing) return;
+                  setIsDisburseModalOpen(false);
+                  setDisburseError(null);
+                }}
+              >
+                Batal
+              </Button>
+
+              <Button
+                type="button"
+                className="bg-green-600 text-white hover:bg-green-700"
+                onClick={() => void handleDisburse()}
+                disabled={isDisbursing}
+              >
+                {isDisbursing ? "Menyimpan..." : "Simpan & Tandai Cair"}
               </Button>
             </div>
           </div>
