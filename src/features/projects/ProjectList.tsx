@@ -236,6 +236,7 @@ export default function ProjectList() {
                   <th className="px-6 py-4">Progress</th>
                   <th className="px-6 py-4">Milestone Berikutnya</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Dana Terealisasi</th>
                   <th className="px-6 py-4">Aksi</th>
                 </tr>
               </thead>
@@ -245,7 +246,7 @@ export default function ProjectList() {
                   <tr>
                     <td
                       className="px-6 py-8 text-center text-gray-500"
-                      colSpan={6}
+                      colSpan={7}
                     >
                       Memuat data monitoring proyek...
                     </td>
@@ -256,7 +257,7 @@ export default function ProjectList() {
                   <tr>
                     <td
                       className="px-6 py-8 text-center text-gray-500"
-                      colSpan={6}
+                      colSpan={7}
                     >
                       Tidak ada proyek ditemukan.
                     </td>

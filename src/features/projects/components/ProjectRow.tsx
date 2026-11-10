@@ -14,6 +14,13 @@ const getStatusKey = (status: string) =>
     .replace(/[^A-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
+const formatCurrencyIDR = (value: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+
 interface Props {
   project: MonitoringProjectListItem;
   onView: (id: number) => void;
@@ -68,6 +75,12 @@ export default function ProjectRow({ project, onView }: Props) {
         >
           {project.calculated_status}
         </span>
+      </td>
+      {/* DANA TEREALISASI */}
+      <td className="px-6 py-4 text-sm text-gray-600">
+        {project.realized_amount
+          ? formatCurrencyIDR(project.realized_amount)
+          : "-"}
       </td>
       {/* ACTION */}
       <td className="px-6 py-4">

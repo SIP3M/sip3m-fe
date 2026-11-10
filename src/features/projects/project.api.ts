@@ -69,6 +69,33 @@ export const verifyPengabdianDocument = async (
   return res.data;
 };
 
+export interface DisburseProjectResponse {
+  message: string;
+  data: {
+    id: number;
+    realized_amount: number;
+    disbursement_status: string;
+    disbursed_at: string | null;
+  };
+}
+
+/**
+ * Input / edit nominal dana terealisasi (khusus ADMIN_LPPM).
+ * BE langsung set status TERCAIRKAN + disbursed_at, dan boleh dipanggil
+ * ulang untuk mengubah nominal.
+ */
+export const disburseProject = async (
+  projectId: number,
+  realizedAmount: number,
+): Promise<DisburseProjectResponse> => {
+  const res = await api.patch<DisburseProjectResponse>(
+    `/finances/projects/${projectId}/disburse`,
+    { realized_amount: realizedAmount },
+  );
+
+  return res.data;
+};
+
 // ─── Pengabdian (Dosen) ────────────────────────────────────────────────────────────────────────────
 
 export interface GetPengabdianProjectsParams {
