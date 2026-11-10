@@ -23,7 +23,8 @@ import {
   X,
 } from "lucide-react";
 
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import { getReferensiAktif } from "@/features/master/referensi.api";
 import {
   deletePengumuman,
@@ -170,8 +171,8 @@ function StatusBadge({ status }: { status: Pengumuman["status"] }) {
 export default function PengumumanKKM() {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = useAuthStore((state) => state.user);
-  const isAdminLppm = user?.roles?.roles === "ADMIN_LPPM";
+  const { hasPermission } = usePermission();
+  const isAdminLppm = hasPermission(PERMISSIONS.KKM_PENGUMUMAN_KELOLA);
 
   // ── daftar ──
   const [items, setItems] = useState<Pengumuman[]>([]);

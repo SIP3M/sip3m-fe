@@ -25,7 +25,19 @@ export interface User {
   roles: {
     id: number;
     roles: string;
+    /** Deskripsi role — dari GET /auth/me & login. */
+    deskripsi?: string | null;
+    /** Role sistem (tidak boleh dihapus/diubah). */
+    is_system?: boolean;
+    /** Path dashboard default role (role baru → /reviewer-eksternal-dashboard). */
+    dashboard_path?: string | null;
   };
+  /**
+   * Daftar kode izin user (permission dinamis) — dari GET /auth/me & login.
+   * ADMIN_SISTEM = superuser: berisi SELURUH kode izin.
+   * Fallback: bila undefined (mis. user tersimpan lama), dianggap kosong.
+   */
+  permissions?: string[];
 }
 
 export interface GetCurrentUserResponse {

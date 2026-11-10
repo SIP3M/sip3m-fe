@@ -18,7 +18,8 @@ import {
   UserCheck,
   Users,
 } from "lucide-react";
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import { getKkmPeriodActive, getKkmPeriods } from "./kkmPeriod.api";
 import { getKkmLocations } from "./kkmLocation.api";
 import { getKkmDpl } from "./kkmDpl.api";
@@ -110,8 +111,8 @@ function StatCard({
 
 export default function KelompokKKM() {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.roles?.roles === "ADMIN_LPPM";
+  const { hasPermission } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.KKM_KELOMPOK_KELOLA);
 
   const [periodes, setPeriodes] = useState<KkmPeriod[]>([]);
   const [selectedPeriodeId, setSelectedPeriodeId] = useState<number | null>(null);

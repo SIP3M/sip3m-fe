@@ -4,7 +4,7 @@ import { useAuthStore } from "./auth.store";
 import { APP_ROLES } from "@/constant/roles";
 import { setAuthSession } from "@/services/storage";
 
-const getDashboardPathByRole = (role?: string) => {
+const getDashboardPathByRole = (role?: string, dashboardPath?: string | null) => {
   if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
   // ADMIN_SISTEM hanya punya modul master data — langsung ke halaman itu
   if (role === APP_ROLES.ADMIN_SISTEM) {
@@ -17,13 +17,16 @@ const getDashboardPathByRole = (role?: string) => {
   if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
     return "/reviewer-eksternal-dashboard";
   }
-  return "/admin-dashboard";
+  // Role custom: ikut dashboard_path dari role (default: layout External).
+  if (dashboardPath) return dashboardPath;
+  return "/reviewer-eksternal-dashboard";
 };
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const setUser = useAuthStore((s) => s.setUser);
+  const fetchCurrentUser = useAuthStore((s) => s.fetchCurrentUser);
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -40,9 +43,12 @@ const OAuthCallback = () => {
         });
 
         setUser(user);
+        // Payload OAuth tidak memuat permissions — segarkan dari /auth/me
+        // supaya guard & sidebar berbasis izin langsung akurat.
+        void fetchCurrentUser();
 
         const role = user?.roles?.roles;
-        navigate(getDashboardPathByRole(role));
+        navigate(getDashboardPathByRole(role, user?.roles?.dashboard_path));
       } catch (error) {
         console.error("Gagal memproses data user dari URL:", error);
         // Kalau terjadi error saat membaca data, kembalikan ke halaman login

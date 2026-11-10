@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { createUser } from "./Users.api";
 import { getFakultas, getProdiByFakultas, MasterData } from "@/features/auth/auth.api";
+import { getRoles } from "@/features/roles/roles.api";
 import { CreateUserPayload, CreateUserRole } from "./users.types";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const CREATE_ROLE_OPTIONS: CreateUserRole[] = [
+// Fallback bila GET /roles gagal — ADMIN_SISTEM sengaja tidak ada di sini
+// (pembuatan akun admin sistem dilakukan lewat seed/terpisah).
+const FALLBACK_ROLE_OPTIONS: CreateUserRole[] = [
   "ADMIN_LPPM",
   "STAFF_LPPM",
   "DOSEN",
@@ -71,6 +74,29 @@ export default function AddUserPage() {
   const [prodiList, setProdiList] = useState<MasterData[]>([]);
   const [prodiLoading, setProdiLoading] = useState(false);
   const [masterError, setMasterError] = useState<string | null>(null);
+
+  // Opsi role dari GET /roles (termasuk role custom) — fallback statis bila gagal
+  const [roleOptions, setRoleOptions] = useState<CreateUserRole[]>(
+    FALLBACK_ROLE_OPTIONS,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    getRoles()
+      .then((roles) => {
+        if (cancelled) return;
+        const names = roles
+          .map((role) => role.nama)
+          .filter((nama) => nama !== "ADMIN_SISTEM");
+        if (names.length > 0) setRoleOptions(names);
+      })
+      .catch(() => {
+        // biarkan fallback statis
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -605,7 +631,7 @@ export default function AddUserPage() {
                   className="w-[var(--radix-dropdown-menu-trigger-width)]"
                   align="start"
                 >
-                  {CREATE_ROLE_OPTIONS.map((role) => (
+                  {roleOptions.map((role) => (
                     <DropdownMenuItem
                       key={role}
                       onSelect={() => handleRoleSelect(role)}

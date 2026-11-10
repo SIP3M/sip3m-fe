@@ -31,8 +31,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
 import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
 import { APP_ROLES } from "@/constant/roles";
+import { PERMISSIONS } from "@/constant/permissions";
 
 
 type Tab = "penelitian" | "kkm";
@@ -43,6 +45,11 @@ interface MenuItem {
   path: string;
   // Path lain yang juga dianggap aktif untuk menu ini
   alsoActive?: string[];
+  /**
+   * Kode izin yang diperlukan — hanya dipakai untuk menu ROLE CUSTOM
+   * (role bawaan selalu tampil apa adanya, parity dengan tampilan lama).
+   */
+  permission?: string;
 }
 
 interface MenuGroup {
@@ -334,6 +341,72 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
 // Dipakai jika role belum punya konfigurasi: sidebar tetap tampil, minimal tombol Keluar
 const EMPTY_CONFIG: RoleConfig = { penelitian: { groups: [] } };
 
+// =====================================================================
+// KONFIGURASI MENU UNTUK ROLE CUSTOM (role di luar ROLE_CONFIGS)
+// Menu dibentuk dari izin role — hanya menu yang izinnya dimiliki yang
+// tampil, mengikuti matriks halaman Role & Permission.
+// =====================================================================
+const buildCustomConfig = (
+  hasPermission: (kode: string) => boolean,
+): RoleConfig => {
+  const pick = (items: MenuItem[]): MenuItem[] =>
+    items.filter((item) => item.permission && hasPermission(item.permission));
+
+  const researchItems = pick([
+    { name: "Manajemen Pengguna", icon: Users, path: "/users", permission: PERMISSIONS.PENGGUNA_LIHAT },
+    { name: "Daftar Proposal", icon: FileText, path: "/proposals", permission: PERMISSIONS.PROPOSAL_LIHAT },
+    { name: "Plotting Reviewer", icon: UserCheck, path: "/plotting-reviewer", permission: PERMISSIONS.PROPOSAL_PLOTTING },
+    { name: "Monitoring Proyek", icon: Activity, path: "/monitoring-project", permission: PERMISSIONS.MONITORING_PROYEK_LIHAT },
+  ]);
+
+  const systemItems = pick([
+    { name: "Role & Permission", icon: ShieldCheck, path: "/admin-dashboard/master-data/role-permission", permission: PERMISSIONS.ROLE_KELOLA },
+    { name: "Fakultas", icon: Building2, path: "/admin-dashboard/master-data/fakultas", permission: PERMISSIONS.MASTER_AKADEMIK_KELOLA },
+    { name: "Program Studi", icon: BookOpen, path: "/admin-dashboard/master-data/program-studi", permission: PERMISSIONS.MASTER_AKADEMIK_KELOLA },
+    { name: "Skema & Pendanaan", icon: Tags, path: "/admin-dashboard/master-data/referensi", permission: PERMISSIONS.MASTER_REFERENSI_KELOLA },
+    { name: "Jabatan", icon: Briefcase, path: "/admin-dashboard/master-data/jabatan", permission: PERMISSIONS.KKM_JABATAN_KELOLA },
+    { name: "Audit Log", icon: ClipboardList, path: "/admin-dashboard/audit-log", permission: PERMISSIONS.AUDIT_LIHAT },
+  ]);
+
+  const kkmItems = pick([
+    { name: "Periode KKM", icon: Calendar, path: "/admin-dashboard/kkm/periode", alsoActive: ["/kkm/periode"], permission: PERMISSIONS.KKM_PERIODE_LIHAT },
+    { name: "Peserta KKM", icon: Users, path: "/admin-dashboard/kkm/peserta", permission: PERMISSIONS.KKM_PESERTA_LIHAT },
+    { name: "Kelompok KKM", icon: UserCheck, path: "/admin-dashboard/kkm/kelompok", permission: PERMISSIONS.KKM_KELOMPOK_LIHAT },
+    { name: "Lokasi / Desa KKM", icon: MapPin, path: "/admin-dashboard/kkm/lokasi", permission: PERMISSIONS.KKM_LOKASI_LIHAT },
+    { name: "DPL KKM", icon: UserPlus, path: "/admin-dashboard/kkm/dpl", permission: PERMISSIONS.KKM_DPL_LIHAT },
+    { name: "Generate Kelompok", icon: CheckSquare, path: "/admin-dashboard/kkm/generate", permission: PERMISSIONS.KKM_GENERATE_LIHAT },
+    { name: "Monitoring KKM", icon: Activity, path: "/admin-dashboard/kkm/monitoring", permission: PERMISSIONS.KKM_MONITORING_LIHAT },
+    { name: "Pengumuman KKM", icon: Megaphone, path: "/admin-dashboard/kkm/pengumuman", permission: PERMISSIONS.KKM_PENGUMUMAN_LIHAT },
+  ]);
+
+  const groups: MenuGroup[] = [];
+  if (researchItems.length > 0) {
+    groups.push({
+      key: "research",
+      label: "MANAJEMEN PENELITIAN",
+      icon: FlaskConical,
+      items: researchItems,
+    });
+  }
+  if (systemItems.length > 0) {
+    groups.push({
+      key: "system",
+      label: "MASTER DATA & SISTEM",
+      icon: Settings,
+      items: systemItems,
+    });
+  }
+
+  const config: RoleConfig = { penelitian: { groups } };
+  if (kkmItems.length > 0) {
+    config.kkm = {
+      groups: [{ key: "kkm", label: "MANAJEMEN KKM", icon: Users, items: kkmItems }],
+      prefixes: ["/admin-dashboard/kkm", "/kkm"],
+    };
+  }
+  return config;
+};
+
 const matchesPath = (current: string, path: string) =>
   current === path || current.startsWith(`${path}/`);
 
@@ -344,7 +417,11 @@ export default function Sidebar() {
   const user = useAuthStore((state) => state.user);
 
   const roleKey = user?.roles?.roles;
-  const config: RoleConfig = (roleKey && ROLE_CONFIGS[roleKey]) || EMPTY_CONFIG;
+  const { hasPermission } = usePermission();
+  // Role bawaan → konfigurasi statis; role custom → menu dibentuk dari izin.
+  const config: RoleConfig =
+    (roleKey && ROLE_CONFIGS[roleKey]) ||
+    (roleKey ? buildCustomConfig(hasPermission) : EMPTY_CONFIG);
 
   const isKkmPath = (current: string) =>
     Boolean(config.kkm?.prefixes?.some((prefix) => matchesPath(current, prefix)));

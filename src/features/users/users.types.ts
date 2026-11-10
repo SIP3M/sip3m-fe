@@ -1,6 +1,8 @@
-import { AppRole } from "@/constant/roles";
-
-export type CreateUserRole = AppRole;
+/**
+ * Nama role untuk payload user — string bebas agar mendukung role custom
+ * (hasil CRUD halaman Role & Permission), bukan hanya role bawaan.
+ */
+export type CreateUserRole = string;
 /**
  * Filter status GET /users.
  * - "active"  → is_active = true
@@ -43,7 +45,8 @@ export interface User {
   created_at: string;
   roles: {
     id: number;
-    roles: AppRole;
+    /** Nama role — bisa role bawaan maupun role custom. */
+    roles: string;
   };
 }
 
@@ -127,6 +130,6 @@ export interface DeleteUserResponse {
 export interface GetUsersParams {
   page?: number;
   status?: UserStatusFilter;
-  roles?: AppRole;
+  roles?: string;
   search?: string;
 }

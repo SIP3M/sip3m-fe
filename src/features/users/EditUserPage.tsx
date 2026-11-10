@@ -12,18 +12,19 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { updateUser, getUserById } from "./Users.api";
+import { getRoles } from "@/features/roles/roles.api";
 import { getFakultas, getProdiByFakultas, MasterData } from "@/features/auth/auth.api";
-import { AppRole, APP_ROLES } from "@/constant/roles";
 import { CreateUserPayload, User } from "./users.types";
 
-const ROLE_OPTIONS: AppRole[] = [
-  APP_ROLES.ADMIN_LPPM,
-  APP_ROLES.ADMIN_SISTEM,
-  APP_ROLES.STAFF_LPPM,
-  APP_ROLES.DOSEN,
-  APP_ROLES.REVIEWER,
-  APP_ROLES.REVIEWER_EKSTERNAL,
-  APP_ROLES.MAHASISWA,
+// Fallback bila GET /roles gagal (termasuk ADMIN_SISTEM, seperti pilihan lama)
+const FALLBACK_ROLE_OPTIONS: string[] = [
+  "ADMIN_LPPM",
+  "ADMIN_SISTEM",
+  "STAFF_LPPM",
+  "DOSEN",
+  "REVIEWER",
+  "REVIEWER_EKSTERNAL",
+  "MAHASISWA",
 ];
 
 export default function EditUserPage() {
@@ -44,7 +45,7 @@ export default function EditUserPage() {
     email: "",
     username: "",
     password: "",
-    roles: "" as AppRole | "",
+    roles: "",
     nidn_nip: "",
     // Disimpan sebagai STRING id ("1"), bukan nama, bukan objek {id,nama}
     fakultas: "",
@@ -63,6 +64,27 @@ export default function EditUserPage() {
   const [prodiList, setProdiList] = useState<MasterData[]>([]);
   const [masterLoading, setMasterLoading] = useState(false);
   const [masterError, setMasterError] = useState<string | null>(null);
+
+  // Opsi role dari GET /roles (termasuk role custom) — fallback statis bila gagal
+  const [roleOptions, setRoleOptions] = useState<string[]>(
+    FALLBACK_ROLE_OPTIONS,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    getRoles()
+      .then((roles) => {
+        if (cancelled) return;
+        const names = roles.map((role) => role.nama);
+        if (names.length > 0) setRoleOptions(names);
+      })
+      .catch(() => {
+        // biarkan fallback statis
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -211,7 +233,7 @@ export default function EditUserPage() {
       email: form.email.trim(),
       username: form.username.trim() || undefined,
       password: form.password || "",
-      roles: form.roles as AppRole,
+      roles: form.roles,
       nidn_nip: form.nidn_nip.trim() || undefined,
       // ID string; "" artinya cabut fakultas/prodi — dikirim eksplisit (lihat filter di bawah)
       fakultas: form.fakultas,
@@ -396,7 +418,7 @@ export default function EditUserPage() {
                   className="h-11 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 text-sm text-gray-900 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                 >
                   <option value="">Pilih Role</option>
-                  {ROLE_OPTIONS.map((role) => (
+                  {roleOptions.map((role) => (
                     <option key={role} value={role}>
                       {role}
                     </option>
