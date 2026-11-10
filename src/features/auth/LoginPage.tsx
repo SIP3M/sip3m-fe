@@ -28,6 +28,22 @@ const getDashboardPathByRole = (role?: string, dashboardPath?: string | null) =>
   return "/reviewer-eksternal-dashboard";
 };
 
+/** Pesan ramah untuk kode error alur OAuth Google (dari ?oauth_error=). */
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  not_configured:
+    "Login Google belum dikonfigurasi sistem. Silakan gunakan login biasa.",
+  invalid_state:
+    "Sesi login Google tidak valid atau sudah kedaluwarsa. Silakan coba lagi.",
+  access_denied: "Login dengan Google dibatalkan.",
+  email_not_verified:
+    "Email Google Anda belum diverifikasi. Verifikasi dulu di akun Google.",
+  email_not_registered:
+    "Email Google Anda belum terdaftar di sistem. Hubungi admin untuk mendaftarkan akun.",
+  inactive: "Akun Anda belum diverifikasi oleh Admin LPPM.",
+  exchange_failed: "Gagal memproses login dengan Google. Silakan coba lagi.",
+  server_error: "Terjadi kesalahan saat login dengan Google. Silakan coba lagi.",
+};
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -49,6 +65,12 @@ const LoginPage = () => {
   useEffect(() => {
     if (searchParams.get("reason") === "session_replaced") {
       setErrorMessage("Sesi kamu di browser ini digantikan login baru. Silakan login ulang.");
+    }
+
+    // Hasil alur OAuth Google (redirect dari BE dengan ?oauth_error=<kode>)
+    const oauthError = searchParams.get("oauth_error");
+    if (oauthError) {
+      setErrorMessage(OAUTH_ERROR_MESSAGES[oauthError] ?? OAUTH_ERROR_MESSAGES.server_error);
     }
   }, [searchParams]);
 
