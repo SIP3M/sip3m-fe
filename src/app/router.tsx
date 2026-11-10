@@ -98,6 +98,7 @@ import MasterDosen from "@/features/master/MasterDosen";
 import MasterMahasiswa from "@/features/master/MasterMahasiswa";
 import MasterReviewer from "@/features/master/MasterReviewer";
 import RolePermission from "@/features/master/RolePermission";
+import MasterJabatanKelompok from "@/features/kkm/MasterJabatanKelompok";
 
 export const router = createBrowserRouter([
   {
@@ -310,6 +311,10 @@ export const router = createBrowserRouter([
         // Reuse halaman Lokasi/Desa KKM
         path: "admin-dashboard/master-data/desa-mitra",
         element: <LokasiKKM />,
+      },
+      {
+        path: "admin-dashboard/master-data/jabatan",
+        element: <MasterJabatanKelompok />,
       },
       {
         path: "admin-dashboard/master-data/role-permission",

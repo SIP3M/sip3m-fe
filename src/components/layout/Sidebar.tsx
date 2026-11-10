@@ -26,6 +26,7 @@ import {
   Building2,
   ShieldCheck,
   Tags,
+  Briefcase,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -193,6 +194,11 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
               name: "Desa & Mitra",
               icon: MapPin,
               path: "/admin-dashboard/master-data/desa-mitra",
+            },
+            {
+              name: "Jabatan",
+              icon: Briefcase,
+              path: "/admin-dashboard/master-data/jabatan",
             },
           ],
         },
