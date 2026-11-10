@@ -52,6 +52,7 @@ import ReviewListEksternal from "@/features/reviews/ReviewListEksternal";
 import ReviewNoteDetailPage from "@/features/reviews/ReviewNoteDetailPage";
 import EditProposalDosen from "@/features/proposals/EditProposalDosen";
 import AuthSessionsPage from "@/features/settings/AuthSessionsPage";
+import OauthGooglePage from "@/features/settings/OauthGooglePage";
 
 import PeriodeKKM from "@/features/kkm/PeriodeKKM";
 import DetailPeriodeKKM from "@/features/kkm/DetailPeriodeKKM";
@@ -305,6 +306,7 @@ export const router = createBrowserRouter([
           PERMISSIONS.KKM_DPL_LIHAT,
           PERMISSIONS.KKM_LOKASI_LIHAT,
           PERMISSIONS.AUDIT_LIHAT,
+          PERMISSIONS.SISTEM_KONFIGURASI,
         ]}
       >
         <DashboardLayout />
@@ -358,6 +360,19 @@ export const router = createBrowserRouter([
         // Audit log — khusus ADMIN_SISTEM (guard blok ini)
         path: "admin-dashboard/audit-log",
         element: <AuditLogPage />,
+      },
+      {
+        // Login Google (kredensial OAuth) — guard izin khusus agar role
+        // lain yang lolos guard blok tidak bisa membuka via URL langsung.
+        path: "admin-dashboard/settings/oauth-google",
+        element: (
+          <ProtectedRoute
+            roles={[APP_ROLES.ADMIN_SISTEM]}
+            permission={PERMISSIONS.SISTEM_KONFIGURASI}
+          >
+            <OauthGooglePage />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

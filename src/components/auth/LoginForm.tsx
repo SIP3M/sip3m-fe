@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import kampus from "@/assets/images/img-login.png";
 import mumar from "@/assets/images/mumar-login.png";
 import logo from "@/assets/images/logo.png";
+import { getDeviceId } from "@/utils/device";
 
 interface LoginFormProps {
   form: { email: string; password: string };
@@ -44,7 +45,24 @@ const LoginForm: React.FC<LoginFormProps> = ({
   }, [loginSuccess]);
 
   const handleGoogleLogin = () => {
-    window.location.href = "https://sip3m-be.vercel.app/api/auth/oauth/google";
+    // Arahkan ke backend (bukan URL hardcode) — alur OAuth Google asli:
+    // BE → Google → BE callback → FE /oauth-callback.
+    const apiBase = (
+      import.meta.env.VITE_API_BASE_URL || "https://sip3m-be.vercel.app/api"
+    ).replace(/\/+$/, "");
+
+    const params = new URLSearchParams();
+    // Device id browser → session OAuth memakai device yang sama dengan
+    // login biasa (single-session per browser tetap berlaku).
+    try {
+      params.set("device_id", getDeviceId());
+    } catch {
+      // ignore — fallback device id dari BE
+    }
+    // Origin FE ini — divalidasi BE terhadap allowlist FRONTEND_URL.
+    params.set("fe", window.location.origin);
+
+    window.location.href = `${apiBase}/auth/oauth/google?${params.toString()}`;
   };
 
   return (

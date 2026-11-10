@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   Tags,
   Briefcase,
+  KeyRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -215,6 +216,11 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
           icon: Settings,
           items: [
             {
+              name: "Login Google",
+              icon: KeyRound,
+              path: "/admin-dashboard/settings/oauth-google",
+            },
+            {
               name: "Audit Log",
               icon: ClipboardList,
               path: "/admin-dashboard/audit-log",
@@ -365,6 +371,7 @@ const buildCustomConfig = (
     { name: "Program Studi", icon: BookOpen, path: "/admin-dashboard/master-data/program-studi", permission: PERMISSIONS.MASTER_AKADEMIK_KELOLA },
     { name: "Skema & Pendanaan", icon: Tags, path: "/admin-dashboard/master-data/referensi", permission: PERMISSIONS.MASTER_REFERENSI_KELOLA },
     { name: "Jabatan", icon: Briefcase, path: "/admin-dashboard/master-data/jabatan", permission: PERMISSIONS.KKM_JABATAN_KELOLA },
+    { name: "Login Google", icon: KeyRound, path: "/admin-dashboard/settings/oauth-google", permission: PERMISSIONS.SISTEM_KONFIGURASI },
     { name: "Audit Log", icon: ClipboardList, path: "/admin-dashboard/audit-log", permission: PERMISSIONS.AUDIT_LIHAT },
   ]);
 
