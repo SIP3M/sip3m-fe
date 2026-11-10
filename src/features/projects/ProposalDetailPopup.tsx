@@ -25,8 +25,8 @@ import {
   submitProposal,
 } from "@/features/proposals/proposal.api";
 import { Proposal } from "@/features/proposals/proposal.types";
-import { useAuthStore } from "@/features/auth/auth.store";
-import { APP_ROLES } from "@/constant/roles";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import { getKetuaNama, getKetuaNidn, isKetuaDiffFromUploader } from "@/utils/proposal";
 
 type FeedbackState = {
@@ -262,8 +262,8 @@ export default function ProposalDetailPopup({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-  const isAdmin = user?.roles?.roles === APP_ROLES.ADMIN_LPPM;
+  const { hasPermission } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.PROPOSAL_STATUS);
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -308,7 +308,7 @@ export default function ProposalDetailPopup({
   const isSubmitted = statusKey === "SUBMITTED";
   const isRevision = statusKey === "REVISION";
   const isDraft = statusKey === "DRAFT";
-  const isDosen = user?.roles?.roles === APP_ROLES.DOSEN;
+  const isDosen = hasPermission(PERMISSIONS.PROPOSAL_SAYA);
   const canEditRevise = isDosen && (isDraft || isRevision);
   const isUnderReview = statusKey === "REVIEW" || statusKey === "UNDER_REVIEW";
 

@@ -10,7 +10,7 @@ import { APP_ROLES } from "@/constant/roles";
 import { User } from "./auth.types";
 import { setAuthSession } from "@/services/storage";
 
-const getDashboardPathByRole = (role?: string) => {
+const getDashboardPathByRole = (role?: string, dashboardPath?: string | null) => {
   if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
   // ADMIN_SISTEM hanya punya modul master data — langsung ke halaman itu
   if (role === APP_ROLES.ADMIN_SISTEM) {
@@ -23,7 +23,9 @@ const getDashboardPathByRole = (role?: string) => {
   if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
     return "/reviewer-eksternal-dashboard";
   }
-  return "/admin-dashboard";
+  // Role custom: ikut dashboard_path dari role (default: layout External).
+  if (dashboardPath) return dashboardPath;
+  return "/reviewer-eksternal-dashboard";
 };
 
 const LoginPage = () => {
@@ -95,7 +97,12 @@ const LoginPage = () => {
       setLoginSuccess(true);
 
       setTimeout(() => {
-        navigate(getDashboardPathByRole(role));
+        navigate(
+          getDashboardPathByRole(
+            role,
+            (user as User | undefined)?.roles?.dashboard_path,
+          ),
+        );
       }, 1800);
     } catch (error) {
       if (axios.isAxiosError(error)) {

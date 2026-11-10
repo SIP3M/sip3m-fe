@@ -16,7 +16,8 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import {
   getKkmKelompokById,
   removeKkmKelompokAnggota,
@@ -89,8 +90,8 @@ export default function DetailKelompokKKM() {
   const kelompokId = Number(id);
   const navigate = useNavigate();
   const location = useLocation();
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.roles?.roles === "ADMIN_LPPM";
+  const { hasPermission } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.KKM_KELOMPOK_KELOLA);
 
   const [detail, setDetail] = useState<KkmKelompokDetail | null>(null);
   const [loading, setLoading] = useState(true);

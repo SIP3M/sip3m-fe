@@ -13,7 +13,8 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import { getKkmKelompokById, removeKkmKelompokAnggota, updateKkmKelompok } from "./kkmKelompok.api";
 import { getKkmDplDosen } from "./kkmDpl.api";
 import type { KkmDplDosenOption } from "./kkmDpl.types";
@@ -26,8 +27,8 @@ export default function EditKelompokKKM() {
   const kelompokId = Number(id);
   const navigate = useNavigate();
   const location = useLocation();
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.roles?.roles === "ADMIN_LPPM";
+  const { hasPermission } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.KKM_KELOMPOK_KELOLA);
   const focusDpl = Boolean((location.state as { focusDpl?: boolean } | null)?.focusDpl);
 
   const [detail, setDetail] = useState<KkmKelompokDetail | null>(null);

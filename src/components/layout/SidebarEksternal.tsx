@@ -16,13 +16,15 @@ import {
 import { Checkbox } from "radix-ui";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import LogoLPPM from "@/assets/images/Logo LPPM UMC 2.png";
-import { Global } from "recharts";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
+  const { hasPermission } = usePermission();
 
   const menus = [
     {
@@ -30,6 +32,16 @@ export default function Sidebar() {
       icon: Globe,
       path: "/reviewer-eksternal-dashboard",
     },
+    // Tampil bila role (termasuk role custom) punya izin review proposal.
+    ...(hasPermission(PERMISSIONS.PROPOSAL_REVIEW)
+      ? [
+          {
+            name: "Daftar Review",
+            icon: FileCheck,
+            path: "/reviewer-eksternal-dashboard/reviews",
+          },
+        ]
+      : []),
   ];
 
   const handleLogout = () => {

@@ -17,7 +17,8 @@ import {
   FileText,
   MapPin,
 } from "lucide-react";
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import { getKkmPeriodActive, getKkmPeriods } from "./kkmPeriod.api";
 import { getKkmDplKelompok } from "./kkmDpl.api";
 import {
@@ -80,8 +81,8 @@ function StatusKelompokBadge({ peserta }: { peserta: KkmPeserta }) {
 
 export default function PesertaKKM() {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.roles?.roles === "ADMIN_LPPM";
+  const { hasPermission } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.KKM_PESERTA_KELOLA);
 
   const [periodes, setPeriodes] = useState<KkmPeriod[]>([]);
   const [selectedPeriodeId, setSelectedPeriodeId] = useState<number | null>(null);

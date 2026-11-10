@@ -16,7 +16,8 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 import { getKkmPeriodActive, getKkmPeriods } from "./kkmPeriod.api";
 import { deleteKkmLocation, getKkmLocationStats, getKkmLocations } from "./kkmLocation.api";
 import type { KkmLocation, KkmLocationStats } from "./kkmLocation.types";
@@ -26,8 +27,8 @@ import KkmLocationDetailModal from "./KkmLocationDetailModal";
 
 export default function LokasiKKM() {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.roles?.roles === "ADMIN_LPPM";
+  const { hasPermission } = usePermission();
+  const isAdmin = hasPermission(PERMISSIONS.KKM_LOKASI_KELOLA);
 
   const [periodes, setPeriodes] = useState<KkmPeriod[]>([]);
   const [selectedPeriodeId, setSelectedPeriodeId] = useState<number | null>(null);

@@ -4,7 +4,7 @@ import { User, UserStatusFilter } from "./users.types";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { deleteUser, getUsers } from "./Users.api";
-import { AppRole, APP_ROLES } from "@/constant/roles";
+import { getRoles } from "@/features/roles/roles.api";
 import Pagination from "@/components/common/Pagination";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { useAuthStore } from "@/features/auth/auth.store";
@@ -32,12 +32,29 @@ export default function UsersPage() {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<UserStatusFilter | "">(
     "",
   );
+  // Opsi role dari GET /roles (termasuk role custom)
+  const [roleOptions, setRoleOptions] = useState<string[]>([]);
   const isInitialLoading = isLoading && users.length === 0;
   const latestRequestId = useRef(0);
+
+  // Muat daftar role untuk filter (sekali saat mount)
+  useEffect(() => {
+    let cancelled = false;
+    getRoles()
+      .then((roles) => {
+        if (!cancelled) setRoleOptions(roles.map((role) => role.nama));
+      })
+      .catch(() => {
+        // filter role tetap bisa dikosongkan bila gagal
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Fetch users
   const fetchUsers = useCallback(
@@ -220,11 +237,11 @@ export default function UsersPage() {
           {/* Role Filter */}
           <select
             value={selectedRole || ""}
-            onChange={(e) => setSelectedRole((e.target.value as AppRole) || "")}
+            onChange={(e) => setSelectedRole(e.target.value || "")}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="" >Semua Role</option>
-            {Object.entries(APP_ROLES).map(([, value]) => (
+            {roleOptions.map((value) => (
               <option key={value} value={value}>
                 {value}
               </option>

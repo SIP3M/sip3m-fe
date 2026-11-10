@@ -20,8 +20,8 @@ import {
 } from "./project.api";
 import { MonitoringDocument, MonitoringProjectDetail } from "./project.types";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/features/auth/auth.store";
-import { APP_ROLES } from "@/constant/roles";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 
 const getStatusClassName = (status: string) => {
   const key = status
@@ -103,11 +103,14 @@ export default function ProjectDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const projectId = Number(id);
-  const user = useAuthStore((state) => state.user);
-  const isAdminOrStaff =
-    user?.roles?.roles === APP_ROLES.ADMIN_LPPM ||
-    user?.roles?.roles === APP_ROLES.STAFF_LPPM;
-  const isAdminLppm = user?.roles?.roles === APP_ROLES.ADMIN_LPPM;
+  const { hasPermission, hasAnyPermission } = usePermission();
+  // Kelola proyek (mulai proyek, verifikasi dokumen): pengabdian.kelola ATAU pengabdian.dokumen
+  const isAdminOrStaff = hasAnyPermission([
+    PERMISSIONS.PENGABDIAN_KELOLA,
+    PERMISSIONS.PENGABDIAN_DOKUMEN,
+  ]);
+  // Input dana terealisasi: izin keuangan.cairkan (dulu khusus ADMIN_LPPM)
+  const isAdminLppm = hasPermission(PERMISSIONS.KEUANGAN_CAIKAN);
 
   const [project, setProject] = useState<MonitoringProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);

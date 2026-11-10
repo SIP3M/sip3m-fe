@@ -15,7 +15,8 @@ import type {
 } from "./kkmSkema.types";
 import { getPendaftaranMe } from "./kkmPendaftaran.api";
 import type { PendaftaranStatus } from "./kkmPendaftaran.api";
-import { useAuthStore } from "@/features/auth/auth.store";
+import { usePermission } from "@/features/auth/usePermission";
+import { PERMISSIONS } from "@/constant/permissions";
 
 // ==================== HELPERS ====================
 
@@ -68,8 +69,8 @@ const jenisStyle = (jenis: string) => {
 export default function PilihSkemaKKM() {
   const { search } = useOutletContext<{ search: string }>();
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-  const isMahasiswa = user?.roles?.roles === "MAHASISWA";
+  const { hasPermission } = usePermission();
+  const isMahasiswa = hasPermission(PERMISSIONS.KKM_PENDAFTARAN);
 
   // base = fetch TANPA jenis (untuk angka tab), view = fetch DENGAN jenis (kartu)
   const [base, setBase] = useState<GetKkmSkemaResponse | null>(null);

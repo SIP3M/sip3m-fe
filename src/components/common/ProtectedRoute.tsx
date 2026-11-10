@@ -5,11 +5,20 @@ import NewtonCradleLoader from "./NewtonCradleLoader";
 import { getAccessToken } from "@/services/storage";
 
 interface Props {
+  /** Role bawaan yang diizinkan masuk (parity dengan guard lama). */
   roles: AppRole[];
+  /**
+   * Permission (kode izin) — role CUSTOM (di luar daftar `roles`) diizinkan
+   * masuk bila punya izin ini. Menjadikan guard dinamis mengikuti matriks
+   * izin halaman Role & Permission.
+   */
+  permission?: string;
+  /** Varian any-of: role custom lolos bila punya SALAH SATU izin di daftar. */
+  anyOf?: string[];
   children: React.ReactNode;
 }
 
-const ProtectedRoute = ({ roles, children }: Props) => {
+const ProtectedRoute = ({ roles, permission, anyOf, children }: Props) => {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
   const token = getAccessToken();
@@ -33,7 +42,13 @@ const ProtectedRoute = ({ roles, children }: Props) => {
 
   const userRole = user.roles.roles;
 
-  if (!roles.includes(userRole as AppRole)) {
+  const allowedByRole = roles.includes(userRole as AppRole);
+  const allowedByPermission = Boolean(
+    (permission && user.permissions?.includes(permission)) ||
+      (anyOf && anyOf.some((kode) => user.permissions?.includes(kode))),
+  );
+
+  if (!allowedByRole && !allowedByPermission) {
     return <Navigate to="/unauthorized" replace />;
   }
 

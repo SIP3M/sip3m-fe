@@ -9,6 +9,7 @@ import OAuthCallback from "@/features/auth/OauthCallback";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import DplRouteGuard from "@/components/common/DplRouteGuard";
 import { APP_ROLES } from "@/constant/roles";
+import { PERMISSIONS } from "@/constant/permissions";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StaffLayout from "@/components/layout/StaffLayout";
@@ -132,7 +133,25 @@ export const router = createBrowserRouter([
   // ADMIN AREA - Perbaiki bagian ini
   {
     element: (
-      <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.ADMIN_LPPM]}
+        anyOf={[
+          PERMISSIONS.DASHBOARD_ADMIN,
+          PERMISSIONS.DASHBOARD_KKM,
+          PERMISSIONS.PENGGUNA_LIHAT,
+          PERMISSIONS.PROPOSAL_LIHAT,
+          PERMISSIONS.PROPOSAL_PLOTTING,
+          PERMISSIONS.MONITORING_PROYEK_LIHAT,
+          PERMISSIONS.KKM_PERIODE_LIHAT,
+          PERMISSIONS.KKM_PESERTA_LIHAT,
+          PERMISSIONS.KKM_KELOMPOK_LIHAT,
+          PERMISSIONS.KKM_LOKASI_LIHAT,
+          PERMISSIONS.KKM_DPL_LIHAT,
+          PERMISSIONS.KKM_GENERATE_LIHAT,
+          PERMISSIONS.KKM_MONITORING_LIHAT,
+          PERMISSIONS.KKM_PENGUMUMAN_LIHAT,
+        ]}
+      >
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -242,7 +261,10 @@ export const router = createBrowserRouter([
   // =========================
   {
     element: (
-      <ProtectedRoute roles={[APP_ROLES.ADMIN_LPPM, APP_ROLES.ADMIN_SISTEM]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.ADMIN_LPPM, APP_ROLES.ADMIN_SISTEM]}
+        permission={PERMISSIONS.PENGGUNA_LIHAT}
+      >
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -272,7 +294,19 @@ export const router = createBrowserRouter([
   // =========================
   {
     element: (
-      <ProtectedRoute roles={[APP_ROLES.ADMIN_SISTEM]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.ADMIN_SISTEM]}
+        anyOf={[
+          PERMISSIONS.MASTER_AKADEMIK_KELOLA,
+          PERMISSIONS.MASTER_REFERENSI_KELOLA,
+          PERMISSIONS.PENGGUNA_LIHAT,
+          PERMISSIONS.ROLE_KELOLA,
+          PERMISSIONS.KKM_JABATAN_KELOLA,
+          PERMISSIONS.KKM_DPL_LIHAT,
+          PERMISSIONS.KKM_LOKASI_LIHAT,
+          PERMISSIONS.AUDIT_LIHAT,
+        ]}
+      >
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -334,7 +368,18 @@ export const router = createBrowserRouter([
   {
     path: "staff-lppm",
     element: (
-      <ProtectedRoute roles={[APP_ROLES.STAFF_LPPM]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.STAFF_LPPM]}
+        anyOf={[
+          PERMISSIONS.PROPOSAL_STATUS,
+          PERMISSIONS.PROPOSAL_PLOTTING,
+          PERMISSIONS.PROPOSAL_LIHAT,
+          PERMISSIONS.MONITORING_PROYEK_LIHAT,
+          PERMISSIONS.PENGABDIAN_LIHAT,
+          PERMISSIONS.DASHBOARD_KKM,
+          PERMISSIONS.KKM_PENGUMUMAN_LIHAT,
+        ]}
+      >
         <StaffLayout />
       </ProtectedRoute>
     ),
@@ -380,7 +425,15 @@ export const router = createBrowserRouter([
   {
     path: "dosen-dashboard",
     element: (
-      <ProtectedRoute roles={[APP_ROLES.DOSEN]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.DOSEN]}
+        anyOf={[
+          PERMISSIONS.PROPOSAL_SAYA,
+          PERMISSIONS.PENGABDIAN_LIHAT,
+          PERMISSIONS.DOSEN_PROFIL,
+          PERMISSIONS.KKM_MONITORING_LIHAT,
+        ]}
+      >
         <DosenLayout />
       </ProtectedRoute>
     ),
@@ -460,6 +513,7 @@ export const router = createBrowserRouter([
           APP_ROLES.ADMIN_LPPM,
           APP_ROLES.STAFF_LPPM,
         ]}
+        permission={PERMISSIONS.KKM_SKEMA_LIHAT}
       >
         <MahasiswaLayout />
       </ProtectedRoute>
@@ -534,7 +588,10 @@ export const router = createBrowserRouter([
   {
     path: "reviewer-dashboard",
     element: (
-      <ProtectedRoute roles={[APP_ROLES.REVIEWER]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.REVIEWER]}
+        permission={PERMISSIONS.PROPOSAL_REVIEW}
+      >
         <ReviewerLayout />
       </ProtectedRoute>
     ),
@@ -564,7 +621,10 @@ export const router = createBrowserRouter([
   {
     path: "reviewer-eksternal-dashboard",
     element: (
-      <ProtectedRoute roles={[APP_ROLES.REVIEWER_EKSTERNAL]}>
+      <ProtectedRoute
+        roles={[APP_ROLES.REVIEWER_EKSTERNAL]}
+        permission={PERMISSIONS.PROPOSAL_LIHAT}
+      >
         <EksternalLayout />
       </ProtectedRoute>
     ),
