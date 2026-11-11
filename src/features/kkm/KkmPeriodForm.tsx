@@ -222,7 +222,7 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
           return;
         }
         if (err.response?.status === 403) {
-          setGeneralError("Hanya ADMIN_LPPM yang boleh membuat/mengubah periode.");
+          setGeneralError("Hanya KETUA_LPPM yang boleh membuat/mengubah periode.");
           return;
         }
         if (err.response?.status === 409) {

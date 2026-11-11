@@ -20,7 +20,7 @@ import {
 
 /**
  * Pengumuman KKM sisi DOSEN — HANYA BACA.
- * Pembuatan & pengelolaan pengumuman dilakukan ADMIN_LPPM
+ * Pembuatan & pengelolaan pengumuman dilakukan KETUA_LPPM
  * (halaman /admin-dashboard/kkm/pengumuman).
  */
 

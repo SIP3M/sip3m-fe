@@ -83,7 +83,7 @@ interface RoleConfig {
 // =====================================================================
 const ROLE_CONFIGS: Record<string, RoleConfig> = {
   // ---------------------------------------------------------------- ADMIN
-  [APP_ROLES.ADMIN_LPPM]: {
+  [APP_ROLES.KETUA_LPPM]: {
     penelitian: {
       dashboard: { name: "Dashboard", icon: LayoutDashboard, path: "/admin-dashboard" },
       groups: [

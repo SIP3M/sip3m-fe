@@ -80,7 +80,7 @@ export interface DisburseProjectResponse {
 }
 
 /**
- * Input / edit nominal dana terealisasi (khusus ADMIN_LPPM).
+ * Input / edit nominal dana terealisasi (khusus KETUA_LPPM).
  * BE langsung set status TERCAIRKAN + disbursed_at, dan boleh dipanggil
  * ulang untuk mengubah nominal.
  */

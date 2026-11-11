@@ -84,7 +84,7 @@ const RegisterPage = () => {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#e10600] mt-[5px] text-[8px]">●</span>
-                Menunggu verifikasi dari Admin LPPM
+                Menunggu verifikasi dari Ketua LPPM
               </li>
             </ul>
 

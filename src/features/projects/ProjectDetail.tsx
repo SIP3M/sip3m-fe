@@ -109,7 +109,7 @@ export default function ProjectDetail() {
     PERMISSIONS.PENGABDIAN_KELOLA,
     PERMISSIONS.PENGABDIAN_DOKUMEN,
   ]);
-  // Input dana terealisasi: izin keuangan.cairkan (dulu khusus ADMIN_LPPM)
+  // Input dana terealisasi: izin keuangan.cairkan (dulu khusus KETUA_LPPM)
   const isAdminLppm = hasPermission(PERMISSIONS.KEUANGAN_CAIKAN);
 
   const [project, setProject] = useState<MonitoringProjectDetail | null>(null);

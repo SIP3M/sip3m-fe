@@ -571,7 +571,7 @@ export default function ProposalDetail() {
             <p className="mt-0.5 text-xs text-indigo-700">
               {isAdmin
                 ? "Reviewer merekomendasikan proposal ini LAYAK DIDANAI. Silakan ambil keputusan akhir (Diterima/Tolak) melalui panel di bawah."
-                : "Reviewer merekomendasikan proposal ini LAYAK DIDANAI. Keputusan akhir (Diterima/Tolak) menunggu persetujuan Admin LPPM."}
+                : "Reviewer merekomendasikan proposal ini LAYAK DIDANAI. Keputusan akhir (Diterima/Tolak) menunggu persetujuan Ketua LPPM."}
             </p>
           </div>
         </div>
@@ -692,14 +692,14 @@ export default function ProposalDetail() {
         </div>
       </div>
 
-      {/* Panel keputusan akhir — hanya Admin LPPM, saat status REVIEW_DONE */}
+      {/* Panel keputusan akhir — hanya Ketua LPPM, saat status REVIEW_DONE */}
       {isAdmin && statusKey === "REVIEW_DONE" && (
         <div className="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-100 pb-3">
             <div className="flex items-center gap-2">
               <Scale size={16} className="text-indigo-600" />
               <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-700">
-                Keputusan Akhir — Admin LPPM
+                Keputusan Akhir — Ketua LPPM
               </h3>
             </div>
             <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
@@ -724,7 +724,7 @@ export default function ProposalDetail() {
                   : ""}
               </p>
               <p className="mt-2 text-xs text-gray-500">
-                Keputusan final (Diterima/Tolak) berada di tangan Admin LPPM.
+                Keputusan final (Diterima/Tolak) berada di tangan Ketua LPPM.
               </p>
             </div>
 

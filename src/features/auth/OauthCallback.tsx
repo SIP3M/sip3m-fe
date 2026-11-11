@@ -5,7 +5,7 @@ import { APP_ROLES } from "@/constant/roles";
 import { setAuthSession } from "@/services/storage";
 
 const getDashboardPathByRole = (role?: string, dashboardPath?: string | null) => {
-  if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
+  if (role === APP_ROLES.KETUA_LPPM) return "/admin-dashboard";
   // ADMIN_SISTEM hanya punya modul master data — langsung ke halaman itu
   if (role === APP_ROLES.ADMIN_SISTEM) {
     return "/admin-dashboard/master-data/fakultas";

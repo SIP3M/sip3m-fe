@@ -98,7 +98,7 @@ export default function DetailPeriodeKKM() {
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
-        if (status === 403) setCloseMsg({ type: "error", text: "Hanya ADMIN_LPPM yang boleh menutup periode." });
+        if (status === 403) setCloseMsg({ type: "error", text: "Hanya KETUA_LPPM yang boleh menutup periode." });
         else if (status === 401) setCloseMsg({ type: "error", text: "Sesi habis. Silakan login ulang." });
         else setCloseMsg({ type: "error", text: (err.response?.data as { message?: string })?.message || "Gagal menutup periode." });
       } else {

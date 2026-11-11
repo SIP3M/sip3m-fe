@@ -28,7 +28,7 @@ type View =
 
 /** Warna badge per role bawaan (role baru memakai abu-abu). */
 const BADGE_CLASS: Record<string, string> = {
-  ADMIN_LPPM: "bg-red-100 text-red-700",
+  KETUA_LPPM: "bg-red-100 text-red-700",
   ADMIN_SISTEM: "bg-gray-100 text-gray-700",
   STAFF_LPPM: "bg-blue-100 text-blue-700",
   DOSEN: "purple-50 text-purple-700",

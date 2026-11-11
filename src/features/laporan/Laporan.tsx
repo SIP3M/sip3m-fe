@@ -146,7 +146,7 @@ export default function Laporan() {
       alert(
         isDraft
           ? "Draft berhasil disimpan!"
-          : "Dokumen berhasil diunggah dan langsung disetujui otomatis, kecuali laporan akhir yang tetap menunggu persetujuan Admin LPPM.",
+          : "Dokumen berhasil diunggah dan langsung disetujui otomatis, kecuali laporan akhir yang tetap menunggu persetujuan Ketua LPPM.",
       );
 
       if (!isDraft) {

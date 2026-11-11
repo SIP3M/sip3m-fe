@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useKkmMahasiswaAccessStore } from "@/features/kkm/kkmMahasiswaAccess.store";
 
 /**
- * Guard untuk modul-modul KKM yang membutuhkan akses terverifikasi dari Admin LPPM
+ * Guard untuk modul-modul KKM yang membutuhkan akses terverifikasi dari Ketua LPPM
  * (Kelompok Saya, Logbook, Laporan, Nilai).
  * Mahasiswa yang belum mendapatkan verifikasi akan diarahkan ke Dashboard KKM
  * untuk melihat status verifikasi berkas.

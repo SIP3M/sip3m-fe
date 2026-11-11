@@ -126,7 +126,7 @@ export default function PeriodeKKM() {
           return;
         }
         if (status === 403) {
-          setError("Akses ditolak: hanya ADMIN_LPPM/STAFF_LPPM yang boleh melihat daftar.");
+          setError("Akses ditolak: hanya KETUA_LPPM/STAFF_LPPM yang boleh melihat daftar.");
         } else {
           const msg = (err.response?.data as { message?: string })?.message || err.message;
           setError(msg || "Gagal memuat periode KKM.");
@@ -166,7 +166,7 @@ export default function PeriodeKKM() {
           return;
         }
         if (status === 403) {
-          setActionMsg({ type: "error", text: "Hanya ADMIN_LPPM yang boleh mengaktifkan periode." });
+          setActionMsg({ type: "error", text: "Hanya KETUA_LPPM yang boleh mengaktifkan periode." });
           return;
         }
         const firstErr = data?.errors ? Object.values(data.errors)[0] : null;

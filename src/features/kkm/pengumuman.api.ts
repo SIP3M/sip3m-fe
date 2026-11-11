@@ -11,7 +11,7 @@ import type {
 const ADMIN_BASE = "/kkm/pengumuman";
 const READER_BASE = "/pengumuman";
 
-// ─── ADMIN (ADMIN_LPPM; baca juga STAFF/ADMIN_SISTEM) ───────────────────────
+// ─── ADMIN (KETUA_LPPM; baca juga STAFF/ADMIN_SISTEM) ───────────────────────
 
 /** GET /kkm/pengumuman — daftar + stats + paginasi */
 export const getPengumumanAdmin = async (

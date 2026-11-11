@@ -7,7 +7,7 @@ import type {
 const BASE = "/kkm/monitoring";
 
 /**
- * Monitoring KKM (role: ADMIN_LPPM, STAFF_LPPM, DOSEN/DPL).
+ * Monitoring KKM (role: KETUA_LPPM, STAFF_LPPM, DOSEN/DPL).
  *
  * Untuk role DOSEN, `dpl_id` dipaksa ke user yang login **di server**
  * (query param diabaikan) → hanya kelompok bimbingan sendiri yang kembali.
