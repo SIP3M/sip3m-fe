@@ -5,7 +5,7 @@ const BASE = "/kkm/skema";
 
 /**
  * Daftar skema KKM yang pendaftarannya terbuka (role: MAHASISWA;
- * ADMIN_LPPM & STAFF_LPPM juga boleh untuk preview).
+ * KETUA_LPPM & STAFF_LPPM juga boleh untuk preview).
  *
  * Query opsional:
  * - `jenis`  → REGULER | TEMATIK (filter tab)

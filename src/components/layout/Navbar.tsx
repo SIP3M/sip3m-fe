@@ -21,7 +21,7 @@ interface NavbarProps {
 /** Halaman pengumuman per role — dipakai saat notifikasi pengumuman diklik. */
 const pengumumanPathFor = (role?: string): string | null => {
   switch (role) {
-    case "ADMIN_LPPM":
+    case "KETUA_LPPM":
       return "/admin-dashboard/kkm/pengumuman";
     case "STAFF_LPPM":
       return "/staff-lppm/kkm/pengumuman";

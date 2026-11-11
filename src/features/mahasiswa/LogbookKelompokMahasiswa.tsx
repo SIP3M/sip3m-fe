@@ -221,7 +221,7 @@ export default function LogbookKelompokMahasiswa() {
                   Jadwal upload logbook kelompok belum diatur
                 </p>
                 <p className="mt-0.5 text-xs text-gray-500">
-                  Admin LPPM belum menentukan hari &amp; jam deadline mingguan.
+                  Ketua LPPM belum menentukan hari &amp; jam deadline mingguan.
                   Silakan hubungi admin LPPM.
                 </p>
               </div>

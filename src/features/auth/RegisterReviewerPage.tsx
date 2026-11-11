@@ -442,7 +442,7 @@ const RegisterReviewerPage = () => {
             <h2 className="mb-2 text-xl font-semibold">Registrasi Berhasil</h2>
             <p className="mb-6 text-sm text-gray-500">
               Registrasi Reviewer Eksternal berhasil. Akun Anda sedang menunggu
-              verifikasi oleh Admin LPPM.
+              verifikasi oleh Ketua LPPM.
             </p>
             <Button
               type="button"

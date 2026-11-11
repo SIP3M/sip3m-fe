@@ -77,7 +77,7 @@ export default function DashboardAdminKKM() {
       const status = e.response?.status;
       setError(
         status === 403
-          ? "Akses ditolak — dashboard ini hanya untuk ADMIN_LPPM / STAFF_LPPM."
+          ? "Akses ditolak — dashboard ini hanya untuk KETUA_LPPM / STAFF_LPPM."
           : status === 404
             ? "Periode tidak ditemukan."
             : e.response?.data?.message || e.message || "Gagal memuat dashboard KKM.",

@@ -238,7 +238,7 @@ const RegisterDosenPage = () => {
               Registrasi Berhasil
             </h2>
             <p className="mb-6 text-sm text-gray-500">
-              Silakan menunggu verifikasi dari Admin LPPM.
+              Silakan menunggu verifikasi dari Ketua LPPM.
             </p>
             <Button
               onClick={() => navigate("/")}

@@ -4,7 +4,7 @@ import type { GetKkmDashboardResponse } from "./kkmDashboard.types";
 const BASE = "/dashboard/kkm";
 
 /**
- * Dashboard KKM (role: ADMIN_LPPM, STAFF_LPPM).
+ * Dashboard KKM (role: KETUA_LPPM, STAFF_LPPM).
  *
  * @param periodeId - Tanpa argumen → periode berstatus AKTIF.
  *                    Dengan argumen → periode itu (404 bila tidak ada,

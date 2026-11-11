@@ -1,5 +1,5 @@
 /**
- * Tipe untuk GET /kkm/monitoring (Monitoring KKM — ADMIN_LPPM & STAFF_LPPM).
+ * Tipe untuk GET /kkm/monitoring (Monitoring KKM — KETUA_LPPM & STAFF_LPPM).
  *
  * Kontrak BE — SEMUA nilai turunan (status, progres, tahapan, indikator, delta)
  * dihitung di backend; FE hanya render apa adanya:

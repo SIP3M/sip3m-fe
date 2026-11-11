@@ -158,7 +158,7 @@ export default function ProjectDosen() {
       alert(
         isDraft
           ? "Draft berhasil disimpan!"
-          : "Dokumen berhasil diunggah dan langsung disetujui otomatis, kecuali laporan akhir yang tetap menunggu persetujuan Admin LPPM.",
+          : "Dokumen berhasil diunggah dan langsung disetujui otomatis, kecuali laporan akhir yang tetap menunggu persetujuan Ketua LPPM.",
       );
       fetchProjects();
     } catch (err: any) {
@@ -356,7 +356,7 @@ export default function ProjectDosen() {
                     <AlertCircle size={24} className="text-blue-500" />
                   </div>
                   <p className="text-[14px] font-semibold text-blue-800">
-                    Proyek ini sedang menunggu persetujuan / SK dari Admin LPPM untuk dapat dimulai.
+                    Proyek ini sedang menunggu persetujuan / SK dari Ketua LPPM untuk dapat dimulai.
                   </p>
                 </div>
               ) : ongoingMilestone ? (

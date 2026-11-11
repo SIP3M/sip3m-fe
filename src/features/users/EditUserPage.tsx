@@ -18,7 +18,7 @@ import { CreateUserPayload, User } from "./users.types";
 
 // Fallback bila GET /roles gagal (termasuk ADMIN_SISTEM, seperti pilihan lama)
 const FALLBACK_ROLE_OPTIONS: string[] = [
-  "ADMIN_LPPM",
+  "KETUA_LPPM",
   "ADMIN_SISTEM",
   "STAFF_LPPM",
   "DOSEN",

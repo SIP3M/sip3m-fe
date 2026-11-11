@@ -1026,7 +1026,7 @@ export default function ReviewDetailPage() {
                   {
                     val: "APPROVED" as const,
                     label: "Layak Didanai",
-                    desc: "Direkomendasikan untuk didanai — keputusan akhir (Diterima/Tolak) oleh Admin LPPM.",
+                    desc: "Direkomendasikan untuk didanai — keputusan akhir (Diterima/Tolak) oleh Ketua LPPM.",
                     activeColor: "ring-2 ring-green-500 border-green-500 bg-green-50/20 shadow-xs",
                   },
                   {

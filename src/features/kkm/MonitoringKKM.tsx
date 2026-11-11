@@ -268,7 +268,7 @@ export default function MonitoringKKM() {
         const status = e.response?.status;
         setError(
           status === 403
-            ? 'Akses ditolak — monitoring KKM hanya untuk ADMIN_LPPM / STAFF_LPPM.'
+            ? 'Akses ditolak — monitoring KKM hanya untuk KETUA_LPPM / STAFF_LPPM.'
             : status === 404
               ? 'Periode tidak ditemukan.'
               : e.response?.data?.message ||

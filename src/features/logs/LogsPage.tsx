@@ -90,7 +90,8 @@ export default function LogsPage() {
           <div className="relative">
             <select className="appearance-none border rounded-lg px-3 pr-9 py-2 text-sm bg-white text-gray-700">
               <option value="">Semua Role</option>
-              <option value="ADMIN_LPPM">ADMIN_LPPM</option>
+              <option value="KETUA_LPPM">KETUA_LPPM</option>
+              <option value="ADMIN_LPPM">ADMIN_LPPM (riwayat lama)</option>
               <option value="STAFF_LPPM">STAFF_LPPM</option>
               <option value="DOSEN">DOSEN</option>
               <option value="REVIEWER">REVIEWER</option>

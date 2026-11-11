@@ -2,7 +2,7 @@ import { Loader2, Pencil, Trash2, Eye } from "lucide-react";
 import { User } from "./users.types";
 
 const roleStyle: Record<string, string> = {
-  ADMIN_LPPM: "bg-purple-100 text-purple-600",
+  KETUA_LPPM: "bg-purple-100 text-purple-600",
   STAFF_LPPM: "bg-blue-100 text-blue-600",
   DOSEN: "bg-green-100 text-green-600",
   MAHASISWA: "bg-cyan-100 text-cyan-700",

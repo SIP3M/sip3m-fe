@@ -135,7 +135,7 @@ export const router = createBrowserRouter([
   {
     element: (
       <ProtectedRoute
-        roles={[APP_ROLES.ADMIN_LPPM]}
+        roles={[APP_ROLES.KETUA_LPPM]}
         anyOf={[
           PERMISSIONS.DASHBOARD_ADMIN,
           PERMISSIONS.DASHBOARD_KKM,
@@ -257,13 +257,13 @@ export const router = createBrowserRouter([
     ],
   },
   // =========================
-  // MANAJEMEN PENGGUNA — dipakai bersama ADMIN_LPPM & ADMIN_SISTEM
+  // MANAJEMEN PENGGUNA — dipakai bersama KETUA_LPPM & ADMIN_SISTEM
   // (halaman users reuse; ADMIN_SISTEM mengelola akun dari menu Pengguna)
   // =========================
   {
     element: (
       <ProtectedRoute
-        roles={[APP_ROLES.ADMIN_LPPM, APP_ROLES.ADMIN_SISTEM]}
+        roles={[APP_ROLES.KETUA_LPPM, APP_ROLES.ADMIN_SISTEM]}
         permission={PERMISSIONS.PENGGUNA_LIHAT}
       >
         <DashboardLayout />
@@ -290,7 +290,7 @@ export const router = createBrowserRouter([
   },
   // =========================
   // ADMIN SISTEM — master data
-  // Guard terpisah dari ADMIN_LPPM agar ADMIN_SISTEM tidak bisa
+  // Guard terpisah dari KETUA_LPPM agar ADMIN_SISTEM tidak bisa
   // membuka halaman admin lain lewat URL langsung.
   // =========================
   {
@@ -525,7 +525,7 @@ export const router = createBrowserRouter([
       <ProtectedRoute
         roles={[
           APP_ROLES.MAHASISWA,
-          APP_ROLES.ADMIN_LPPM,
+          APP_ROLES.KETUA_LPPM,
           APP_ROLES.STAFF_LPPM,
         ]}
         permission={PERMISSIONS.KKM_SKEMA_LIHAT}

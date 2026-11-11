@@ -25,7 +25,7 @@ import {
 // Fallback bila GET /roles gagal — ADMIN_SISTEM sengaja tidak ada di sini
 // (pembuatan akun admin sistem dilakukan lewat seed/terpisah).
 const FALLBACK_ROLE_OPTIONS: CreateUserRole[] = [
-  "ADMIN_LPPM",
+  "KETUA_LPPM",
   "STAFF_LPPM",
   "DOSEN",
   "REVIEWER",

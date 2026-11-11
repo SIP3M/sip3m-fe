@@ -11,7 +11,7 @@ import { User } from "./auth.types";
 import { setAuthSession } from "@/services/storage";
 
 const getDashboardPathByRole = (role?: string, dashboardPath?: string | null) => {
-  if (role === APP_ROLES.ADMIN_LPPM) return "/admin-dashboard";
+  if (role === APP_ROLES.KETUA_LPPM) return "/admin-dashboard";
   // ADMIN_SISTEM hanya punya modul master data — langsung ke halaman itu
   if (role === APP_ROLES.ADMIN_SISTEM) {
     return "/admin-dashboard/master-data/fakultas";
@@ -39,7 +39,7 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
     "Email Google Anda belum diverifikasi. Verifikasi dulu di akun Google.",
   email_not_registered:
     "Email Google Anda belum terdaftar di sistem. Hubungi admin untuk mendaftarkan akun.",
-  inactive: "Akun Anda belum diverifikasi oleh Admin LPPM.",
+  inactive: "Akun Anda belum diverifikasi oleh Ketua LPPM.",
   exchange_failed: "Gagal memproses login dengan Google. Silakan coba lagi.",
   server_error: "Terjadi kesalahan saat login dengan Google. Silakan coba lagi.",
 };
