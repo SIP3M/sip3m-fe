@@ -52,6 +52,11 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
   const [deadlineLaporanIndividu, setDeadlineLaporanIndividu] = useState("");
   const [jamLaporanIndividu, setJamLaporanIndividu] = useState("23:59");
   const [jamLaporanKelompok, setJamLaporanKelompok] = useState("23:59");
+  // Deadline per jenis laporan kelompok (Awal & Mingguan; Akhir memakai deadlineLaporan)
+  const [deadlineLaporanAwal, setDeadlineLaporanAwal] = useState("");
+  const [jamLaporanAwal, setJamLaporanAwal] = useState("23:59");
+  const [deadlineLaporanMingguan, setDeadlineLaporanMingguan] = useState("");
+  const [jamLaporanMingguan, setJamLaporanMingguan] = useState("23:59");
 
   // Section C - Peserta
   const [targetPeserta, setTargetPeserta] = useState<string>("0");
@@ -127,6 +132,14 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
         );
         setJamLaporanIndividu(p.jam_laporan_individu || "23:59");
         setJamLaporanKelompok(p.jam_laporan_kelompok || "23:59");
+        setDeadlineLaporanAwal(
+          p.deadline_laporan_awal ? p.deadline_laporan_awal.slice(0, 10) : "",
+        );
+        setJamLaporanAwal(p.jam_laporan_awal || "23:59");
+        setDeadlineLaporanMingguan(
+          p.deadline_laporan_mingguan ? p.deadline_laporan_mingguan.slice(0, 10) : "",
+        );
+        setJamLaporanMingguan(p.jam_laporan_mingguan || "23:59");
         setTargetPeserta(String(p.target_peserta ?? 0));
         setMinimalSemester(p.minimal_semester != null ? String(p.minimal_semester) : "");
         setMaksAnggotaKelompok(String(p.maks_anggota_kelompok ?? 10));
@@ -171,6 +184,10 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
       deadline_laporan_individu: deadlineLaporanIndividu || null,
       jam_laporan_individu: deadlineLaporanIndividu ? jamLaporanIndividu : null,
       jam_laporan_kelompok: deadlineLaporan ? jamLaporanKelompok : null,
+      deadline_laporan_awal: deadlineLaporanAwal || null,
+      jam_laporan_awal: deadlineLaporanAwal ? jamLaporanAwal : null,
+      deadline_laporan_mingguan: deadlineLaporanMingguan || null,
+      jam_laporan_mingguan: deadlineLaporanMingguan ? jamLaporanMingguan : null,
       target_peserta: targetPeserta === "" ? 0 : Number(targetPeserta),
       minimal_semester: minimalSemester === "" ? null : Number(minimalSemester),
       maks_anggota_kelompok: maksAnggotaKelompok === "" ? 10 : Number(maksAnggotaKelompok),
@@ -560,10 +577,86 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
                 )}
               </div>
 
-              {/* Laporan Kelompok */}
+              {/* Laporan Kelompok — Laporan Awal */}
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                  Laporan Kelompok
+                  Laporan Kelompok — Awal
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Batas Waktu</label>
+                    <input
+                      type="date"
+                      value={deadlineLaporanAwal}
+                      onChange={(e) => setDeadlineLaporanAwal(e.target.value)}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${fieldErrors.deadline_laporan_awal ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jam Tutup</label>
+                    <input
+                      type="time"
+                      value={jamLaporanAwal}
+                      onChange={(e) => setJamLaporanAwal(e.target.value)}
+                      disabled={!deadlineLaporanAwal}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:text-gray-400 ${fieldErrors.jam_laporan_awal ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Dibuka saat Tanggal Pelaksanaan. Kosongkan = tanpa batas
+                  waktu.
+                </p>
+                {fieldErrors.deadline_laporan_awal && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.deadline_laporan_awal}</p>
+                )}
+                {fieldErrors.jam_laporan_awal && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.jam_laporan_awal}</p>
+                )}
+              </div>
+
+              {/* Laporan Kelompok — Mingguan */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Laporan Kelompok — Mingguan
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Batas Waktu</label>
+                    <input
+                      type="date"
+                      value={deadlineLaporanMingguan}
+                      onChange={(e) => setDeadlineLaporanMingguan(e.target.value)}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${fieldErrors.deadline_laporan_mingguan ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jam Tutup</label>
+                    <input
+                      type="time"
+                      value={jamLaporanMingguan}
+                      onChange={(e) => setJamLaporanMingguan(e.target.value)}
+                      disabled={!deadlineLaporanMingguan}
+                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:text-gray-400 ${fieldErrors.jam_laporan_mingguan ? "border-red-300 bg-red-50/40" : "border-gray-300"}`}
+                    />
+                  </div>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  Dibuka saat Tanggal Pelaksanaan. Kosongkan = tanpa batas
+                  waktu.
+                </p>
+                {fieldErrors.deadline_laporan_mingguan && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.deadline_laporan_mingguan}</p>
+                )}
+                {fieldErrors.jam_laporan_mingguan && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrors.jam_laporan_mingguan}</p>
+                )}
+              </div>
+
+              {/* Laporan Kelompok — Akhir */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  Laporan Kelompok — Akhir
                 </p>
                 <div className="mt-3 grid grid-cols-3 gap-3">
                   <div className="col-span-2">

@@ -91,6 +91,8 @@ export function validateKkmPeriodPayload(payload: KkmPeriodPayload): Record<stri
     "logbook_kelompok_jam",
     "jam_laporan_individu",
     "jam_laporan_kelompok",
+    "jam_laporan_awal",
+    "jam_laporan_mingguan",
   ];
   for (const k of jamKeys) {
     const v = (payload as unknown as Record<string, unknown>)[k];
@@ -128,6 +130,21 @@ export function validateKkmPeriodPayload(payload: KkmPeriodPayload): Record<stri
     const p = new Date(payload.tgl_penarikan);
     if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d < p) {
       errors.deadline_laporan_individu = "Tidak boleh lebih awal dari Tanggal Penarikan";
+    }
+  }
+
+  // Laporan Awal & Mingguan dibuka saat tgl_pelaksanaan → tidak boleh lebih awal.
+  for (const [key, label] of [
+    ["deadline_laporan_awal", "Deadline laporan awal"],
+    ["deadline_laporan_mingguan", "Deadline laporan mingguan"],
+  ] as const) {
+    const deadline = payload[key];
+    if (deadline && payload.tgl_pelaksanaan) {
+      const d = new Date(deadline);
+      const p = new Date(payload.tgl_pelaksanaan);
+      if (!Number.isNaN(d.getTime()) && !Number.isNaN(p.getTime()) && d < p) {
+        errors[key] = `${label} tidak boleh lebih awal dari Tanggal Pelaksanaan`;
+      }
     }
   }
 

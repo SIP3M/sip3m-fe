@@ -431,6 +431,10 @@ export const router = createBrowserRouter([
         path: "kkm/pengumuman",
         element: <PengumumanKKM />,
       },
+      {
+        path: "kkm/laporan",
+        element: <LaporanKKM />,
+      },
     ],
   },
 
