@@ -28,6 +28,14 @@ export interface KkmPeriod {
   jam_laporan_individu?: string | null;
   /** "HH:mm" — jam tutup laporan kelompok (tanggal pada deadline_laporan) */
   jam_laporan_kelompok?: string | null;
+  /** Deadline laporan awal kelompok (YYYY-MM-DD) */
+  deadline_laporan_awal?: string | null;
+  /** "HH:mm" — jam tutup laporan awal */
+  jam_laporan_awal?: string | null;
+  /** Deadline laporan mingguan kelompok (YYYY-MM-DD) */
+  deadline_laporan_mingguan?: string | null;
+  /** "HH:mm" — jam tutup laporan mingguan */
+  jam_laporan_mingguan?: string | null;
   target_peserta: number;
   minimal_semester?: number | null;
   maks_anggota_kelompok: number;
@@ -89,6 +97,14 @@ export interface KkmPeriodPayload {
   jam_laporan_individu?: string | null;
   /** "HH:mm" — jam tutup laporan kelompok (tanggal pada deadline_laporan) */
   jam_laporan_kelompok?: string | null;
+  /** Deadline laporan awal kelompok (YYYY-MM-DD) */
+  deadline_laporan_awal?: string | null;
+  /** "HH:mm" — jam tutup laporan awal */
+  jam_laporan_awal?: string | null;
+  /** Deadline laporan mingguan kelompok (YYYY-MM-DD) */
+  deadline_laporan_mingguan?: string | null;
+  /** "HH:mm" — jam tutup laporan mingguan */
+  jam_laporan_mingguan?: string | null;
   target_peserta?: number;
   minimal_semester?: number | null;
   maks_anggota_kelompok?: number;

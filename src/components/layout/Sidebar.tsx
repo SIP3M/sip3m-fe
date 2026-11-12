@@ -383,6 +383,7 @@ const buildCustomConfig = (
     { name: "DPL KKM", icon: UserPlus, path: "/admin-dashboard/kkm/dpl", permission: PERMISSIONS.KKM_DPL_LIHAT },
     { name: "Generate Kelompok", icon: CheckSquare, path: "/admin-dashboard/kkm/generate", permission: PERMISSIONS.KKM_GENERATE_LIHAT },
     { name: "Monitoring KKM", icon: Activity, path: "/admin-dashboard/kkm/monitoring", permission: PERMISSIONS.KKM_MONITORING_LIHAT },
+    { name: "Laporan KKM", icon: FileText, path: "/admin-dashboard/kkm/laporan", permission: PERMISSIONS.KKM_LAPORAN_LIHAT },
     { name: "Pengumuman KKM", icon: Megaphone, path: "/admin-dashboard/kkm/pengumuman", permission: PERMISSIONS.KKM_PENGUMUMAN_LIHAT },
   ]);
 
