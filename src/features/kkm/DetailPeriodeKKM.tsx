@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -22,6 +22,9 @@ import type { KkmPeriod } from "./kkmPeriod.types";
 
 export default function DetailPeriodeKKM() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isStaff = location.pathname.startsWith("/staff-lppm");
+  const basePath = isStaff ? "/staff-lppm/kkm/periode" : "/admin-dashboard/kkm/periode";
   const { id } = useParams();
   const periodId = Number(id);
 
@@ -172,7 +175,7 @@ export default function DetailPeriodeKKM() {
             <Printer size={16} /> Cetak
           </button>
           <button
-            onClick={() => navigate(`/admin-dashboard/kkm/periode/${periode.id}/edit`)}
+            onClick={() => navigate(`${basePath}/${periode.id}/edit`)}
             className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Edit size={16} /> Edit
@@ -396,10 +399,10 @@ export default function DetailPeriodeKKM() {
       </div>
 
       <div className="mt-4 flex gap-2">
-        <button onClick={() => navigate(`/admin-dashboard/kkm/periode/${periode.id}/edit`)} className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50">
+        <button onClick={() => navigate(`${basePath}/${periode.id}/edit`)} className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50">
           Edit Periode
         </button>
-        <button onClick={() => navigate("/admin-dashboard/kkm/periode")} className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-900">
+        <button onClick={() => navigate(basePath)} className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-900">
           Kembali ke Daftar
         </button>
       </div>

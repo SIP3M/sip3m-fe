@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft } from "lucide-react";
 import { createKkmPeriod, getKkmPeriodById, updateKkmPeriod } from "./kkmPeriod.api";
@@ -25,6 +25,9 @@ function getErrorMessage(err: unknown, fallback: string) {
 
 export default function KkmPeriodForm({ mode }: { mode: Mode }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isStaff = location.pathname.startsWith("/staff-lppm");
+  const basePath = isStaff ? "/staff-lppm/kkm/periode" : "/admin-dashboard/kkm/periode";
   const { id } = useParams();
   const isEdit = mode === "edit";
   const periodId = isEdit ? Number(id) : null;
@@ -223,11 +226,11 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
         const res = await updateKkmPeriod(periodId, payload);
         setSuccessMsg(res.message || "Periode berhasil diperbarui.");
         // FE cukup refresh list: navigate ke list
-        setTimeout(() => navigate("/admin-dashboard/kkm/periode"), 800);
+        setTimeout(() => navigate(basePath), 800);
       } else {
         const res = await createKkmPeriod(payload);
         setSuccessMsg(res.message || "Periode berhasil dibuat.");
-        setTimeout(() => navigate("/admin-dashboard/kkm/periode"), 800);
+        setTimeout(() => navigate(basePath), 800);
       }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -774,7 +777,7 @@ export default function KkmPeriodForm({ mode }: { mode: Mode }) {
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => navigate("/admin-dashboard/kkm/periode")}
+              onClick={() => navigate(basePath)}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               disabled={loading}
             >

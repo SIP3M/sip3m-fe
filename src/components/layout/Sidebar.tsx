@@ -252,9 +252,29 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
         },
       ],
     },
-    // Menu KKM staff belum ditentukan — tab tampil dengan placeholder
     kkm: {
-      groups: [],
+      dashboard: {
+        name: "Dashboard KKM",
+        icon: LayoutDashboard,
+        path: "/staff-lppm/kkm/dashboard",
+      },
+      prefixes: ["/staff-lppm/kkm"],
+      groups: [
+        {
+          key: "kkm",
+          label: "MANAJEMEN KKM",
+          icon: Users,
+          items: [
+            { name: "Periode KKM", icon: Calendar, path: "/staff-lppm/kkm/periode" },
+            { name: "Peserta KKM", icon: Users, path: "/staff-lppm/kkm/peserta" },
+            { name: "Kelompok KKM", icon: UserCheck, path: "/staff-lppm/kkm/kelompok" },
+            { name: "Generate Kelompok", icon: CheckSquare, path: "/staff-lppm/kkm/generate" },
+            { name: "Monitoring KKM", icon: Activity, path: "/staff-lppm/kkm/monitoring" },
+            { name: "Laporan KKM", icon: FileText, path: "/staff-lppm/kkm/laporan" },
+            { name: "Pengumuman KKM", icon: Megaphone, path: "/staff-lppm/kkm/pengumuman" },
+          ],
+        },
+      ],
     },
   },
 

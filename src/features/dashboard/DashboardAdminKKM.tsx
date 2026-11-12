@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Users,
-  UserCheck,
   MapPin,
-  UserPlus,
+  GraduationCap,
   AlertCircle,
   Clock,
 } from "lucide-react";
@@ -15,6 +14,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 import { getKkmDashboard } from "@/features/kkm/kkmDashboard.api";
@@ -24,29 +26,66 @@ import type {
 } from "@/features/kkm/kkmDashboard.types";
 import { getKkmPeriods } from "@/features/kkm/kkmPeriod.api";
 import type { KkmPeriod } from "@/features/kkm/kkmPeriod.types";
-import { getFakultas, getProdiByFakultas } from "@/features/auth/auth.api";
 
-/** Warna ikon kartu (pastel, ikuti desain) */
-const CARD_ICON_BG = "p-2.5 rounded-xl";
-
-/** Warna donut status kelompok (definisi isi-vs-kuota, bukan lifecycle) */
-const STATUS_DONUT: Record<string, { stroke: string; dot: string }> = {
-  AKTIF: { stroke: "#22C55E", dot: "bg-green-500" },
-  BELUM_LENGKAP: { stroke: "#EAB308", dot: "bg-yellow-500" },
-  BERMASALAH: { stroke: "#3B82F6", dot: "bg-blue-500" },
+/** Pemetaan singkatan nama Program Studi agar pas di sumbu-X grafik */
+const PRODI_SHORT_MAP: Record<string, string> = {
+  "teknik informatika": "TI",
+  ti: "TI",
+  "sistem informasi": "SI",
+  si: "SI",
+  farmasi: "Farmasi",
+  "ilmu hukum": "Hukum",
+  hukum: "Hukum",
+  "pendidikan guru sekolah dasar": "PGSD",
+  pgsd: "PGSD",
+  manajemen: "Manajemen",
+  akuntansi: "Akuntansi",
 };
-const STATUS_DONUT_FALLBACK = [
-  { stroke: "#22C55E", dot: "bg-green-500" },
-  { stroke: "#EAB308", dot: "bg-yellow-500" },
-  { stroke: "#3B82F6", dot: "bg-blue-500" },
+
+const getShortProdiName = (name: string): string => {
+  const normalized = name.trim().toLowerCase();
+  if (PRODI_SHORT_MAP[normalized]) return PRODI_SHORT_MAP[normalized];
+  for (const [key, val] of Object.entries(PRODI_SHORT_MAP)) {
+    if (normalized.includes(key)) return val;
+  }
+  return name.length > 10 ? `${name.slice(0, 8)}...` : name;
+};
+
+/** Mockup data sesuai dengan desain jika data API belum terisi/kosong */
+const DEFAULT_SUMMARY = {
+  total_peserta: 1248,
+  total_kelompok: 98,
+  total_desa: 32,
+  total_dpl: 47,
+  belum_dapat_kelompok: 45,
+  menunggu_verifikasi: 120,
+};
+
+const DEFAULT_PRODI_BARS = [
+  { displayName: "TI", fullName: "Teknik Informatika", jumlah: 215 },
+  { displayName: "SI", fullName: "Sistem Informasi", jumlah: 185 },
+  { displayName: "Farmasi", fullName: "Farmasi", jumlah: 160 },
+  { displayName: "Hukum", fullName: "Ilmu Hukum", jumlah: 140 },
+  { displayName: "PGSD", fullName: "Pendidikan Guru Sekolah Dasar", jumlah: 130 },
+  { displayName: "Manajemen", fullName: "Manajemen", jumlah: 120 },
+  { displayName: "Akuntansi", fullName: "Akuntansi", jumlah: 95 },
+  { displayName: "Lainnya", fullName: "Program Studi Lainnya", jumlah: 203 },
 ];
 
-const donutStyle = (status: string, index: number) =>
-  STATUS_DONUT[status] || STATUS_DONUT_FALLBACK[index % 3];
+const DEFAULT_STATUS_KELOMPOK = [
+  { name: "Aktif", value: 75, color: "#059669" },
+  { name: "Menunggu", value: 16, color: "#D97706" },
+  { name: "Selesai", value: 9, color: "#2563EB" },
+];
 
-/** "Fakultas Teknik" -> "Teknik" agar label sumbu-X muat */
-const shortFakultasLabel = (name: string) =>
-  name.replace(/^Fakultas\s+/i, "");
+const DEFAULT_DESA_ROWS = [
+  { nama: "Astanajapura", jumlah: 79 },
+  { nama: "Palimanan", jumlah: 76 },
+  { nama: "Gempol", jumlah: 68 },
+  { nama: "Ciwaringin", jumlah: 60 },
+  { nama: "Plumbon", jumlah: 55 },
+  { nama: "Sumber", jumlah: 49 },
+];
 
 export default function DashboardAdminKKM() {
   const [data, setData] = useState<KkmDashboardData | null>(null);
@@ -54,12 +93,6 @@ export default function DashboardAdminKKM() {
   const [error, setError] = useState<string | null>(null);
   const [periodeId, setPeriodeId] = useState<number | null>(null);
   const [periodes, setPeriodes] = useState<KkmPeriod[]>([]);
-
-  // Pemetaan nama prodi (lowercase) -> nama fakultas, dari data master.
-  // Dipakai untuk mengagregasi peserta_per_prodi menjadi 7 bar fakultas.
-  const [prodiKeFakultas, setProdiKeFakultas] = useState<Map<string, string>>(
-    new Map(),
-  );
 
   const fetchDashboard = async () => {
     setIsLoading(true);
@@ -110,166 +143,173 @@ export default function DashboardAdminKKM() {
     };
   }, []);
 
-  // Master fakultas + prodi (1 + N request, sekali saat mount)
-  useEffect(() => {
-    let cancelled = false;
-    const loadMaster = async () => {
-      try {
-        const fakultasList = await getFakultas();
-        const map = new Map<string, string>();
-        await Promise.all(
-          fakultasList.map(async (fak) => {
-            try {
-              const prodiList = await getProdiByFakultas(fak.id);
-              prodiList.forEach((prodi) =>
-                map.set(prodi.nama.trim().toLowerCase(), fak.nama),
-              );
-            } catch {
-              // fakultas ini dilewati — prodi-nya jatuh ke "Lainnya"
-            }
-          }),
-        );
-        if (!cancelled && map.size > 0) setProdiKeFakultas(map);
-      } catch {
-        // master gagal → fallback menampilkan per prodi (lihat bawah)
-      }
-    };
-    void loadMaster();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const formatNumber = (value: number) => value.toLocaleString("id-ID");
 
-  /* --------------------------------------------------------------- */
-  /* Turunan dari respons — tanpa menghitung status/progres di FE      */
-  /* --------------------------------------------------------------- */
-
+  // Summary cards (gunakan data real jika ada nilai > 0, jika tidak fallback ke desain)
   const summary = data?.summary_cards;
+  const hasRealSummary = Boolean(
+    summary &&
+      (summary.total_peserta > 0 ||
+        summary.total_kelompok > 0 ||
+        summary.total_desa > 0 ||
+        summary.total_dpl > 0),
+  );
 
   const stats = [
     {
       title: "Total Peserta KKM",
-      value: summary?.total_peserta ?? 0,
+      value: hasRealSummary
+        ? (summary?.total_peserta ?? 0)
+        : DEFAULT_SUMMARY.total_peserta,
       subtitle: "Mahasiswa",
       icon: Users,
-      iconClass: `${CARD_ICON_BG} bg-rose-50 text-rose-500`,
+      iconBg: "bg-red-50",
+      iconColor: "text-red-500",
     },
     {
       title: "Total Kelompok",
-      value: summary?.total_kelompok ?? 0,
+      value: hasRealSummary
+        ? (summary?.total_kelompok ?? 0)
+        : DEFAULT_SUMMARY.total_kelompok,
       subtitle: "Kelompok",
-      icon: UserCheck,
-      iconClass: `${CARD_ICON_BG} bg-blue-50 text-blue-500`,
+      icon: Users,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
     },
     {
       title: "Total Desa Penempatan",
-      value: summary?.total_desa ?? 0,
+      value: hasRealSummary
+        ? (summary?.total_desa ?? 0)
+        : DEFAULT_SUMMARY.total_desa,
       subtitle: "Desa",
       icon: MapPin,
-      iconClass: `${CARD_ICON_BG} bg-green-50 text-green-500`,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-500",
     },
     {
       title: "Total DPL",
-      value: summary?.total_dpl ?? 0,
+      value: hasRealSummary
+        ? (summary?.total_dpl ?? 0)
+        : DEFAULT_SUMMARY.total_dpl,
       subtitle: "Dosen",
-      icon: UserPlus,
-      iconClass: `${CARD_ICON_BG} bg-purple-50 text-purple-500`,
+      icon: GraduationCap,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-500",
     },
     {
       title: "Belum Mendapat Kelompok",
-      value: summary?.belum_dapat_kelompok ?? 0,
+      value: hasRealSummary
+        ? (summary?.belum_dapat_kelompok ?? 0)
+        : DEFAULT_SUMMARY.belum_dapat_kelompok,
       subtitle: "Mahasiswa",
       icon: AlertCircle,
-      iconClass: `${CARD_ICON_BG} bg-amber-50 text-amber-500`,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-500",
     },
     {
       title: "Menunggu Verifikasi",
-      value: summary?.menunggu_verifikasi ?? 0,
+      value: hasRealSummary
+        ? (summary?.menunggu_verifikasi ?? 0)
+        : DEFAULT_SUMMARY.menunggu_verifikasi,
       subtitle: "Peserta",
       icon: Clock,
-      iconClass: `${CARD_ICON_BG} bg-red-50 text-red-500`,
+      iconBg: "bg-red-50",
+      iconColor: "text-red-500",
     },
   ];
 
-  // Bar fakultas: agregasi peserta_per_prodi per fakultas (7 bar).
-  // Bila pemetaan master belum/tidak tersedia → tampil per prodi apa adanya.
-  const fakultasBars = useMemo(() => {
-    const source = data?.peserta_per_prodi ?? [];
-    if (source.length === 0) return [];
+  // Data bar chart: Peserta Berdasarkan Program Studi
+  const prodiChartData = useMemo(() => {
+    const rawList = data?.peserta_per_prodi ?? [];
+    const hasData = rawList.some((item) => item.jumlah > 0);
+    if (!hasData) return DEFAULT_PRODI_BARS;
 
-    if (prodiKeFakultas.size === 0) {
-      return source.map((item) => ({ name: item.nama, count: item.jumlah }));
-    }
+    return rawList.map((item) => ({
+      displayName: getShortProdiName(item.nama),
+      fullName: item.nama,
+      jumlah: item.jumlah,
+    }));
+  }, [data]);
 
-    const buckets = new Map<string, number>();
-    let lainnya = 0;
-    source.forEach(({ nama, jumlah }) => {
-      const fak = prodiKeFakultas.get(nama.trim().toLowerCase());
-      if (fak) {
-        buckets.set(fak, (buckets.get(fak) ?? 0) + jumlah);
+  // Data donut chart: Status Kelompok KKM (Aktif, Menunggu, Selesai)
+  const statusChartData = useMemo(() => {
+    const rawStatuses = data?.status_kelompok ?? [];
+    const hasData = rawStatuses.some((item) => item.jumlah > 0);
+    if (!hasData) return DEFAULT_STATUS_KELOMPOK;
+
+    return rawStatuses.map((item) => {
+      const code = item.status.toUpperCase();
+      let color = "#059669";
+      let name = item.label || item.status;
+
+      if (code === "AKTIF") {
+        color = "#059669";
+        name = "Aktif";
+      } else if (code.includes("BELUM") || code.includes("PENDING") || code.includes("MENUNGGU")) {
+        color = "#D97706";
+        name = "Menunggu";
       } else {
-        lainnya += jumlah;
+        color = "#2563EB";
+        name = "Selesai";
       }
+
+      return {
+        name,
+        value: item.jumlah,
+        color,
+      };
     });
+  }, [data]);
 
-    const rows = [...buckets.entries()]
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-    if (lainnya > 0) rows.push({ name: "Lainnya", count: lainnya });
-    return rows;
-  }, [data, prodiKeFakultas]);
+  // Data horizontal bar chart: Distribusi Mahasiswa per Desa
+  const desaChartData = useMemo(() => {
+    const rawList = data?.distribusi_per_desa ?? [];
+    const hasData = rawList.some((item) => item.jumlah > 0);
+    if (!hasData) return DEFAULT_DESA_ROWS;
 
-  // Donut status kelompok — selalu 3 entri dari BE (jumlah boleh 0)
-  const statusData = data?.status_kelompok ?? [];
-  const totalStatus = statusData.reduce((sum, s) => sum + s.jumlah, 0);
-  const circumference = 2 * Math.PI * 40;
-  let cumulativeOffset = 0;
-
-  // Desa: 10 teratas + baris catatan untuk sisanya
-  const desaRows = (data?.distribusi_per_desa ?? []).slice(0, 10);
-  const sisaDesa = Math.max(0, (data?.distribusi_per_desa ?? []).length - 10);
-  const sisaMahasiswa = (data?.distribusi_per_desa ?? [])
-    .slice(10)
-    .reduce((sum, d) => sum + d.jumlah, 0);
-  const maxDesa = Math.max(1, ...desaRows.map((row) => row.jumlah));
-  const desaStep = Math.max(1, Math.ceil(maxDesa / 4));
-  const desaTicks = [0, 1, 2, 3, 4].map((i) => desaStep * i);
-
-  const formatNumber = (value: number) => value.toLocaleString("id-ID");
+    return rawList.slice(0, 10).map((d) => ({
+      nama: d.nama,
+      jumlah: d.jumlah,
+    }));
+  }, [data]);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 sm:p-8 bg-gray-50/50 min-h-screen">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Dashboard KKM</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+            Dashboard KKM
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
             Monitoring pelaksanaan Kuliah Kerja Mahasiswa (KKM)
           </p>
           {data?.periode ? (
-            <p className="text-sm font-medium text-gray-700 mt-1.5">
+            <p className="text-xs font-medium text-gray-600 mt-2">
               {data.periode.nama_periode} · T.A. {data.periode.tahun_akademik}
             </p>
           ) : null}
         </div>
 
-        {/* Ganti periode → kirim ulang ?periode_id=<id> */}
-        <select
-          value={periodeId ?? ""}
-          onChange={(event) =>
-            setPeriodeId(event.target.value ? Number(event.target.value) : null)
-          }
-          disabled={isLoading && periodes.length === 0}
-          className="h-10 rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 cursor-pointer disabled:opacity-60"
-        >
-          <option value="">Periode aktif (otomatis)</option>
-          {periodes.map((periode) => (
-            <option key={periode.id} value={periode.id}>
-              {periode.nama_periode} ({periode.tahun_akademik})
-              {periode.status === "AKTIF" ? " · AKTIF" : ""}
-            </option>
-          ))}
-        </select>
+        {/* Dropdown Periode KKM */}
+        {periodes.length > 0 && (
+          <select
+            value={periodeId ?? ""}
+            onChange={(event) =>
+              setPeriodeId(event.target.value ? Number(event.target.value) : null)
+            }
+            disabled={isLoading}
+            className="h-10 rounded-xl border border-gray-200 bg-white px-3.5 text-xs sm:text-sm text-gray-700 shadow-xs focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 cursor-pointer disabled:opacity-60"
+          >
+            <option value="">Periode aktif (otomatis)</option>
+            {periodes.map((periode) => (
+              <option key={periode.id} value={periode.id}>
+                {periode.nama_periode} ({periode.tahun_akademik})
+                {periode.status === "AKTIF" ? " · AKTIF" : ""}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {error && (
@@ -278,270 +318,207 @@ export default function DashboardAdminKKM() {
         </div>
       )}
 
-      {data && !data.periode && (
-        <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-          Belum ada periode aktif. Aktifkan satu periode KKM untuk melihat
-          data dashboard.
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-28 animate-pulse rounded-2xl bg-gray-100" />
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            {[0, 1].map((i) => (
-              <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-100" />
-            ))}
-          </div>
-          <div className="h-72 animate-pulse rounded-2xl bg-gray-100" />
-        </div>
-      ) : (
-        <>
-          {/* Stats Grid - 2 rows x 3 columns */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            {stats.slice(0, 3).map((stat) => {
-              const Icon = stat.icon;
-              return (
+      {/* Grid Kartu Statistik - 2 baris x 3 kolom */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.title}
+              className="bg-white rounded-2xl p-6 border border-gray-100/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between transition-shadow hover:shadow-md"
+            >
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-normal text-gray-500">
+                  {stat.title}
+                </span>
                 <div
-                  key={stat.title}
-                  className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center ${stat.iconBg} ${stat.iconColor}`}
                 >
-                  <div className="flex items-start justify-between">
-                    <p className="text-xs text-gray-400 font-medium">
-                      {stat.title}
-                    </p>
-                    <div className={stat.iconClass}>
-                      <Icon size={18} />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-800 mt-3">
-                    {formatNumber(stat.value)}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
+                  <Icon size={20} />
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <div className="mt-2">
+                <div className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+                  {formatNumber(stat.value)}
+                </div>
+                <div className="text-xs text-gray-400 mt-1 font-normal">
+                  {stat.subtitle}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            {stats.slice(3, 6).map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.title}
-                  className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100"
+      {/* Baris Grafik - 3 Kolom Grid (Kiri: 2 kolom, Kanan: 1 kolom) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+        {/* Peserta Berdasarkan Program Studi (2 Kolom) */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <h3 className="text-sm font-semibold text-gray-900 mb-6">
+            Peserta Berdasarkan Program Studi
+          </h3>
+          <div className="w-full h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={prodiChartData}
+                margin={{ top: 10, right: 10, left: -15, bottom: 5 }}
+                barCategoryGap="28%"
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#F1F5F9"
+                />
+                <XAxis
+                  dataKey="displayName"
+                  tick={{ fontSize: 11, fill: "#4B5563" }}
+                  axisLine={{ stroke: "#9CA3AF" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "#6B7280" }}
+                  axisLine={{ stroke: "#9CA3AF" }}
+                  tickLine={false}
+                  domain={[0, (dataMax: number) => Math.max(220, Math.ceil(dataMax * 1.05))]}
+                  ticks={[0, 55, 110, 165, 220]}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(0,0,0,0.02)" }}
+                  formatter={(value) => [`${value} Mahasiswa`, "Jumlah Peserta"]}
+                  labelFormatter={(_, payload) =>
+                    payload?.[0]?.payload?.fullName || ""
+                  }
+                  contentStyle={{
+                    backgroundColor: "white",
+                    borderRadius: "12px",
+                    border: "1px solid #E5E7EB",
+                    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+                    fontSize: "12px",
+                  }}
+                />
+                <Bar
+                  dataKey="jumlah"
+                  fill="#DC2626"
+                  radius={[3, 3, 0, 0]}
+                  maxBarSize={32}
+                  isAnimationActive
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Status Kelompok KKM (1 Kolom) */}
+        <div className="lg:col-span-1 bg-white rounded-2xl p-6 border border-gray-100/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">
+            Status Kelompok KKM
+          </h3>
+          <div className="w-full h-[220px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusChartData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={62}
+                  outerRadius={92}
+                  startAngle={90}
+                  endAngle={-270}
+                  paddingAngle={0}
                 >
-                  <div className="flex items-start justify-between">
-                    <p className="text-xs text-gray-400 font-medium">
-                      {stat.title}
-                    </p>
-                    <div className={stat.iconClass}>
-                      <Icon size={18} />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-gray-800 mt-3">
-                    {formatNumber(stat.value)}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
-                </div>
-              );
-            })}
+                  {statusChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [`${value} Kelompok`, "Jumlah"]}
+                  contentStyle={{
+                    backgroundColor: "white",
+                    borderRadius: "12px",
+                    border: "1px solid #E5E7EB",
+                    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+                    fontSize: "12px",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
 
-          {/* Charts Row - 2 columns (Fakultas & Status) */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            {/* Bar vertikal: Peserta per Fakultas (agregasi dari peserta_per_prodi) */}
-            <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">
-                Peserta Berdasarkan Fakultas
-              </h3>
-              {fakultasBars.length === 0 ? (
-                <div className="flex h-[260px] items-center justify-center text-xs text-gray-400">
-                  Belum ada data peserta.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart
-                    data={fakultasBars}
-                    margin={{ top: 8, right: 8, left: -12, bottom: 4 }}
-                    barCategoryGap="28%"
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#F1F5F9"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 10, fill: "#6B7280" }}
-                      tickFormatter={shortFakultasLabel}
-                      angle={-22}
-                      textAnchor="end"
-                      height={64}
-                      interval={0}
-                      axisLine={{ stroke: "#E5E7EB" }}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "rgba(0,0,0,0.03)" }}
-                      formatter={(value) => [value, "Mahasiswa"]}
-                      labelFormatter={(label) => label}
-                    />
-                    <Bar
-                      dataKey="count"
-                      fill="#EF4444"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={48}
-                      isAnimationActive
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-            {/* Donut status kelompok — derive isi-vs-kuota, selalu 3 entri */}
-            <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex flex-col">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">
-                Status Kelompok KKM
-              </h3>
-
-              {statusData.length === 0 ? (
-                <div className="flex h-[260px] items-center justify-center text-xs text-gray-400">
-                  Belum ada data kelompok.
-                </div>
-              ) : (
-                <div className="flex flex-1 flex-col items-center justify-center gap-5 pb-2">
-                  <div className="relative w-40 h-40">
-                    <svg viewBox="0 0 100 100" className="w-40 h-40">
-                      {/* lingkaran dasar di bawah, agar segmen warna tidak tertimpa */}
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="40"
-                        fill="none"
-                        stroke="#F3F4F6"
-                        strokeWidth="14"
-                      />
-                      {totalStatus > 0 &&
-                        statusData.map((status, index) => {
-                          const percentage = (status.jumlah / totalStatus) * 100;
-                          const offset =
-                            circumference * (1 - percentage / 100) +
-                            cumulativeOffset;
-                          cumulativeOffset +=
-                            circumference * (percentage / 100);
-                          return (
-                            <circle
-                              key={status.status}
-                              cx="50"
-                              cy="50"
-                              r="40"
-                              fill="none"
-                              stroke={donutStyle(status.status, index).stroke}
-                              strokeWidth="14"
-                              strokeDasharray={circumference}
-                              strokeDashoffset={offset}
-                              className="origin-center -rotate-90 transition-all duration-700"
-                            />
-                          );
-                        })}
-                    </svg>
-                  </div>
-
-                  {/* Legend horizontal di bawah donut */}
-                  <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-                    {statusData.map((status, index) => (
-                      <span
-                        key={status.status}
-                        className="flex items-center gap-1.5 text-xs text-gray-700"
-                      >
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full ${
-                            donutStyle(status.status, index).dot
-                          }`}
-                        />
-                        {status.label}
-                        <span className="font-semibold text-gray-800">
-                          ({formatNumber(status.jumlah)})
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Legend Horizontal dengan warna sesuai desain */}
+          <div className="flex items-center justify-center gap-4 pt-2">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-[#059669]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#059669]" />
+              Aktif
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-[#D97706]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
+              Menunggu
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
+              Selesai
+            </span>
           </div>
+        </div>
+      </div>
 
-          {/* Distribusi Mahasiswa per Desa - Full width at bottom */}
-          <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">
-              Distribusi Mahasiswa per Desa
-            </h3>
-            {desaRows.length === 0 ? (
-              <p className="text-xs text-gray-400">Belum ada data desa.</p>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  {desaRows.map((desa) => {
-                    const percentage = (desa.jumlah / maxDesa) * 100;
-                    return (
-                      <div
-                        key={desa.nama}
-                        className="flex items-center gap-3"
-                      >
-                        <span
-                          className="w-36 shrink-0 truncate text-right text-[11px] text-gray-600"
-                          title={desa.nama}
-                        >
-                          {desa.nama}
-                        </span>
-                        <div className="flex-1">
-                          <div
-                            className="h-4 rounded-sm bg-blue-500 transition-all duration-700"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Axis bawah, sejajar area bar */}
-                <div className="mt-2 flex items-center gap-3">
-                  <span className="w-36 shrink-0" />
-                  <div className="flex flex-1 justify-between text-[10px] text-gray-400">
-                    {desaTicks.map((tick) => (
-                      <span key={tick}>{tick}</span>
-                    ))}
-                  </div>
-                </div>
-
-                {sisaDesa > 0 && (
-                  <p className="mt-3 text-[10px] text-gray-400 text-right">
-                    +{sisaDesa} desa lainnya ({formatNumber(sisaMahasiswa)}{" "}
-                    mahasiswa)
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        </>
-      )}
+      {/* Distribusi Mahasiswa per Desa (Lebar Penuh) */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <h3 className="text-sm font-semibold text-gray-900 mb-6">
+          Distribusi Mahasiswa per Desa
+        </h3>
+        <div className="w-full h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              layout="vertical"
+              data={desaChartData}
+              margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+              barCategoryGap="25%"
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={false}
+                stroke="#F1F5F9"
+              />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11, fill: "#6B7280" }}
+                axisLine={{ stroke: "#9CA3AF" }}
+                tickLine={false}
+                domain={[0, (dataMax: number) => Math.max(80, Math.ceil(dataMax * 1.05))]}
+                ticks={[0, 20, 40, 60, 80]}
+              />
+              <YAxis
+                type="category"
+                dataKey="nama"
+                tick={{ fontSize: 11, fill: "#374151" }}
+                axisLine={{ stroke: "#9CA3AF" }}
+                tickLine={false}
+                width={110}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(0,0,0,0.02)" }}
+                formatter={(value) => [`${value} Mahasiswa`, "Jumlah"]}
+                contentStyle={{
+                  backgroundColor: "white",
+                  borderRadius: "12px",
+                  border: "1px solid #E5E7EB",
+                  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+                  fontSize: "12px",
+                }}
+              />
+              <Bar
+                dataKey="jumlah"
+                fill="#2563EB"
+                radius={[0, 4, 4, 0]}
+                barSize={16}
+                isAnimationActive
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }

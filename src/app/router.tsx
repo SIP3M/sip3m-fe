@@ -393,6 +393,12 @@ export const router = createBrowserRouter([
           PERMISSIONS.PENGABDIAN_LIHAT,
           PERMISSIONS.DASHBOARD_KKM,
           PERMISSIONS.KKM_PENGUMUMAN_LIHAT,
+          PERMISSIONS.KKM_PERIODE_LIHAT,
+          PERMISSIONS.KKM_PESERTA_LIHAT,
+          PERMISSIONS.KKM_KELOMPOK_LIHAT,
+          PERMISSIONS.KKM_GENERATE_LIHAT,
+          PERMISSIONS.KKM_MONITORING_LIHAT,
+          PERMISSIONS.KKM_LAPORAN_LIHAT,
         ]}
       >
         <StaffLayout />
@@ -400,8 +406,20 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
+        index: true,
+        element: <Navigate to="/staff-lppm/staff-dashboard" replace />,
+      },
+      {
         path: "staff-dashboard",
         element: <StaffDashboard />,
+      },
+      {
+        path: "kkm/dashboard",
+        element: <DashboardAdminKKM />,
+      },
+      {
+        path: "kkm",
+        element: <Navigate to="/staff-lppm/kkm/dashboard" replace />,
       },
       {
         path: "verifikasi-proposal",
@@ -426,6 +444,46 @@ export const router = createBrowserRouter([
       {
         path: "repository-publik",
         element: <PublicationList />,
+      },
+      {
+        path: "kkm/periode",
+        element: <PeriodeKKM />,
+      },
+      {
+        path: "kkm/periode/new",
+        element: <TambahPeriodeKKM />,
+      },
+      {
+        path: "kkm/periode/:id",
+        element: <DetailPeriodeKKM />,
+      },
+      {
+        path: "kkm/periode/:id/edit",
+        element: <KkmPeriodForm mode="edit" />,
+      },
+      {
+        path: "kkm/peserta",
+        element: <PesertaKKM />,
+      },
+      {
+        path: "kkm/kelompok",
+        element: <KelompokKKM />,
+      },
+      {
+        path: "kkm/kelompok/:id",
+        element: <DetailKelompokKKM />,
+      },
+      {
+        path: "kkm/kelompok/:id/edit",
+        element: <EditKelompokKKM />,
+      },
+      {
+        path: "kkm/generate",
+        element: <GenerateKelompok />,
+      },
+      {
+        path: "kkm/monitoring",
+        element: <MonitoringKKM />,
       },
       {
         path: "kkm/pengumuman",
