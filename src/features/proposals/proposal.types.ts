@@ -75,6 +75,7 @@ export interface Proposal {
   abstrak?: string | null;
   tujuan_penelitian?: string | null;
   metode_penelitian?: string | null;
+  detail_sumber_penelitian?: string | null;
   dosen_terlibat?: string | null;
   nidn_dosen_terlibat?: string | null;
   nama_anggota?: string | null;
@@ -172,6 +173,7 @@ export interface UpsertProposalPayload {
   detail_sumber_penelitian?: string;
   tujuan_penelitian?: string;
   metode_penelitian?: string;
+  abstrak?: string;
 }
 
 export interface DeleteProposalResponse {

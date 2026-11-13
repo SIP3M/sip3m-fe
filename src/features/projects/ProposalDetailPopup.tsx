@@ -741,6 +741,15 @@ export default function ProposalDetailPopup({
                 </p>
               </div>
 
+              <div className="border-b border-gray-100 pb-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Detail Sumber Data Penelitian
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
+                  {proposal.detail_sumber_penelitian || "-"}
+                </p>
+              </div>
+
               <div className="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
                 <Info size={16} className="mt-0.5 flex-shrink-0 text-blue-600" />
                 <p className="text-xs text-blue-700">

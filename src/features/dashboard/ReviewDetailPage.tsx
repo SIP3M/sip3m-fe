@@ -652,8 +652,8 @@ export default function ReviewDetailPage() {
                 {/* Abstrak */}
                 <div className="space-y-2 border-t border-gray-100 pt-4 text-xs">
                   <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Abstrak</span>
-                  <p className="text-sm text-gray-600 leading-relaxed text-justify">
-                    Penggunaan teknologi Artificial Intelligence (AI) dalam bidang pertanian semakin berkembang pesat. Penelitian ini bertujuan untuk mengembangkan algoritma deteksi hama pada tanaman padi menggunakan metode Convolutional Neural Network (CNN). Diharapkan hasil penelitian ini dapat membantu petani di wilayah Cirebon dalam mendeteksi serangan hama secara dini dan meningkatkan produktivitas pertanian.
+                  <p className="text-sm text-gray-600 leading-relaxed text-justify whitespace-pre-wrap">
+                    {proposal.abstrak || "-"}
                   </p>
                 </div>
 
