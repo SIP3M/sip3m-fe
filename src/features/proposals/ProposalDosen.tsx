@@ -1108,6 +1108,24 @@ export default function ProposalDosen() {
       return;
     }
 
+    // Field naratif wajib saat submit final — Simpan Draft (isDraft=true) bebas kosong
+    if (!isDraft) {
+      const fieldKurang: string[] = [];
+      if (!formValues.detail_sumber_penelitian.trim())
+        fieldKurang.push("Detail Sumber Data Penelitian");
+      if (!formValues.tujuan_penelitian.trim())
+        fieldKurang.push("Tujuan Penelitian");
+      if (!formValues.metode_penelitian.trim())
+        fieldKurang.push("Metode Penelitian");
+      if (!formValues.abstrak.trim()) fieldKurang.push("Abstrak");
+      if (fieldKurang.length > 0) {
+        setError(
+          `Lengkapi isian berikut sebelum submit: ${fieldKurang.join(", ")}.`,
+        );
+        return;
+      }
+    }
+
     setIsSubmittingForm(true);
     setError(null);
     setFeedback(null);
@@ -1305,7 +1323,7 @@ export default function ProposalDosen() {
                 {/* Detail Sumber Data Penelitian */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Detail Sumber Data Penelitian
+                    Detail Sumber Data Penelitian<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="detail_sumber_penelitian"
@@ -1323,7 +1341,7 @@ export default function ProposalDosen() {
                 {/* Tujuan Penelitian */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Tujuan Penelitian
+                    Tujuan Penelitian<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="tujuan_penelitian"
@@ -1331,7 +1349,11 @@ export default function ProposalDosen() {
                     onChange={handleInputChange}
                     placeholder="Jelaskan tujuan dan target yang ingin dicapai dari penelitian ini..."
                     className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    maxLength={2000}
                   />
+                  <div className={`text-xs font-medium ${formValues.tujuan_penelitian.length >= 1800 ? 'text-orange-500' : 'text-gray-400'}`}>
+                    {formValues.tujuan_penelitian.length}/2000 karakter
+                  </div>
                   {fieldErrors.tujuan_penelitian && (
                     <p className="text-xs text-red-600">{fieldErrors.tujuan_penelitian}</p>
                   )}
@@ -1340,7 +1362,7 @@ export default function ProposalDosen() {
                 {/* Metode Penelitian */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Metode Penelitian
+                    Metode Penelitian<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="metode_penelitian"
@@ -1348,7 +1370,11 @@ export default function ProposalDosen() {
                     onChange={handleInputChange}
                     placeholder="Jelaskan rancangan, alur, tahapan, dan metode penelitian yang digunakan..."
                     className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    maxLength={2000}
                   />
+                  <div className={`text-xs font-medium ${formValues.metode_penelitian.length >= 1800 ? 'text-orange-500' : 'text-gray-400'}`}>
+                    {formValues.metode_penelitian.length}/2000 karakter
+                  </div>
                   {fieldErrors.metode_penelitian && (
                     <p className="text-xs text-red-600">{fieldErrors.metode_penelitian}</p>
                   )}
@@ -1356,7 +1382,7 @@ export default function ProposalDosen() {
                 {/* Abstrak */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Abstrak
+                    Abstrak<span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="abstrak"
@@ -1364,7 +1390,11 @@ export default function ProposalDosen() {
                     onChange={handleInputChange}
                     placeholder="Tuliskan abstrak penelitian secara ringkas dan jelas..."
                     className="min-h-[110px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    maxLength={2000}
                   />
+                  <div className={`text-xs font-medium ${formValues.abstrak.length >= 1800 ? 'text-orange-500' : 'text-gray-400'}`}>
+                    {formValues.abstrak.length}/2000 karakter
+                  </div>
                   {fieldErrors.abstrak && (
                     <p className="text-xs text-red-600">{fieldErrors.abstrak}</p>
                   )}

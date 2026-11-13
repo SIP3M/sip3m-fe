@@ -30,6 +30,7 @@ export interface AssignedProposal {
   skema: string;
   funding_request_amount: number;
   status: ProposalStatus;
+  abstrak?: string | null;
   proposal_file_path: string | null;
   rab_file_path: string | null;
   submitted_at: string;

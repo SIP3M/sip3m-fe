@@ -202,6 +202,10 @@ const buildProposalFormData = (payload: UpsertProposalPayload) => {
     formData.append("metode_penelitian", payload.metode_penelitian);
   }
 
+  if (payload.abstrak !== undefined) {
+    formData.append("abstrak", payload.abstrak);
+  }
+
   return formData;
 };
 
