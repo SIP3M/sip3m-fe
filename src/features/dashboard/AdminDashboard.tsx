@@ -1,19 +1,14 @@
 import StatCard from "@/components/dashboard/StatCard";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   FileText,
   Users,
   CheckCircle,
   Clock,
-  GraduationCap,
-  UsersRound,
-  BookOpen,
-  UserCog,
-  Plus,
-  Zap,
-  Bell,
-  Download,
+  ListChecks,
+  UserCheck,
   Activity,
   ChevronRight,
 } from "lucide-react";
@@ -49,6 +44,9 @@ const EMPTY_DASHBOARD_DATA: AdminDashboardData = {
   statusChart: [],
   kategoriChart: [],
   trendBulanan: [],
+  fakultasChart: [],
+  recentProposals: [],
+  tahunTersedia: [],
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -71,6 +69,17 @@ const statusColorMap: Record<string, string> = {
   REVIEW_DONE: "#6366f1",
   ACCEPTED: "#22c55e",
   REJECTED: "#ef4444",
+};
+
+const statusBadgeClass: Record<string, string> = {
+  DRAFT: "bg-gray-100 text-gray-600",
+  SUBMITTED: "bg-blue-100 text-blue-700",
+  ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  UNDER_REVIEW: "bg-amber-100 text-amber-700",
+  REVISION: "bg-orange-100 text-orange-700",
+  REVIEW_DONE: "bg-indigo-100 text-indigo-700",
+  ACCEPTED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-700",
 };
 
 const getStatusKey = (status: ProposalStatusKey) =>
@@ -101,90 +110,54 @@ const formatUpdatedAt = (date: Date) =>
     minute: "2-digit",
   });
 
-// =====================================================================
-// DATA PLACEHOLDER (UI ONLY) — belum ada endpoint/relasi datanya.
-// Ganti dengan data dari API begitu backend & tipe datanya tersedia.
-// Tidak memengaruhi fungsi/data lain yang sudah terhubung ke server.
-// =====================================================================
-const PLACEHOLDER_KKM_STATS = {
-  pesertaAktif: 248,
-  totalKelompok: 24,
-  desaPenempatan: 8,
-  laporanPending: 18,
-  dplAktif: 16,
-  totalFakultasDpl: 6,
+const formatWaktuLalu = (dateInput: string) => {
+  const date = new Date(dateInput);
+  const diffMs = Date.now() - date.getTime();
+  const menit = Math.floor(diffMs / 60000);
+  if (menit < 1) return "Baru saja";
+  if (menit < 60) return `${menit} menit lalu`;
+  const jam = Math.floor(menit / 60);
+  if (jam < 24) return `${jam} jam lalu`;
+  const hari = Math.floor(jam / 24);
+  if (hari < 30) return `${hari} hari lalu`;
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const PLACEHOLDER_FAKULTAS_DATA = [
-  { name: "Teknik", value: 18, fill: "#ef4444" },
-  { name: "Ekonomi", value: 14, fill: "#3b82f6" },
-  { name: "FKIP", value: 10, fill: "#f59e0b" },
-  { name: "Hukum", value: 6, fill: "#8b5cf6" },
-  { name: "Kesehatan", value: 9, fill: "#22c55e" },
-  { name: "Lainnya", value: 5, fill: "#94a3b8" },
+// Palet warna donut — dirotasi untuk jumlah kategori tak terbatas
+const DONUT_COLORS = [
+  "#ef4444",
+  "#3b82f6",
+  "#f59e0b",
+  "#8b5cf6",
+  "#22c55e",
+  "#64748b",
+  "#ec4899",
+  "#14b8a6",
 ];
 
-const PLACEHOLDER_KKM_PROGRESS = [
-  { name: "K-01", value: 95, status: "good" },
-  { name: "K-02", value: 68, status: "warning" },
-  { name: "K-03", value: 32, status: "danger" },
-  { name: "K-04", value: 98, status: "good" },
-  { name: "K-05", value: 72, status: "warning" },
-  { name: "K-06", value: 45, status: "danger" },
-];
-
-const progressColorMap: Record<string, string> = {
-  good: "#22c55e",
-  warning: "#f59e0b",
-  danger: "#ef4444",
-};
-
-const PLACEHOLDER_ACTIVITIES = [
-  {
-    id: 1,
-    text: "3 mahasiswa baru diverifikasi oleh Staff LPPM",
-    time: "10 menit lalu",
-    color: "bg-green-500",
-  },
-  {
-    id: 2,
-    text: "Kelompok KKM Batch 2 berhasil digenerate (8 kelompok)",
-    time: "45 menit lalu",
-    color: "bg-green-500",
-  },
-  {
-    id: 3,
-    text: "Proposal PROP-012 disetujui oleh reviewer",
-    time: "1 jam lalu",
-    color: "bg-green-500",
-  },
-  {
-    id: 4,
-    text: "Laporan KKM Kelompok 03 dikirimkan untuk review",
-    time: "2 jam lalu",
-    color: "bg-blue-500",
-  },
-  {
-    id: 5,
-    text: "DPL Dr. Budi Santoso ditetapkan untuk 2 kelompok",
-    time: "3 jam lalu",
-    color: "bg-blue-500",
-  },
-  {
-    id: 6,
-    text: "Pengumuman Periode KKM 2026 dipublikasikan",
-    time: "Kemarin",
-    color: "bg-blue-500",
-  },
-];
-// =====================================================================
+const toDonutData = (
+  items: Array<{ name: string; value: number }>,
+) =>
+  items.map((item, index) => ({
+    ...item,
+    fill: DONUT_COLORS[index % DONUT_COLORS.length],
+  }));
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] =
     useState<AdminDashboardData>(EMPTY_DASHBOARD_DATA);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  // Filter tahun: null = Semua Tahun
+  const [tahun, setTahun] = useState<number | null>(null);
+  // Snapshot tahun dari respons pertama (untuk dropdown sebelum filter aktif)
+  const [tahunTersedia, setTahunTersedia] = useState<number[]>([]);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -192,17 +165,18 @@ export default function AdminDashboard() {
       setError(null);
 
       try {
-        const response = await getAdminDashboard();
+        const response = await getAdminDashboard(tahun ?? undefined);
         setDashboardData(response.data);
+        setTahunTersedia(response.data.tahunTersedia);
         setUpdatedAt(new Date());
       } catch (err: unknown) {
         const message = axios.isAxiosError(err)
           ? err.response?.data?.message ||
             err.message ||
-            "Gagal memuat data dashboard admin."
+            "Gagal memuat data dashboard penelitian."
           : err instanceof Error
             ? err.message
-            : "Gagal memuat data dashboard admin.";
+            : "Gagal memuat data dashboard penelitian.";
 
         setError(message);
       } finally {
@@ -211,7 +185,7 @@ export default function AdminDashboard() {
     };
 
     void loadDashboard();
-  }, []);
+  }, [tahun]);
 
   const statusData = useMemo(
     () => mapStatusChartData(dashboardData.statusChart),
@@ -220,11 +194,24 @@ export default function AdminDashboard() {
 
   const kategoriData = useMemo(
     () =>
-      dashboardData.kategoriChart.map((item) => ({
-        name: item.skema || "Tanpa Skema",
-        value: item.jumlah,
-      })),
+      toDonutData(
+        dashboardData.kategoriChart.map((item) => ({
+          name: item.skema || "Tanpa Skema",
+          value: item.jumlah,
+        })),
+      ),
     [dashboardData.kategoriChart],
+  );
+
+  const fakultasData = useMemo(
+    () =>
+      toDonutData(
+        dashboardData.fakultasChart.map((item) => ({
+          name: item.fakultas,
+          value: item.jumlah,
+        })),
+      ),
+    [dashboardData.fakultasChart],
   );
 
   const lineData = useMemo(
@@ -236,24 +223,87 @@ export default function AdminDashboard() {
     [dashboardData.trendBulanan],
   );
 
+  const aksiCepat = [
+    {
+      label: "Daftar Proposal",
+      icon: FileText,
+      path: "/proposals",
+    },
+    {
+      label: "Plotting Reviewer",
+      icon: UserCheck,
+      path: "/plotting-reviewer",
+    },
+    {
+      label: "Monitoring Proyek",
+      icon: Activity,
+      path: "/monitoring-project",
+    },
+  ];
+
+  const donutLegend = (items: Array<{ name: string; value: number; fill: string }>) => (
+    <div className="flex-1 w-full space-y-2.5">
+      {items.length === 0 && (
+        <p className="text-sm text-gray-400">Belum ada data.</p>
+      )}
+      {items.map((item) => (
+        <div
+          key={item.name}
+          className="flex items-center justify-between text-sm"
+        >
+          <span className="flex items-center gap-2 text-gray-600 min-w-0">
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: item.fill }}
+            />
+            <span className="truncate">{item.name}</span>
+          </span>
+          <span className="font-medium text-gray-900 ml-2">{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Dashboard Ketua LPPM
+            Dashboard Penelitian
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            Ringkasan aktivitas Penelitian & KKM — UMC
+            Ringkasan aktivitas Penelitian — UMC
           </p>
         </div>
 
-        {updatedAt && (
-          <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full whitespace-nowrap">
-            Diperbarui: {formatUpdatedAt(updatedAt)}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Filter tahun */}
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="font-medium">Tahun</span>
+            <select
+              value={tahun === null ? "" : String(tahun)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setTahun(raw === "" ? null : Number(raw));
+              }}
+              className="h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200 cursor-pointer"
+            >
+              <option value="">Semua Tahun</option>
+              {tahunTersedia.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {updatedAt && (
+            <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full whitespace-nowrap">
+              Diperbarui: {formatUpdatedAt(updatedAt)}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -262,11 +312,12 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+      {/* STAT CARDS — semua dari API */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
         <StatCard
           title="Total Proposal"
           value={isLoading ? "..." : dashboardData.summaryCards.totalProposal}
-          desc="Total proposal terdaftar"
+          desc={tahun === null ? "Total proposal terdaftar" : `Tahun ${tahun}`}
           icon={<FileText size={18} />}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
@@ -282,76 +333,41 @@ export default function AdminDashboard() {
         />
 
         <StatCard
-          title="Peserta KKM Aktif"
-          value={PLACEHOLDER_KKM_STATS.pesertaAktif}
-          desc="KKM Reguler 2026"
-          icon={<GraduationCap size={18} />}
-          iconBg="bg-pink-100"
-          iconColor="text-pink-600"
+          title="Proposal Disetujui"
+          value={isLoading ? "..." : dashboardData.summaryCards.proposalDisetujui}
+          desc="Status ACCEPTED"
+          icon={<CheckCircle size={18} />}
+          iconBg="bg-green-100"
+          iconColor="text-green-600"
         />
 
         <StatCard
-          title="Total Kelompok KKM"
-          value={PLACEHOLDER_KKM_STATS.totalKelompok}
-          desc={`${PLACEHOLDER_KKM_STATS.desaPenempatan} desa penempatan`}
-          icon={<UsersRound size={18} />}
+          title="Dosen Aktif"
+          value={isLoading ? "..." : dashboardData.summaryCards.dosenAktif}
+          desc="Terdaftar aktif"
+          icon={<Users size={18} />}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
         />
-
-        <StatCard
-          title="DPL Aktif"
-          value={PLACEHOLDER_KKM_STATS.dplAktif}
-          desc={`Dari ${PLACEHOLDER_KKM_STATS.totalFakultasDpl} fakultas`}
-          icon={<UserCog size={18} />}
-          iconBg="bg-teal-100"
-          iconColor="text-teal-600"
-        />
-
-        <StatCard
-          title="Laporan Pending"
-          value={PLACEHOLDER_KKM_STATS.laporanPending}
-          desc="Menunggu validasi"
-          icon={<BookOpen size={18} />}
-          iconBg="bg-amber-100"
-          iconColor="text-amber-600"
-        />
       </div>
 
-      {/* AKSI CEPAT — UI only, tombol belum terhubung ke aksi apa pun */}
+      {/* AKSI CEPAT — terhubung ke halaman manajemen penelitian */}
       <div className="bg-linear-to-r from-red-600 to-red-500 rounded-2xl p-6 shadow-sm">
         <p className="text-white/80 text-xs font-semibold tracking-wide mb-3">
           AKSI CEPAT
         </p>
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Plus size={16} />
-            Tambah Periode KKM
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Zap size={16} />
-            Generate Kelompok
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Bell size={16} />
-            Tambah Pengumuman
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
-          >
-            <Download size={16} />
-            Export Data
-          </button>
+          {aksiCepat.map((aksi) => (
+            <button
+              key={aksi.path}
+              type="button"
+              onClick={() => navigate(aksi.path)}
+              className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors cursor-pointer"
+            >
+              <aksi.icon size={16} />
+              {aksi.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -396,7 +412,7 @@ export default function AdminDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Donut "Proposal per Fakultas" — UI placeholder, belum ada API */}
+        {/* Donut "Proposal per Fakultas" — dari API */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="font-semibold text-gray-900">Proposal per Fakultas</h2>
           <p className="text-xs text-gray-400 mb-4">
@@ -408,14 +424,14 @@ export default function AdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={PLACEHOLDER_FAKULTAS_DATA}
+                    data={fakultasData}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={2}
                   >
-                    {PLACEHOLDER_FAKULTAS_DATA.map((entry) => (
+                    {fakultasData.map((entry) => (
                       <Cell key={entry.name} fill={entry.fill} />
                     ))}
                   </Pie>
@@ -431,35 +447,19 @@ export default function AdminDashboard() {
               </ResponsiveContainer>
             </div>
 
-            <div className="flex-1 w-full space-y-2.5">
-              {PLACEHOLDER_FAKULTAS_DATA.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: item.fill }}
-                    />
-                    {item.name}
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    {item.value}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {donutLegend(fakultasData)}
           </div>
         </div>
       </div>
 
-      {/* CHART: Tren Proposal Masuk & Progress KKM per Kelompok */}
+      {/* CHART: Tren Proposal Masuk & Proposal per Skema */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="font-semibold text-gray-900">Tren Proposal Masuk</h2>
           <p className="text-xs text-gray-400 mb-4">
-            Jumlah proposal per bulan
+            {tahun === null
+              ? "Jumlah proposal per bulan (6 bulan terakhir)"
+              : `Jumlah proposal per bulan — tahun ${tahun}`}
           </p>
 
           <ResponsiveContainer width="100%" height={280}>
@@ -478,6 +478,7 @@ export default function AdminDashboard() {
                 tickLine={false}
               />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   backgroundColor: "white",
                   border: "1px solid #e5e7eb",
@@ -498,48 +499,56 @@ export default function AdminDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Progress KKM per Kelompok — UI placeholder, belum ada API */}
+        {/* Donut "Proposal per Skema" — kategoriChart dari API */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h2 className="font-semibold text-gray-900">
-            Progress KKM per Kelompok
-          </h2>
+          <h2 className="font-semibold text-gray-900">Proposal per Skema</h2>
           <p className="text-xs text-gray-400 mb-4">
-            Kelompok dengan kemajuan paling lambat & cepat
+            Distribusi proposal berdasarkan skema pendanaan
           </p>
 
-          <div className="space-y-4">
-            {PLACEHOLDER_KKM_PROGRESS.map((item) => (
-              <div key={item.name} className="flex items-center gap-3">
-                <span className="text-xs font-medium text-gray-500 w-10">
-                  {item.name}
-                </span>
-                <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${item.value}%`,
-                      backgroundColor: progressColorMap[item.status],
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-full sm:w-1/2 h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={kategoriData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {kategoriData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "8px",
+                      fontSize: "13px",
                     }}
                   />
-                </div>
-                <span className="text-xs font-medium text-gray-500 w-9 text-right">
-                  {item.value}%
-                </span>
-              </div>
-            ))}
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {donutLegend(kategoriData)}
           </div>
         </div>
       </div>
 
-      {/* AKTIVITAS TERBARU — UI placeholder, belum ada API log aktivitas */}
+      {/* PROPOSAL TERBARU — dari API (menggantikan aktivitas hardcode) */}
       <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Activity size={18} className="text-red-500" />
-            Aktivitas Terbaru
+            <ListChecks size={18} className="text-red-500" />
+            Proposal Terbaru
           </h2>
           <button
             type="button"
+            onClick={() => navigate("/proposals")}
             className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 font-medium cursor-pointer"
           >
             Lihat semua
@@ -547,19 +556,43 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        <div className="space-y-4">
-          {PLACEHOLDER_ACTIVITIES.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3">
-              <span
-                className={`w-2 h-2 rounded-full mt-1.5 ${activity.color}`}
-              />
-              <div>
-                <p className="text-sm text-gray-700">{activity.text}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <p className="text-sm text-gray-400">Memuat proposal terbaru...</p>
+        ) : dashboardData.recentProposals.length === 0 ? (
+          <p className="text-sm text-gray-400">Belum ada proposal.</p>
+        ) : (
+          <div className="space-y-4">
+            {dashboardData.recentProposals.map((proposal) => {
+              const key = getStatusKey(proposal.status);
+              return (
+                <button
+                  key={proposal.id}
+                  type="button"
+                  onClick={() => navigate(`/proposals/${proposal.id}`)}
+                  className="w-full flex items-start gap-3 text-left hover:bg-gray-50 rounded-lg px-2 py-1.5 -mx-2 transition-colors cursor-pointer"
+                >
+                  <span className="w-2 h-2 rounded-full mt-1.5 bg-red-500 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-700 truncate">
+                      {proposal.title}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      PROP-{String(proposal.id).padStart(3, "0")} ·{" "}
+                      {formatWaktuLalu(proposal.created_at)}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                      statusBadgeClass[key] || "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {statusLabelMap[key] || key}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
