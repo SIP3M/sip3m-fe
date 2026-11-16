@@ -31,11 +31,27 @@ export interface AdminTrendBulananItem {
   jumlah: number;
 }
 
+export interface AdminFakultasChartItem {
+  fakultas: string;
+  jumlah: number;
+}
+
+export interface AdminRecentProposalItem {
+  id: number;
+  title: string;
+  status: ProposalStatusKey;
+  created_at: string;
+}
+
 export interface AdminDashboardData {
   summaryCards: AdminSummaryCards;
   statusChart: AdminStatusChartItem[];
   kategoriChart: AdminKategoriChartItem[];
   trendBulanan: AdminTrendBulananItem[];
+  fakultasChart: AdminFakultasChartItem[];
+  recentProposals: AdminRecentProposalItem[];
+  /** Tahun unik dari created_at proposal — untuk isi dropdown filter */
+  tahunTersedia: number[];
 }
 
 export interface GetAdminDashboardResponse {
