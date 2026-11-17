@@ -279,6 +279,7 @@ export default function ProposalList() {
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
               <th className="px-6 py-4">No</th>
+              <th className="px-6 py-4">Nilai</th>
               <th className="px-6 py-4">Judul Proposal</th>
               <th className="px-6 py-4">Peneliti</th>
               <th className="px-6 py-4">Skema</th>
