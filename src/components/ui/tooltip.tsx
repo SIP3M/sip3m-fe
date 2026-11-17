@@ -5,11 +5,12 @@ import { cn } from "@/lib/utils"
 
 function Tooltip({
   children,
+  delayDuration = 200,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
   return (
-    <TooltipPrimitive.Provider delayDuration={200} {...props}>
-      {children}
+    <TooltipPrimitive.Provider delayDuration={delayDuration} {...props}>
+      <TooltipPrimitive.Root>{children}</TooltipPrimitive.Root>
     </TooltipPrimitive.Provider>
   )
 }
