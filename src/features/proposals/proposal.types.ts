@@ -106,6 +106,8 @@ export interface Proposal {
   reviews?: Array<{
     id: number;
     status: string;
+    total_score?: number | null;
+    decision?: string | null;
     rekomendasi_akhir?: string | null;
     kelemahan_proposal?: string | null;
     kekuatan_proposal?: string | null;
