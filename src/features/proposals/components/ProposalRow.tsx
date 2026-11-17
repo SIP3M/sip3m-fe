@@ -1,6 +1,8 @@
 import { Eye, FileText } from "lucide-react";
 import { useState } from "react";
+import axios from "axios";
 import { Proposal } from "../proposal.types";
+import { updateProposalStatus } from "../proposal.api";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 const statusStyle: Record<string, string> = {
   REVIEW: "bg-yellow-100 text-yellow-700",
@@ -83,10 +86,16 @@ const InfoRow = ({ label, value }: { label: string; value?: string | null }) => 
 interface Props {
   proposal: Proposal;
   rowNumber: number;
+  /** Dipanggil setelah keputusan Terima/Tolak berhasil — untuk refresh daftar */
+  onUpdated?: () => void;
 }
 
-export default function ProposalRow({ proposal, rowNumber }: Props) {
+export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
   const [openDetail, setOpenDetail] = useState(false);
+  const [pendingDecision, setPendingDecision] = useState<
+    "ACCEPTED" | "REJECTED" | null
+  >(null);
+  const [isDeciding, setIsDeciding] = useState(false);
 
   const normalizedStatus = getStatusKey(proposal.status);
   const submittedYear = proposal.submitted_at
@@ -103,6 +112,29 @@ export default function ProposalRow({ proposal, rowNumber }: Props) {
   const decisionText = review?.decision
     ? decisionLabel[review.decision] || review.decision
     : review?.rekomendasi_akhir || "-";
+
+  const canDecide = normalizedStatus === "REVIEW_DONE";
+
+  const handleDecision = async () => {
+    if (!pendingDecision) return;
+    setIsDeciding(true);
+    try {
+      await updateProposalStatus(proposal.id, { status: pendingDecision });
+      setPendingDecision(null);
+      onUpdated?.();
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message ||
+          err.message ||
+          "Gagal menyimpan keputusan."
+        : err instanceof Error
+          ? err.message
+          : "Gagal menyimpan keputusan.";
+      alert(message);
+    } finally {
+      setIsDeciding(false);
+    }
+  };
 
   return (
     <tr className="hover:bg-gray-50 transition">
@@ -171,29 +203,52 @@ export default function ProposalRow({ proposal, rowNumber }: Props) {
         </span>
       </td>
 
-      <td className="px-6 py-4 flex gap-4">
-        {proposal.proposal_file_path ? (
-          <a
-            href={proposal.proposal_file_path}
-            target="_blank"
-            rel="noreferrer"
-            className="text-gray-500 hover:text-blue-600"
-            aria-label="Lihat file proposal"
-          >
-            <FileText size={18} />
-          </a>
-        ) : (
-          <FileText size={18} className="text-gray-300" />
-        )}
+      <td className="px-6 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {proposal.proposal_file_path ? (
+            <a
+              href={proposal.proposal_file_path}
+              target="_blank"
+              rel="noreferrer"
+              className="text-gray-500 hover:text-blue-600"
+              aria-label="Lihat file proposal"
+            >
+              <FileText size={18} />
+            </a>
+          ) : (
+            <FileText size={18} className="text-gray-300" />
+          )}
 
-        <button
-          type="button"
-          onClick={() => setOpenDetail(true)}
-          className="text-red-500 hover:text-red-700"
-          aria-label="Lihat ringkasan proposal"
-        >
-          <Eye size={18} />
-        </button>
+          <button
+            type="button"
+            onClick={() => setOpenDetail(true)}
+            className="text-red-500 hover:text-red-700"
+            aria-label="Lihat ringkasan proposal"
+          >
+            <Eye size={18} />
+          </button>
+
+          {canDecide && (
+            <>
+              <button
+                type="button"
+                onClick={() => setPendingDecision("ACCEPTED")}
+                disabled={isDeciding}
+                className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Terima
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingDecision("REJECTED")}
+                disabled={isDeciding}
+                className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Tolak
+              </button>
+            </>
+          )}
+        </div>
       </td>
 
       {/* POPUP RINGKASAN — pengganti halaman detail */}
@@ -334,6 +389,31 @@ export default function ProposalRow({ proposal, rowNumber }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* KONFIRMASI KEPUTUSAN — Terima / Tolak dari kolom Aksi */}
+      <ConfirmDialog
+        open={pendingDecision !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeciding) setPendingDecision(null);
+        }}
+        title={
+          pendingDecision === "REJECTED"
+            ? "Tolak proposal ini?"
+            : "Setujui proposal ini?"
+        }
+        description={
+          pendingDecision === "REJECTED"
+            ? `Tolak proposal "${proposal.title}" secara FINAL (Ditolak)? Proposal tidak dapat direview ulang.`
+            : `Terima proposal "${proposal.title}" secara FINAL (Diterima)? Keputusan ini bersifat final.`
+        }
+        confirmLabel={
+          pendingDecision === "REJECTED" ? "Ya, Tolak" : "Ya, Terima"
+        }
+        cancelLabel="Batal"
+        variant={pendingDecision === "REJECTED" ? "danger" : "success"}
+        isLoading={isDeciding}
+        onConfirm={handleDecision}
+      />
     </tr>
   );
 }
