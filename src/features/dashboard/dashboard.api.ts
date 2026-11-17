@@ -1,5 +1,8 @@
 import { api } from "@/services/api";
-import { GetAdminDashboardResponse } from "./dashboard.types";
+import {
+  GetAdminDashboardResponse,
+  GetStaffDashboardResponse,
+} from "./dashboard.types";
 
 export const getAdminDashboard = async (
   tahun?: number,
@@ -9,3 +12,9 @@ export const getAdminDashboard = async (
   });
   return res.data;
 };
+
+export const getStaffDashboard =
+  async (): Promise<GetStaffDashboardResponse> => {
+    const res = await api.get<GetStaffDashboardResponse>("/dashboard/staff");
+    return res.data;
+  };
