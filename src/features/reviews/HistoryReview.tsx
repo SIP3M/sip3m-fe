@@ -200,7 +200,7 @@ function ReviewDetailModal({
                         ["Metode", rv.score_metode],
                         ["Anggaran", rv.score_anggaran],
                         ["Luaran", rv.score_luaran],
-                        ["Total", rv.total_score],
+                        ["Akhir", rv.total_score],
                       ].map(([lbl, val]) => (
                         <div key={lbl as string} className="text-center">
                           <p className="text-gray-400">{lbl}</p>
