@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { AlertTriangle, Loader2, TriangleAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,8 @@ interface Props {
   isLoading?: boolean;
   /** Aksi saat tombol konfirmasi diklik */
   onConfirm: () => void;
-  /** "danger" (merah) untuk aksi hapus, "default" (merah muda) untuk aksi biasa */
-  variant?: "danger" | "default";
+  /** "danger" (merah) untuk aksi hapus, "default" (merah muda) untuk aksi biasa, "success" (hijau) untuk aksi menyetujui */
+  variant?: "danger" | "default" | "success";
 }
 
 /**
@@ -43,6 +43,7 @@ export default function ConfirmDialog({
   variant = "danger",
 }: Props) {
   const isDanger = variant === "danger";
+  const isSuccess = variant === "success";
   const contentRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -64,11 +65,15 @@ export default function ConfirmDialog({
             className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${
               isDanger
                 ? "bg-red-50 text-red-500"
-                : "bg-amber-50 text-amber-500"
+                : isSuccess
+                  ? "bg-green-50 text-green-600"
+                  : "bg-amber-50 text-amber-500"
             }`}
           >
             {isDanger ? (
               <TriangleAlert size={26} />
+            ) : isSuccess ? (
+              <CheckCircle2 size={26} />
             ) : (
               <AlertTriangle size={26} />
             )}
@@ -100,10 +105,12 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:opacity-70 ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-70 ${
               isDanger
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-red-500 hover:bg-red-600"
+                ? "bg-red-600 hover:bg-red-700 focus-visible:ring-red-300"
+                : isSuccess
+                  ? "bg-green-600 hover:bg-green-700 focus-visible:ring-green-300"
+                  : "bg-red-500 hover:bg-red-600 focus-visible:ring-red-300"
             }`}
           >
             {isLoading && <Loader2 size={15} className="animate-spin" />}

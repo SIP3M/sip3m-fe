@@ -296,6 +296,15 @@ export default function ProposalList() {
                 key={p.id}
                 proposal={p}
                 rowNumber={(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                onUpdated={() =>
+                  void fetchProposals(
+                    currentPage,
+                    debouncedSearch,
+                    skemaQuery,
+                    tahunQuery,
+                    statusQuery,
+                  )
+                }
               />
             ))}
           </tbody>
