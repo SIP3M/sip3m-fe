@@ -262,53 +262,57 @@ export default function ProposalList() {
 
       {/* TABLE */}
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        {isLoading && (
-          <div className="p-6 text-center text-sm text-gray-500">
-            Memuat data proposal...
-          </div>
-        )}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-gray-600 border-b border-gray-200">
+              <tr>
+                <th className="px-4 py-3.5 text-center font-semibold w-12">No</th>
+                <th className="px-4 py-3.5 text-left font-semibold min-w-[240px]">Judul Proposal</th>
+                <th className="px-4 py-3.5 text-left font-semibold min-w-[160px]">Peneliti</th>
+                <th className="px-4 py-3.5 text-left font-semibold whitespace-nowrap">Skema</th>
+                <th className="px-4 py-3.5 text-center font-semibold whitespace-nowrap">Tahun</th>
+                <th className="px-4 py-3.5 text-left font-semibold whitespace-nowrap">Anggaran</th>
+                <th className="px-4 py-3.5 text-center font-semibold whitespace-nowrap">Nilai</th>
+                <th className="px-4 py-3.5 text-center font-semibold whitespace-nowrap">Status</th>
+                <th className="px-4 py-3.5 text-center font-semibold whitespace-nowrap">Aksi</th>
+              </tr>
+            </thead>
 
-        {!isLoading && proposals.length === 0 && (
-          <div className="p-6 text-center text-sm text-gray-500">
-            Tidak ada proposal ditemukan.
-          </div>
-        )}
-
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-left">
-            <tr>
-              <th className="px-6 py-4">No</th>
-              <th className="px-6 py-4">Nilai</th>
-              <th className="px-6 py-4">Judul Proposal</th>
-              <th className="px-6 py-4">Peneliti</th>
-              <th className="px-6 py-4">Skema</th>
-              <th className="px-6 py-4">Tahun</th>
-              <th className="px-6 py-4">Anggaran</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Aksi</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {proposals.map((p, idx) => (
-              <ProposalRow
-                key={p.id}
-                proposal={p}
-                rowNumber={(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
-                onUpdated={() =>
-                  void fetchProposals(
-                    currentPage,
-                    debouncedSearch,
-                    skemaQuery,
-                    tahunQuery,
-                    statusQuery,
-                  )
-                }
-              />
-            ))}
-          </tbody>
-        </table>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-sm text-gray-500">
+                    Memuat data proposal...
+                  </td>
+                </tr>
+              ) : proposals.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-sm text-gray-500">
+                    Tidak ada proposal ditemukan.
+                  </td>
+                </tr>
+              ) : (
+                proposals.map((p, idx) => (
+                  <ProposalRow
+                    key={p.id}
+                    proposal={p}
+                    rowNumber={(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                    onUpdated={() =>
+                      void fetchProposals(
+                        currentPage,
+                        debouncedSearch,
+                        skemaQuery,
+                        tahunQuery,
+                        statusQuery,
+                      )
+                    }
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {totalPages > 1 && (
           <div className="border-t border-gray-200">

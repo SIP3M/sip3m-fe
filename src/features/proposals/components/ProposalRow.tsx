@@ -137,22 +137,37 @@ export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
   };
 
   return (
-    <tr className="hover:bg-gray-50 transition">
-      <td className="px-6 py-4">{rowNumber}</td>
+    <tr className="hover:bg-gray-50/80 transition-colors">
+      <td className="px-4 py-4 text-center text-gray-500 font-medium">{rowNumber}</td>
+
+      <td className="px-4 py-4 font-medium text-gray-800 leading-snug">{proposal.title}</td>
+
+      <td className="px-4 py-4">
+        <p className="font-medium text-gray-800">{researcherName}</p>
+        <p className="text-xs text-gray-400">NIDN/NIP: {researcherNidn}</p>
+      </td>
+
+      <td className="px-4 py-4 whitespace-nowrap text-gray-600">{formatSkemaLabel(proposal.skema)}</td>
+
+      <td className="px-4 py-4 text-center whitespace-nowrap text-gray-600">{submittedYear}</td>
+
+      <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-700">
+        Rp {proposal.funding_request_amount.toLocaleString("id-ID")}
+      </td>
 
       {/* NILAI — tooltip hover menampilkan ringkasan review */}
-      <td className="px-6 py-4">
+      <td className="px-4 py-4 text-center whitespace-nowrap">
         {hasReview ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <span
                 tabIndex={0}
-                className="inline-flex cursor-help items-center rounded-md bg-indigo-50 px-2.5 py-1 text-sm font-semibold text-indigo-700 outline-none ring-indigo-200 hover:ring-1"
+                className="inline-flex cursor-help items-center justify-center min-w-[38px] rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 outline-none ring-1 ring-indigo-200/60 hover:bg-indigo-100 hover:ring-indigo-300 transition"
               >
                 {formatScore(score)}
               </span>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs space-y-1.5">
+            <TooltipContent side="top" className="max-w-xs space-y-1.5 p-3 shadow-lg">
               <p className="font-semibold text-gray-800">Ringkasan Review</p>
               <p className="text-gray-600">
                 Dinilai oleh <span className="font-medium">{reviewerName}</span>
@@ -164,67 +179,54 @@ export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
                 Rekomendasi: <span className="font-medium">{decisionText}</span>
               </p>
               {review?.kekuatan_proposal && (
-                <p className="text-gray-500">
+                <p className="text-gray-500 text-xs">
                   Kekuatan: {review.kekuatan_proposal}
                 </p>
               )}
               {review?.kelemahan_proposal && (
-                <p className="text-gray-500">
+                <p className="text-gray-500 text-xs">
                   Kelemahan: {review.kelemahan_proposal}
                 </p>
               )}
             </TooltipContent>
           </Tooltip>
         ) : (
-          <span className="text-gray-300">-</span>
+          <span className="text-gray-300 font-medium">-</span>
         )}
       </td>
 
-      <td className="px-6 py-4 font-medium text-gray-800">{proposal.title}</td>
-
-      <td className="px-6 py-4">
-        <p>{researcherName}</p>
-        <p className="text-xs text-gray-400">NIDN/NIP: {researcherNidn}</p>
-      </td>
-
-      <td className="px-6 py-4">{formatSkemaLabel(proposal.skema)}</td>
-
-      <td className="px-6 py-4">{submittedYear}</td>
-
-      <td className="px-6 py-4">
-        Rp {proposal.funding_request_amount.toLocaleString("id-ID")}
-      </td>
-
-      <td className="px-6 py-4">
+      <td className="px-4 py-4 text-center whitespace-nowrap">
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyle[normalizedStatus] || "bg-gray-100 text-gray-600"}`}
+          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusStyle[normalizedStatus] || "bg-gray-100 text-gray-600"}`}
         >
           {getStatusLabel(proposal.status)}
         </span>
       </td>
 
-      <td className="px-6 py-4">
-        <div className="flex flex-col items-start gap-2">
+      <td className="px-4 py-4 whitespace-nowrap">
+        <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
             {proposal.proposal_file_path ? (
               <a
                 href={proposal.proposal_file_path}
                 target="_blank"
                 rel="noreferrer"
-                className="text-gray-500 hover:text-blue-600"
+                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
                 aria-label="Lihat file proposal"
                 title="Lihat file proposal"
               >
                 <FileText size={18} />
               </a>
             ) : (
-              <FileText size={18} className="text-gray-300" />
+              <span className="p-1 text-gray-300 cursor-not-allowed" title="File proposal tidak tersedia">
+                <FileText size={18} />
+              </span>
             )}
 
             <button
               type="button"
               onClick={() => setOpenDetail(true)}
-              className="text-red-500 hover:text-red-700"
+              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition"
               aria-label="Lihat detail proposal"
               title="Lihat detail"
             >
@@ -232,7 +234,7 @@ export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
             </button>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 w-full min-w-[85px]">
             <button
               type="button"
               onClick={() => setPendingDecision("ACCEPTED")}
@@ -242,7 +244,7 @@ export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
                   ? "Approve proposal"
                   : "Hanya tersedia saat status Menunggu Keputusan"
               }
-              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <CheckCircle2 size={12} />
               Approve
@@ -256,7 +258,7 @@ export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
                   ? "Reject proposal"
                   : "Hanya tersedia saat status Menunggu Keputusan"
               }
-              className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <XCircle size={12} />
               Reject
