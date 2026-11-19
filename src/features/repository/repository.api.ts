@@ -1,5 +1,9 @@
 import { api } from "@/services/api";
 import type {
+  DosenPublikasiBasis,
+  DosenSearchParams,
+  GetDosenPublikasiResponse,
+  GetDosenRepositoryResponse,
   GetPengabdianRepositoryResponse,
   GetPublikasiResponse,
   PengabdianSearchParams,
@@ -34,5 +38,30 @@ export const getPublikasi = async (
       sort: params.sort ?? "relevance",
     },
   });
+  return res.data;
+};
+
+export const getDosenRepository = async (
+  params: DosenSearchParams = {},
+): Promise<GetDosenRepositoryResponse> => {
+  const search = params.search?.trim();
+  const res = await api.get<GetDosenRepositoryResponse>("/public/repository/dosen", {
+    params: {
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      ...(search ? { search } : {}),
+    },
+  });
+  return res.data;
+};
+
+export const getDosenPublikasi = async (
+  id: string,
+  basis: DosenPublikasiBasis,
+): Promise<GetDosenPublikasiResponse> => {
+  const res = await api.get<GetDosenPublikasiResponse>(
+    `/public/repository/dosen/${encodeURIComponent(id)}/publikasi`,
+    { params: { basis } },
+  );
   return res.data;
 };
