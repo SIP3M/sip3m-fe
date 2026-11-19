@@ -66,3 +66,59 @@ export type PublikasiSearchParams = {
   limit?: number;
   sort?: PublikasiSort;
 };
+
+// ---------------------------------------------------------------------------
+// Repository Dosen (baris PDDikti + angka publikasi SINTA)
+// ---------------------------------------------------------------------------
+
+export type DosenRepositorySync = {
+  status: "idle" | "syncing" | "unavailable" | "error";
+  last_sync_at: string | null;
+  message: string | null;
+};
+
+export type DosenRepositoryItem = {
+  id: string;
+  nama: string;
+  nidn: string | null;
+  prodi: string | null;
+  jenjang: string | null;
+  scopus: number | null;
+  garuda: number | null;
+  gs: number | null;
+  terhubung: boolean;
+};
+
+export type GetDosenRepositoryResponse = {
+  message: string;
+  data: DosenRepositoryItem[];
+  meta: RepositoryMeta & { sync: DosenRepositorySync };
+};
+
+export type DosenPublikasiBasis = "scopus" | "garuda" | "googlescholar";
+
+export type DosenPublikasiItem = {
+  title: string;
+  url: string | null;
+  venue: string | null;
+  year: number | null;
+  quartile: string | null;
+  extra: string | null;
+};
+
+export type GetDosenPublikasiResponse = {
+  message: string;
+  data: DosenPublikasiItem[];
+  meta: {
+    basis: DosenPublikasiBasis;
+    total: number;
+    synced_at: string;
+    source: "live" | "cache";
+  };
+};
+
+export type DosenSearchParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};

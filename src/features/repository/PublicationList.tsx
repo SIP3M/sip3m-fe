@@ -1,10 +1,10 @@
 import { useState } from "react";
 import PengabdianRepositoryTab from "./components/PengabdianRepositoryTab";
-import PublikasiDosenTab from "./components/PublikasiDosenTab";
+import DosenRepositoryTab from "./components/DosenRepositoryTab";
 
 const TABS = [
   { key: "pengabdian", label: "Repository Pengabdian" },
-  { key: "publikasi", label: "Publikasi Dosen" },
+  { key: "publikasi", label: "Repository Dosen" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -46,7 +46,7 @@ export default function PublicationList() {
       {activeTab === "pengabdian" ? (
         <PengabdianRepositoryTab />
       ) : (
-        <PublikasiDosenTab />
+        <DosenRepositoryTab />
       )}
     </div>
   );
