@@ -1,4 +1,4 @@
-import { Eye, FileText } from "lucide-react";
+import { CheckCircle2, Eye, FileText, XCircle } from "lucide-react";
 import { useState } from "react";
 import axios from "axios";
 import { Proposal } from "../proposal.types";
@@ -204,50 +204,64 @@ export default function ProposalRow({ proposal, rowNumber, onUpdated }: Props) {
       </td>
 
       <td className="px-6 py-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {proposal.proposal_file_path ? (
-            <a
-              href={proposal.proposal_file_path}
-              target="_blank"
-              rel="noreferrer"
-              className="text-gray-500 hover:text-blue-600"
-              aria-label="Lihat file proposal"
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-center gap-2">
+            {proposal.proposal_file_path ? (
+              <a
+                href={proposal.proposal_file_path}
+                target="_blank"
+                rel="noreferrer"
+                className="text-gray-500 hover:text-blue-600"
+                aria-label="Lihat file proposal"
+                title="Lihat file proposal"
+              >
+                <FileText size={18} />
+              </a>
+            ) : (
+              <FileText size={18} className="text-gray-300" />
+            )}
+
+            <button
+              type="button"
+              onClick={() => setOpenDetail(true)}
+              className="text-red-500 hover:text-red-700"
+              aria-label="Lihat detail proposal"
+              title="Lihat detail"
             >
-              <FileText size={18} />
-            </a>
-          ) : (
-            <FileText size={18} className="text-gray-300" />
-          )}
+              <Eye size={18} />
+            </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setOpenDetail(true)}
-            className="text-red-500 hover:text-red-700"
-            aria-label="Lihat ringkasan proposal"
-          >
-            <Eye size={18} />
-          </button>
-
-          {canDecide && (
-            <>
-              <button
-                type="button"
-                onClick={() => setPendingDecision("ACCEPTED")}
-                disabled={isDeciding}
-                className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Terima
-              </button>
-              <button
-                type="button"
-                onClick={() => setPendingDecision("REJECTED")}
-                disabled={isDeciding}
-                className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Tolak
-              </button>
-            </>
-          )}
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPendingDecision("ACCEPTED")}
+              disabled={isDeciding || !canDecide}
+              title={
+                canDecide
+                  ? "Approve proposal"
+                  : "Hanya tersedia saat status Menunggu Keputusan"
+              }
+              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CheckCircle2 size={12} />
+              Approve
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDecision("REJECTED")}
+              disabled={isDeciding || !canDecide}
+              title={
+                canDecide
+                  ? "Reject proposal"
+                  : "Hanya tersedia saat status Menunggu Keputusan"
+              }
+              className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <XCircle size={12} />
+              Reject
+            </button>
+          </div>
         </div>
       </td>
 
