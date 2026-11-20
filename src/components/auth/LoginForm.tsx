@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -45,21 +43,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
   }, [loginSuccess]);
 
   const handleGoogleLogin = () => {
-    // Arahkan ke backend (bukan URL hardcode) — alur OAuth Google asli:
-    // BE → Google → BE callback → FE /oauth-callback.
     const apiBase = (
       import.meta.env.VITE_API_BASE_URL || "https://sip3m-be.vercel.app/api"
     ).replace(/\/+$/, "");
 
     const params = new URLSearchParams();
-    // Device id browser → session OAuth memakai device yang sama dengan
-    // login biasa (single-session per browser tetap berlaku).
     try {
       params.set("device_id", getDeviceId());
     } catch {
       // ignore — fallback device id dari BE
     }
-    // Origin FE ini — divalidasi BE terhadap allowlist FRONTEND_URL.
     params.set("fe", window.location.origin);
 
     window.location.href = `${apiBase}/auth/oauth/google?${params.toString()}`;
@@ -67,13 +60,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="relative w-full bg-white rounded-2xl sm:rounded-3xl lg:rounded-4xl
-        shadow-[0_30px_80px_rgba(0,0,0,0.15)]
-        flex flex-col lg:flex-row overflow-hidden"
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      className="relative w-full max-w-[690px] xl:max-w-[710px] bg-white rounded-3xl sm:rounded-[32px]
+        shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100/80
+        flex flex-col lg:flex-row items-center lg:items-stretch
+        p-6 sm:p-7 gap-6 sm:gap-7 lg:gap-7"
     >
       {/* TOAST — Login Berhasil */}
       {loginSuccess && (
@@ -122,54 +116,63 @@ const LoginForm: React.FC<LoginFormProps> = ({
         </div>
       )}
 
-      {/* ================= LEFT (desktop) ================= */}
-      <div className="hidden lg:flex relative w-[46%] xl:w-1/2 p-4 shrink-0">
-        <div className="w-full h-full min-h-[480px] rounded-3xl xl:rounded-4xl overflow-hidden shadow-md">
+      {/* ================= LEFT (desktop photo + mascot) ================= */}
+      <div className="hidden lg:flex relative w-[280px] xl:w-[290px] shrink-0 flex-col">
+        {/* Frame Foto Gedung Kampus UMC */}
+        <div className="w-full h-full min-h-[410px] rounded-[22px] overflow-hidden border border-gray-300 shadow-xs relative">
           <img
             src={kampus}
-            alt="Kampus"
+            alt="Kampus Universitas Muhammadiyah Cirebon"
             className="w-full h-full object-cover"
           />
         </div>
+
+        {/* Maskot Mumar UMC — Posisi persis di pojok kiri bawah foto gedung, overlapping keluar sedikit */}
+        <img
+          src={mumar}
+          alt="Maskot UMC"
+          className="absolute pointer-events-none select-none z-10 w-[89%] -left-[30.5%] -bottom-[21.2%]"
+        />
       </div>
 
-      {/* MASKOT BURUNG — posisi baru: di luar frame foto gedung, di pojok kiri bawah kartu UI (overlap) */}
-      <div className="hidden lg:block absolute bottom-0 left-0 w-44 xl:w-56 pointer-events-none select-none">
-        <img src={mumar} alt="Maskot" className="w-full h-auto" />
-      </div>
+      {/* ================= RIGHT (Form & Branding) ================= */}
+      <div className="flex-1 w-full max-w-[325px] flex flex-col justify-center">
+        {/* Logo & Judul Header */}
+        <div className="flex flex-col items-center mb-3">
+          <img
+            src={logo}
+            alt="Logo LPPM UMC"
+            className="w-14 h-14 sm:w-16 sm:h-16 object-contain"
+          />
 
-      {/* ================= RIGHT ================= */}
-      <div className="w-full lg:flex-1 flex flex-col justify-center px-5 py-7 sm:px-8 sm:py-8 lg:px-8 lg:py-6">
-        <div className="flex flex-col items-center mb-5 sm:mb-6">
-          <img src={logo} alt="Logo" className="w-14 sm:w-16" />
-
-          <h1 className="text-xl sm:text-2xl font-semibold text-center leading-snug text-gray-800 mt-2">
+          <h1 className="text-lg sm:text-[19px] font-bold text-center leading-tight text-gray-900 mt-2">
             Sistem Informasi <br /> LPPM UMC
           </h1>
 
-          <p className="text-xs sm:text-[13px] text-gray-500 mt-1 text-center">
+          <p className="text-[11px] sm:text-xs text-gray-500 mt-1 mb-2 sm:mb-3 text-center">
             Universitas Muhammadiyah Cirebon
           </p>
         </div>
 
+        {/* Form Login */}
         <form onSubmit={handleLogin} className="space-y-3">
           <div>
-            <label className="block text-xs text-gray-600 mb-1.5">
+            <label className="block text-xs font-normal text-gray-700 mb-1 text-left">
               Email / NIDN / NIP
             </label>
 
-            <Input
+            <input
               type="text"
               name="email"
               value={form.email}
               onChange={handleChange}
               placeholder="Masukkan Email / NIDN / NIP"
-              className="w-full h-11 px-4 text-sm bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600]"
+              className="w-full h-9 sm:h-10 px-3.5 text-xs sm:text-sm bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#e10600] focus:border-[#e10600] transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs text-gray-600 mb-1.5">
+            <label className="block text-xs font-normal text-gray-700 mb-1 text-left">
               Password
             </label>
 
@@ -179,91 +182,99 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 value={form.password}
                 onChange={handleChange}
                 type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                data-lpignore="true"
-                data-1p-ignore="true"
-                data-bwignore="true"
+                autoComplete="current-password"
                 placeholder="Masukkan Password"
-                className="w-full h-11 px-4 pr-12 text-sm bg-[#ededed] border border-[#dddddd] rounded-[14px] focus:ring-2 focus:ring-[#e10600] focus:border-[#e10600] outline-none"
+                className="w-full h-9 sm:h-10 pl-3.5 pr-10 text-xs sm:text-sm bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#e10600] focus:border-[#e10600] transition"
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 inset-y-0 flex items-center text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="absolute right-3 inset-y-0 flex items-center text-gray-500 hover:text-gray-700 cursor-pointer"
                 aria-label={
                   showPassword ? "Sembunyikan password" : "Tampilkan password"
                 }
               >
-                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                {showPassword ? (
+                  <EyeOff size={17} strokeWidth={1.75} />
+                ) : (
+                  <Eye size={17} strokeWidth={1.75} />
+                )}
               </button>
             </div>
           </div>
 
-          <div className="flex justify-between items-center gap-3 text-xs">
-            <label className="flex items-center gap-2 text-gray-500 cursor-pointer">
+          {/* Ingat saya & Lupa password */}
+          <div className="flex justify-between items-center text-xs pt-0.5">
+            <label className="flex items-center gap-1.5 text-gray-600 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => handleRememberMeChange(e.target.checked)}
-                className="w-4 h-4 accent-[#e10600]"
+                className="w-3.5 h-3.5 rounded border-gray-300 accent-[#e10600] cursor-pointer"
               />
-              Ingat saya
+              <span>Ingat saya</span>
             </label>
 
-            <span className="text-[#e10600] cursor-pointer hover:underline shrink-0">
+            <span className="text-[#e10600] cursor-pointer hover:underline text-xs">
               Lupa password?
             </span>
           </div>
 
-          <motion.div whileTap={{ scale: 0.97 }} className="sm:hover:scale-[1.02] transition-transform">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-11 bg-[#e10600] hover:bg-[#c50500] text-white rounded-[14px] text-[15px] font-medium transition cursor-pointer"
-            >
-              {isLoading ? "Memproses..." : "Masuk"}
-            </Button>
-          </motion.div>
+          {/* Tombol Masuk */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-9 sm:h-10 bg-[#e10600] hover:bg-[#c50500] text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer disabled:opacity-60 flex items-center justify-center mt-1 shadow-xs active:scale-[0.99]"
+          >
+            {isLoading ? "Memproses..." : "Masuk"}
+          </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#dddddd]"></div>
-            <span className="text-[11px] text-gray-400">atau</span>
-            <div className="flex-1 h-px bg-[#dddddd]"></div>
+          {/* Divider atau */}
+          <div className="flex items-center gap-2.5 my-2">
+            <div className="flex-1 h-px bg-gray-300"></div>
+            <span className="text-[11px] text-gray-400 select-none">atau</span>
+            <div className="flex-1 h-px bg-gray-300"></div>
           </div>
 
-          <Button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="w-full h-11 bg-white border border-[#dddddd] rounded-[14px] text-[13px] text-gray-700 hover:bg-gray-50 transition flex items-center justify-center gap-3 cursor-pointer"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 48 48"
-              className="w-5 h-5"
+          {/* Tombol Sign in with Google (Pill button centered) */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="inline-flex items-center justify-center gap-2 px-4 py-1.5 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50 transition cursor-pointer shadow-xs active:scale-[0.99]"
             >
-              <path
-                fill="#EA4335"
-                d="M24 9.5c3.54 0 6.67 1.22 9.15 3.6l6.85-6.85C35.9 2.4 30.37 0 24 0 14.6 0 6.5 5.48 2.6 13.44l7.98 6.2C12.4 13.36 17.7 9.5 24 9.5z"
-              />
-              <path
-                fill="#4285F4"
-                d="M46.5 24c0-1.6-.14-3.14-.4-4.64H24v9.3h12.7c-.55 2.96-2.2 5.48-4.7 7.18l7.3 5.7C43.9 37.1 46.5 31 46.5 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M10.6 28.36A14.5 14.5 0 019.5 24c0-1.52.26-2.98.72-4.36l-7.98-6.2A24 24 0 000 24c0 3.9.94 7.6 2.6 10.56l8-6.2z"
-              />
-              <path
-                fill="#34A853"
-                d="M24 48c6.37 0 11.73-2.1 15.64-5.7l-7.3-5.7c-2.02 1.36-4.6 2.15-8.34 2.15-6.3 0-11.6-3.86-13.42-9.14l-8 6.2C6.5 42.52 14.6 48 24 48z"
-              />
-            </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 48 48"
+                className="w-4 h-4 shrink-0"
+              >
+                <path
+                  fill="#EA4335"
+                  d="M24 9.5c3.54 0 6.67 1.22 9.15 3.6l6.85-6.85C35.9 2.4 30.37 0 24 0 14.6 0 6.5 5.48 2.6 13.44l7.98 6.2C12.4 13.36 17.7 9.5 24 9.5z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M46.5 24c0-1.6-.14-3.14-.4-4.64H24v9.3h12.7c-.55 2.96-2.2 5.48-4.7 7.18l7.3 5.7C43.9 37.1 46.5 31 46.5 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M10.6 28.36A14.5 14.5 0 019.5 24c0-1.52.26-2.98.72-4.36l-7.98-6.2A24 24 0 000 24c0 3.9.94 7.6 2.6 10.56l8-6.2z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M24 48c6.37 0 11.73-2.1 15.64-5.7l-7.3-5.7c-2.02 1.36-4.6 2.15-8.34 2.15-6.3 0-11.6-3.86-13.42-9.14l-8 6.2C6.5 42.52 14.6 48 24 48z"
+                />
+              </svg>
 
-            <span>Sign in with Google</span>
-          </Button>
+              <span className="text-[12px] text-gray-700">
+                Sign in with Google
+              </span>
+            </button>
+          </div>
 
-          <p className="text-center text-xs pt-2 text-gray-500">
+          {/* Link Daftar */}
+          <p className="text-center text-xs text-gray-700 pt-1.5">
             Belum punya akun?{" "}
             <span
               onClick={() => navigate("/register")}

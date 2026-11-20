@@ -58,7 +58,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 🆕 State untuk toast sukses login (UI only, tidak menyentuh logic auth)
+  // State untuk toast sukses login (UI only, tidak menyentuh logic auth)
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [loggedInName, setLoggedInName] = useState("");
 
@@ -114,7 +114,7 @@ const LoginPage = () => {
 
       setUser(user);
 
-      // 🆕 Trigger toast sukses sebelum redirect (tidak mengubah role/logic)
+      // Trigger toast sukses sebelum redirect (tidak mengubah role/logic)
       setLoggedInName((user as User | undefined)?.name || "");
       setLoginSuccess(true);
 
@@ -152,18 +152,16 @@ const LoginPage = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
+      exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.35, ease: "easeInOut" }}
       className="relative min-h-dvh flex flex-col items-center justify-center bg-cover bg-center px-4 py-8 sm:px-6"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="absolute inset-0 backdrop-blur-xxs z-0"></div>
-
-      <div className="relative z-10 w-full max-w-md lg:max-w-4xl xl:max-w-5xl">
+      <div className="relative z-10 w-full flex flex-col items-center justify-center">
         {errorMessage && (
-          <div className="mb-4 p-3 bg-red-100 text-red-600 border border-red-300 rounded-xl text-sm text-center font-medium">
+          <div className="mb-4 w-full max-w-[690px] xl:max-w-[710px] p-3 bg-red-100 text-red-600 border border-red-300 rounded-xl text-xs sm:text-sm text-center font-medium shadow-sm">
             {errorMessage}
           </div>
         )}
@@ -180,7 +178,7 @@ const LoginPage = () => {
         />
       </div>
 
-      <p className="relative z-10 mt-6 px-4 text-center text-[11px] text-gray-600">
+      <p className="relative z-10 mt-5 px-4 text-center text-xs text-gray-800">
         © 2026 Universitas Muhammadiyah Cirebon. All rights reserved.
       </p>
     </motion.div>

@@ -44,6 +44,10 @@ import heroBuilding from "@/assets/images/hero1.jpg";
 import fotoSlide1LP from "@/assets/images/foto-slide-1LP.png";
 // Foto slide 3 (KKM) - diganti ke foto baru.
 import fotoSlide3LP from "@/assets/images/foto-slide-3LP.png";
+// Foto slide 4 (PENELITIAN) - file no 14.
+import fotoSlide4LP from "@/assets/images/foto-slide-4LP.png";
+// Foto slide 5 (PUBLIKASI & REPOSITORY) - file no 13.
+import fotoSlide5LP from "@/assets/images/foto-slide-5LP.png";
 
 import "swiper/css";
 
@@ -122,7 +126,7 @@ export default function LPPMLandingPage() {
       subtitle: "Dorong Penelitian Berkualitas melalui Sistem Terintegrasi",
       description:
         "Ajukan proposal penelitian, ikuti proses review, pantau perkembangan kegiatan, dan kelola laporan penelitian secara lebih terstruktur.",
-      image: heroBuilding,
+      image: fotoSlide4LP,
       imageType: "illustration" as const,
       primary: { label: "Ajukan Proposal", icon: "FileText", to: "/login" },
       secondary: {
@@ -137,7 +141,7 @@ export default function LPPMLandingPage() {
       subtitle: "Temukan dan Kelola Hasil Penelitian & Pengabdian",
       description:
         "Simpan, kelola, dan temukan hasil penelitian, pengabdian, publikasi, laporan, serta luaran kegiatan dalam repository LPPM.",
-      image: heroBuilding,
+      image: fotoSlide5LP,
       imageType: "illustration" as const,
       primary: {
         label: "Jelajahi Repository",
@@ -404,12 +408,12 @@ export default function LPPMLandingPage() {
                       className="max-h-72 lg:max-h-96 w-auto max-w-full object-contain drop-shadow-2xl"
                     />
                   ) : (
-                    // Foto: tampil dalam bingkai putih membulat
-                    <div className="bg-white p-2.5 rounded-[28px] shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500 max-w-full">
+                    // Foto: tampil dalam bingkai putih membulat tipis (border ramping)
+                    <div className="bg-white p-1 sm:p-1.5 rounded-[22px] shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500 max-w-full">
                       <img
                         src={slide.image}
                         alt={slide.title}
-                        className="w-full max-w-md h-64 lg:h-80 object-cover rounded-[20px]"
+                        className="w-full max-w-md h-64 lg:h-80 object-cover rounded-[18px]"
                       />
                     </div>
                   )}
