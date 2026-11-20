@@ -1,4 +1,5 @@
 import { Proposal } from "@/features/proposals/proposal.types";
+import { Eye } from "lucide-react";
 
 const statusStyle: Record<string, string> = {
   REVIEW: "bg-yellow-100 text-yellow-700",
@@ -26,6 +27,7 @@ interface Props {
   checked: boolean;
   disabled?: boolean;
   onToggle: (proposal: Proposal) => void;
+  onShowDetail: () => void;
 }
 
 export default function ProposalReviewerRow({
@@ -33,6 +35,7 @@ export default function ProposalReviewerRow({
   checked,
   disabled = false,
   onToggle,
+  onShowDetail,
 }: Props) {
   const normalizedStatus = getStatusKey(proposal.status || "");
   const canSelect = normalizedStatus === "SUBMITTED";
@@ -63,6 +66,18 @@ export default function ProposalReviewerRow({
         >
           {proposal.status}
         </span>
+      </td>
+
+      <td className="px-4 py-4 text-center">
+        <button
+          type="button"
+          onClick={onShowDetail}
+          aria-label={`Lihat detail proposal ${proposal.title}`}
+          title="Lihat detail proposal"
+          className="inline-flex rounded-lg p-2 text-gray-500 transition hover:bg-blue-50 hover:text-blue-600"
+        >
+          <Eye size={18} />
+        </button>
       </td>
     </tr>
   );
