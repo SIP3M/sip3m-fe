@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { ArrowRightLeft, Inbox, Loader2, Search } from "lucide-react";
+import { Inbox, Search } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
+import ReviewerPickerModal from "./components/ReviewerPickerModal";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 import {
   bulkAssignProposalReviewers,
   getAllProposals,
 } from "@/features/proposals/proposal.api";
 import { Proposal } from "@/features/proposals/proposal.types";
 import Pagination from "@/components/common/Pagination";
-import { getUsers } from "@/features/users/Users.api";
-import type { User } from "@/features/users/users.types";
-import { APP_ROLES } from "@/constant/roles";
 import {
   Dialog,
   DialogContent,
@@ -82,11 +81,8 @@ export default function ReviewList() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("ALL");
   const [detailProposal, setDetailProposal] = useState<Proposal | null>(null);
-  const [showReassignment, setShowReassignment] = useState(false);
-  const [reviewers, setReviewers] = useState<User[]>([]);
-  const [selectedReviewerId, setSelectedReviewerId] = useState("");
-  const [isLoadingReviewers, setIsLoadingReviewers] = useState(false);
-  const [reviewerError, setReviewerError] = useState<string | null>(null);
+  const [pickingProposal, setPickingProposal] = useState<Proposal | null>(null);
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const loadAllProposalPages = useCallback(
     async (search = "", status: StatusFilterValue = "ALL") => {
@@ -282,7 +278,13 @@ export default function ReviewList() {
     try {
       const res = await bulkAssignProposalReviewers(proposalIds);
 
-      setSuccessMessage(res.message);
+      const successDetails = res.data.success
+        .map((item) => `${item.title} → ${item.reviewerName}`)
+        .join("; ");
+
+      setSuccessMessage(
+        successDetails ? `${res.message} Berhasil: ${successDetails}` : res.message,
+      );
 
       const failedDetails = res.data.failed
         .map((item) => `#${item.proposalId}: ${item.reason}`)
@@ -305,53 +307,37 @@ export default function ReviewList() {
       );
     } finally {
       setIsAssigning(false);
+      setShowBulkConfirm(false);
     }
   };
 
-  const handleOpenReassignment = async () => {
-    setShowReassignment(true);
-    setReviewerError(null);
-    if (reviewers.length > 0) return;
+  const handleAssigned = (reviewer: { id: number; name: string }) => {
+    setPickingProposal(null);
+    setSuccessMessage(
+      `Reviewer ${reviewer.name} berhasil diplot — penugasan bersifat final.`,
+    );
+    setError(null);
 
-    setIsLoadingReviewers(true);
-    try {
-      const firstPage = await getUsers({
-        page: 1,
-        roles: APP_ROLES.REVIEWER,
-        status: "active",
-      });
-      const allReviewers = [...firstPage.data];
-      const totalPages = firstPage.pagination?.total_pages ?? 1;
-      if (totalPages > 1) {
-        const remainingPages = await Promise.all(
-          Array.from({ length: totalPages - 1 }, (_, index) =>
-            getUsers({
-              page: index + 2,
-              roles: APP_ROLES.REVIEWER,
-              status: "active",
-            }),
-          ),
-        );
-        remainingPages.forEach((response) =>
-          allReviewers.push(...response.data),
-        );
-      }
-      setReviewers(allReviewers);
-    } catch (err: unknown) {
-      setReviewerError(
-        getErrorMessage(err, "Gagal memuat daftar reviewer aktif."),
-      );
-    } finally {
-      setIsLoadingReviewers(false);
-    }
+    // Perbarui dialog detail agar nama reviewer langsung tampil.
+    setDetailProposal((prev) =>
+      prev
+        ? {
+            ...prev,
+            assigned_reviewer: {
+              name: reviewer.name,
+              assigned_at: new Date().toISOString(),
+            },
+          }
+        : prev,
+    );
+
+    void loadProposals(currentPage, debouncedSearch, statusFilter);
   };
 
   const handleCloseDetail = (open: boolean) => {
     if (open) return;
     setDetailProposal(null);
-    setShowReassignment(false);
-    setSelectedReviewerId("");
-    setReviewerError(null);
+    setPickingProposal(null);
   };
 
   const selectedCount = selectedProposals.length;
@@ -363,12 +349,17 @@ export default function ReviewList() {
           Plotting Reviewer
         </h1>
         <p className="text-sm text-gray-500">
-          Penugasan reviewer dilakukan otomatis oleh sistem.
+          Penugasan reviewer dilakukan otomatis oleh sistem atau dipilih manual
+          per proposal.
         </p>
 
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-          Catatan: hanya proposal berstatus{" "}
-          <span className="font-semibold">SUBMITTED</span> yang bisa dipilih.
+          Catatan: proposal berstatus{" "}
+          <span className="font-semibold">SUBMITTED</span> bisa dipilih untuk
+          plotting massal; plotting manual tersedia untuk proposal{" "}
+          <span className="font-semibold">SUBMITTED</span> /{" "}
+          <span className="font-semibold">UNDER_REVIEW</span> yang belum terplot.
+          Setelah terplot, reviewer bersifat final dan tidak dapat diganti.
         </div>
       </div>
 
@@ -444,6 +435,7 @@ export default function ReviewList() {
                 </th>
                 <th className="px-4 py-4 text-left font-medium">Bidang</th>
                 <th className="px-4 py-4 text-left font-medium">Status</th>
+                <th className="px-4 py-4 text-left font-medium">Reviewer</th>
                 <th className="px-4 py-4 text-center font-medium">Detail</th>
               </tr>
             </thead>
@@ -452,7 +444,7 @@ export default function ReviewList() {
               {isLoadingProposals ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     Memuat proposal...
@@ -461,7 +453,7 @@ export default function ReviewList() {
               ) : proposals.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     Tidak ada proposal.
@@ -476,6 +468,7 @@ export default function ReviewList() {
                     disabled={isAssigning}
                     onToggle={toggleProposalSelection}
                     onShowDetail={() => setDetailProposal(proposal)}
+                    onPickReviewer={() => setPickingProposal(proposal)}
                   />
                 ))
               )}
@@ -604,7 +597,7 @@ export default function ReviewList() {
 
             <button
               type="button"
-              onClick={() => void handleBulkAssign()}
+              onClick={() => setShowBulkConfirm(true)}
               disabled={isAssigning || selectedCount === 0}
               className={`w-full rounded-lg px-4 py-2 text-white ${
                 isAssigning || selectedCount === 0
@@ -700,8 +693,9 @@ export default function ReviewList() {
                     Reviewer saat ini
                   </dt>
                   <dd className="text-sm text-gray-700">
-                    {detailProposal.reviews?.[0]?.reviewer?.name ||
-                      "Belum ada informasi reviewer"}
+                    {detailProposal.assigned_reviewer?.name ||
+                      detailProposal.reviews?.[0]?.reviewer?.name ||
+                      "Belum terplot"}
                   </dd>
                 </div>
               </dl>
@@ -744,86 +738,76 @@ export default function ReviewList() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h3 className="font-semibold text-gray-800">
-                      Pemindahan Penugasan
+                      Penugasan Reviewer
                     </h3>
                     <p className="mt-1 text-xs text-gray-500">
-                      Pilih reviewer aktif sebagai tujuan penugasan.
+                      {detailProposal.assigned_reviewer
+                        ? "Reviewer sudah ditugaskan untuk proposal ini."
+                        : "Pilih reviewer aktif untuk menugaskan proposal ini."}
                     </p>
                   </div>
-                  {!showReassignment && (
+
+                  {detailProposal.assigned_reviewer ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">
+                      Terplot: {detailProposal.assigned_reviewer.name}
+                    </span>
+                  ) : ["SUBMITTED", "UNDER_REVIEW"].includes(
+                      normalizeStatus(detailProposal.status),
+                    ) ? (
                     <button
                       type="button"
-                      onClick={() => void handleOpenReassignment()}
+                      onClick={() => setPickingProposal(detailProposal)}
                       className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                      <ArrowRightLeft size={16} />
-                      Pindahkan Penugasan
+                      Pilih Reviewer
                     </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-500">
+                      Belum terplot
+                    </span>
                   )}
                 </div>
 
-                {showReassignment && (
-                  <div className="mt-4 space-y-3">
-                    {reviewerError && (
-                      <p className="text-sm text-red-700">{reviewerError}</p>
-                    )}
-                    <label className="block text-sm font-medium text-gray-700">
-                      Reviewer tujuan
-                      <select
-                        value={selectedReviewerId}
-                        onChange={(event) =>
-                          setSelectedReviewerId(event.target.value)
-                        }
-                        disabled={isLoadingReviewers || Boolean(reviewerError)}
-                        className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm disabled:bg-gray-100"
-                      >
-                        <option value="">
-                          {isLoadingReviewers
-                            ? "Memuat reviewer..."
-                            : "Pilih reviewer"}
-                        </option>
-                        {reviewers.map((reviewer) => (
-                          <option key={reviewer.id} value={reviewer.id}>
-                            {reviewer.name}
-                            {reviewer.bidang_keahlian
-                              ? ` — ${reviewer.bidang_keahlian}`
-                              : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {isLoadingReviewers && (
-                      <p className="flex items-center gap-2 text-xs text-gray-500">
-                        <Loader2 size={14} className="animate-spin" />
-                        Memuat daftar reviewer aktif...
-                      </p>
-                    )}
-                    {!isLoadingReviewers &&
-                      !reviewerError &&
-                      reviewers.length === 0 && (
-                        <p className="text-sm text-amber-700">
-                          Belum ada reviewer aktif yang tersedia.
-                        </p>
-                      )}
-                    <button
-                      type="button"
-                      disabled
-                      title="Menyimpan pemindahan memerlukan endpoint backend."
-                      className="w-full cursor-not-allowed rounded-lg bg-blue-300 px-4 py-2 text-sm font-medium text-white"
-                    >
-                      Simpan Pemindahan
-                    </button>
-                    <p className="text-xs text-gray-500">
-                      Tampilan sudah disiapkan; penyimpanan pemindahan akan
-                      diaktifkan setelah endpoint backend tersedia.
-                    </p>
-                  </div>
-                )}
+                <p className="mt-3 text-xs text-gray-500">
+                  {detailProposal.assigned_reviewer
+                    ? "Penugasan bersifat final — reviewer tidak dapat diganti."
+                    : "Penugasan bersifat final — setelah terplot, reviewer tidak dapat diganti."}
+                </p>
               </section>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={showBulkConfirm}
+        onOpenChange={setShowBulkConfirm}
+        title="Plotting reviewer massal?"
+        description={
+          <>
+            <span className="font-medium text-gray-700">
+              {selectedCount} proposal
+            </span>{" "}
+            akan ditugaskan reviewer secara otomatis oleh sistem. Penugasan
+            bersifat final dan tidak dapat diganti.
+          </>
+        }
+        confirmLabel="Ya, Plot Massal"
+        cancelLabel="Batal"
+        isLoading={isAssigning}
+        onConfirm={() => void handleBulkAssign()}
+        variant="default"
+      />
+
+      <ReviewerPickerModal
+        open={pickingProposal !== null}
+        proposalId={pickingProposal?.id ?? 0}
+        proposalTitle={pickingProposal?.title ?? ""}
+        onOpenChange={(open) => {
+          if (!open) setPickingProposal(null);
+        }}
+        onAssigned={handleAssigned}
+      />
     </div>
   );
 }

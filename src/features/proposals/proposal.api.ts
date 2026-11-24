@@ -92,6 +92,7 @@ export interface BulkAssignReviewersResponse {
     success: Array<{
       proposalId: number;
       title: string;
+      reviewerId: number;
       reviewerName: string;
     }>;
     failed: Array<{
