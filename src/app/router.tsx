@@ -5,6 +5,7 @@ import RegisterPage from "@/features/auth/RegisterPage";
 import RegisterDosenPage from "@/features/auth/RegisterDosenPage";
 import RegisterReviewerPage from "@/features/auth/RegisterReviewerPage";
 import OAuthCallback from "@/features/auth/OauthCallback";
+import UnauthorizedPage from "@/features/auth/UnauthorizedPage";
 
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 import DplRouteGuard from "@/components/common/DplRouteGuard";
@@ -762,6 +763,10 @@ export const router = createBrowserRouter([
   // =========================
   // FALLBACK ROUTE
   // =========================
+  {
+    path: "/unauthorized",
+    element: <UnauthorizedPage />,
+  },
   {
     path: "*",
     element: <Navigate to="/" />,
