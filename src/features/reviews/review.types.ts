@@ -199,3 +199,18 @@ export interface AssignManualReviewerResponse {
     };
   };
 }
+
+// ─── Reassign reviewer: PUT /proposals/{id}/reviewer ─────────────────────────
+export interface ReassignReviewerResponse {
+  message: string;
+  data: {
+    proposalId: number;
+    status: ProposalStatus;
+    reviewer: {
+      id: number;
+      name: string;
+      faculty: string | null;
+      is_sebidang: boolean;
+    };
+  };
+}

@@ -1,5 +1,5 @@
 import { Proposal } from "@/features/proposals/proposal.types";
-import { Eye } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 const statusStyle: Record<string, string> = {
   REVIEW: "bg-yellow-100 text-yellow-700",
   UNDER_REVIEW: "bg-yellow-100 text-yellow-700",
@@ -29,6 +29,8 @@ interface Props {
   onShowDetail: () => void;
   /** Buka modal pilih reviewer (plotting manual) untuk proposal ini. */
   onPickReviewer: () => void;
+  /** Buka modal edit penugasan reviewer untuk proposal yang sudah terplot. */
+  onEditReviewer: () => void;
 }
 
 /** Status yang masih boleh menerima plotting reviewer manual. */
@@ -42,6 +44,7 @@ export default function ProposalReviewerRow({
   onToggle,
   onShowDetail,
   onPickReviewer,
+  onEditReviewer,
 }: Props) {
   const normalizedStatus = getStatusKey(proposal.status || "");
   const canSelect = normalizedStatus === "SUBMITTED";
@@ -78,7 +81,7 @@ export default function ProposalReviewerRow({
         {proposal.assigned_reviewer ? (
           <span
             className="text-gray-700"
-            title={`Terplot: ${proposal.assigned_reviewer.name} — bersifat final, tidak dapat diganti`}
+            title={`Terplot: ${proposal.assigned_reviewer.name}`}
           >
             Terplot:{" "}
             <span className="font-medium">
@@ -103,15 +106,28 @@ export default function ProposalReviewerRow({
       </td>
 
       <td className="px-4 py-4 text-center">
-        <button
-          type="button"
-          onClick={onShowDetail}
-          aria-label={`Lihat detail proposal ${proposal.title}`}
-          title="Lihat detail proposal"
-          className="inline-flex rounded-lg p-2 text-gray-500 transition hover:bg-blue-50 hover:text-blue-600"
-        >
-          <Eye size={18} />
-        </button>
+        <div className="inline-flex items-center gap-1">
+          {proposal.assigned_reviewer && (
+            <button
+              type="button"
+              onClick={onEditReviewer}
+              aria-label={`Edit penugasan reviewer proposal ${proposal.title}`}
+              title="Edit penugasan reviewer"
+              className="inline-flex rounded-lg p-2 text-gray-500 transition hover:bg-amber-50 hover:text-amber-600"
+            >
+              <Pencil size={18} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onShowDetail}
+            aria-label={`Lihat detail proposal ${proposal.title}`}
+            title="Lihat detail proposal"
+            className="inline-flex rounded-lg p-2 text-gray-500 transition hover:bg-blue-50 hover:text-blue-600"
+          >
+            <Eye size={18} />
+          </button>
+        </div>
       </td>
     </tr>
   );

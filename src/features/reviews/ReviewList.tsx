@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Inbox, Search } from "lucide-react";
+import { Inbox, Pencil, Search } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
 import ReviewerPickerModal from "./components/ReviewerPickerModal";
+import EditReviewerModal from "./components/EditReviewerModal";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import {
   bulkAssignProposalReviewers,
@@ -82,6 +83,7 @@ export default function ReviewList() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("ALL");
   const [detailProposal, setDetailProposal] = useState<Proposal | null>(null);
   const [pickingProposal, setPickingProposal] = useState<Proposal | null>(null);
+  const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const loadAllProposalPages = useCallback(
@@ -314,7 +316,7 @@ export default function ReviewList() {
   const handleAssigned = (reviewer: { id: number; name: string }) => {
     setPickingProposal(null);
     setSuccessMessage(
-      `Reviewer ${reviewer.name} berhasil diplot — penugasan bersifat final.`,
+      `Reviewer ${reviewer.name} berhasil diplot untuk proposal ini.`,
     );
     setError(null);
 
@@ -326,6 +328,31 @@ export default function ReviewList() {
             assigned_reviewer: {
               name: reviewer.name,
               assigned_at: new Date().toISOString(),
+            },
+          }
+        : prev,
+    );
+
+    void loadProposals(currentPage, debouncedSearch, statusFilter);
+  };
+
+  const handleReassigned = (reviewer: { id: number; name: string }) => {
+    const edited = editingProposal;
+    setEditingProposal(null);
+    setSuccessMessage(
+      `Penugasan reviewer berhasil diubah menjadi ${reviewer.name}.`,
+    );
+    setError(null);
+
+    // Perbarui dialog detail agar nama reviewer langsung tampil.
+    setDetailProposal((prev) =>
+      prev
+        ? {
+            ...prev,
+            assigned_reviewer: {
+              name: reviewer.name,
+              assigned_at: edited?.assigned_reviewer?.assigned_at ??
+                new Date().toISOString(),
             },
           }
         : prev,
@@ -359,7 +386,8 @@ export default function ReviewList() {
           plotting massal; plotting manual tersedia untuk proposal{" "}
           <span className="font-semibold">SUBMITTED</span> /{" "}
           <span className="font-semibold">UNDER_REVIEW</span> yang belum terplot.
-          Setelah terplot, reviewer bersifat final dan tidak dapat diganti.
+          Penugasan reviewer dapat diubah melalui ikon pensil pada kolom Aksi
+          untuk proposal yang sudah terplot.
         </div>
       </div>
 
@@ -436,7 +464,7 @@ export default function ReviewList() {
                 <th className="px-4 py-4 text-left font-medium">Bidang</th>
                 <th className="px-4 py-4 text-left font-medium">Status</th>
                 <th className="px-4 py-4 text-left font-medium">Reviewer</th>
-                <th className="px-4 py-4 text-center font-medium">Detail</th>
+                <th className="px-4 py-4 text-center font-medium">Aksi</th>
               </tr>
             </thead>
 
@@ -469,6 +497,7 @@ export default function ReviewList() {
                     onToggle={toggleProposalSelection}
                     onShowDetail={() => setDetailProposal(proposal)}
                     onPickReviewer={() => setPickingProposal(proposal)}
+                    onEditReviewer={() => setEditingProposal(proposal)}
                   />
                 ))
               )}
@@ -748,9 +777,19 @@ export default function ReviewList() {
                   </div>
 
                   {detailProposal.assigned_reviewer ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">
-                      Terplot: {detailProposal.assigned_reviewer.name}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">
+                        Terplot: {detailProposal.assigned_reviewer.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingProposal(detailProposal)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                      >
+                        <Pencil size={15} />
+                        Edit Penugasan
+                      </button>
+                    </div>
                   ) : ["SUBMITTED", "UNDER_REVIEW"].includes(
                       normalizeStatus(detailProposal.status),
                     ) ? (
@@ -770,8 +809,8 @@ export default function ReviewList() {
 
                 <p className="mt-3 text-xs text-gray-500">
                   {detailProposal.assigned_reviewer
-                    ? "Penugasan bersifat final — reviewer tidak dapat diganti."
-                    : "Penugasan bersifat final — setelah terplot, reviewer tidak dapat diganti."}
+                    ? "Penugasan reviewer dapat diubah melalui tombol Edit Penugasan."
+                    : "Pilih reviewer aktif untuk menugaskan proposal ini. Penugasan masih dapat diubah setelah tersimpan."}
                 </p>
               </section>
             </>
@@ -807,6 +846,15 @@ export default function ReviewList() {
           if (!open) setPickingProposal(null);
         }}
         onAssigned={handleAssigned}
+      />
+
+      <EditReviewerModal
+        open={editingProposal !== null}
+        proposal={editingProposal}
+        onOpenChange={(open) => {
+          if (!open) setEditingProposal(null);
+        }}
+        onReassigned={handleReassigned}
       />
     </div>
   );
