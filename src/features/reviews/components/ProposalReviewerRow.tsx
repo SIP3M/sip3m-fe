@@ -1,6 +1,5 @@
 import { Proposal } from "@/features/proposals/proposal.types";
 import { Eye } from "lucide-react";
-
 const statusStyle: Record<string, string> = {
   REVIEW: "bg-yellow-100 text-yellow-700",
   UNDER_REVIEW: "bg-yellow-100 text-yellow-700",
@@ -28,7 +27,13 @@ interface Props {
   disabled?: boolean;
   onToggle: (proposal: Proposal) => void;
   onShowDetail: () => void;
+  /** Buka modal pilih reviewer (plotting manual) untuk proposal ini. */
+  onPickReviewer: () => void;
 }
+
+/** Status yang masih boleh menerima plotting reviewer manual. */
+const isPlottableStatus = (status: string) =>
+  ["SUBMITTED", "UNDER_REVIEW"].includes(getStatusKey(status || ""));
 
 export default function ProposalReviewerRow({
   proposal,
@@ -36,6 +41,7 @@ export default function ProposalReviewerRow({
   disabled = false,
   onToggle,
   onShowDetail,
+  onPickReviewer,
 }: Props) {
   const normalizedStatus = getStatusKey(proposal.status || "");
   const canSelect = normalizedStatus === "SUBMITTED";
@@ -66,6 +72,34 @@ export default function ProposalReviewerRow({
         >
           {proposal.status}
         </span>
+      </td>
+
+      <td className="px-6 py-4 text-sm">
+        {proposal.assigned_reviewer ? (
+          <span
+            className="text-gray-700"
+            title={`Terplot: ${proposal.assigned_reviewer.name} — bersifat final, tidak dapat diganti`}
+          >
+            Terplot:{" "}
+            <span className="font-medium">
+              {proposal.assigned_reviewer.name}
+            </span>
+          </span>
+        ) : isPlottableStatus(proposal.status) ? (
+          <button
+            type="button"
+            onClick={onPickReviewer}
+            disabled={disabled}
+            aria-label={`Pilih reviewer untuk proposal ${proposal.title}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Pilih Reviewer
+          </button>
+        ) : (
+          <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+            Belum terplot
+          </span>
+        )}
       </td>
 
       <td className="px-4 py-4 text-center">

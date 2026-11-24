@@ -151,3 +151,51 @@ export interface AssignReviewersResponse {
   message: string;
   data: AssignedProposal;
 }
+
+// ─── Plotting manual: GET /proposals/{id}/reviewer-candidates ────────────────
+export interface ReviewerCandidate {
+  id: number;
+  name: string;
+  /** Fakultas reviewer (null bila tidak terdaftar). */
+  faculty: string | null;
+  /** Fakultas reviewer sama dengan fakultas proposal. */
+  is_sebidang: boolean;
+  /** Jumlah proposal yang sedang/melewati direview reviewer ini. */
+  beban: number;
+  /** false = konflik kepentingan; tampil tetapi tidak bisa dipilih. */
+  eligible: boolean;
+  /** Alasan ketidakeligiblean (konflik kepentingan). Kosong bila eligible. */
+  alasan: string[];
+}
+
+export interface ReviewerCandidatesResponse {
+  message: string;
+  data: {
+    proposal: {
+      id: number;
+      title: string;
+      faculty: string | null;
+      status: ProposalStatus;
+    };
+    candidates: ReviewerCandidate[];
+  };
+}
+
+// ─── Plotting manual: POST /proposals/{id}/reviewer ──────────────────────────
+export interface AssignManualReviewerPayload {
+  reviewerId: number;
+}
+
+export interface AssignManualReviewerResponse {
+  message: string;
+  data: {
+    proposalId: number;
+    status: ProposalStatus;
+    reviewer: {
+      id: number;
+      name: string;
+      faculty: string | null;
+      is_sebidang: boolean;
+    };
+  };
+}

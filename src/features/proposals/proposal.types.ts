@@ -103,6 +103,11 @@ export interface Proposal {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Nama reviewer hasil plotting (auto atau manual); null bila belum terplot. */
+  assigned_reviewer?: {
+    name: string;
+    assigned_at: string;
+  } | null;
   reviews?: Array<{
     id: number;
     status: string;
