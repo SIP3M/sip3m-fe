@@ -109,8 +109,9 @@ export default function ProjectDetail() {
     PERMISSIONS.PENGABDIAN_KELOLA,
     PERMISSIONS.PENGABDIAN_DOKUMEN,
   ]);
-  // Input dana terealisasi: izin keuangan.cairkan (dulu khusus KETUA_LPPM)
-  const isAdminLppm = hasPermission(PERMISSIONS.KEUANGAN_CAIKAN);
+  // Input dana terealisasi: izin keuangan.cairkan (role KEUANGAN).
+  // KETUA_LPPM tidak lagi menginput nominal — hanya menyetujui anggaran.
+  const canDisburse = hasPermission(PERMISSIONS.KEUANGAN_CAIKAN);
 
   const [project, setProject] = useState<MonitoringProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -239,7 +240,7 @@ export default function ProjectDetail() {
   };
 
   const openDisburseModal = () => {
-    if (!isAdminLppm || !project) return;
+    if (!canDisburse || !project) return;
     setDisburseAmount(
       project.realized_amount ? String(project.realized_amount) : "",
     );
@@ -248,7 +249,7 @@ export default function ProjectDetail() {
   };
 
   const handleDisburse = async () => {
-    if (!project || !isAdminLppm) return;
+    if (!project || !canDisburse) return;
 
     const amount = Number(disburseAmount);
     if (!disburseAmount.trim() || Number.isNaN(amount)) {
@@ -594,7 +595,9 @@ export default function ProjectDetail() {
               </>
             )}
 
-            {isAdminLppm && (
+            {canDisburse &&
+              (project.disbursement_status === "DISETUJUI" ||
+                project.disbursement_status === "TERCAIRKAN") && (
               <button
                 type="button"
                 onClick={openDisburseModal}
@@ -724,7 +727,7 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {isAdminLppm && isDisburseModalOpen && (
+      {canDisburse && isDisburseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-800">

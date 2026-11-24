@@ -31,6 +31,7 @@ const FALLBACK_ROLE_OPTIONS: CreateUserRole[] = [
   "REVIEWER",
   "REVIEWER_EKSTERNAL",
   "MAHASISWA",
+  "KEUANGAN",
 ];
 
 export default function AddUserPage() {

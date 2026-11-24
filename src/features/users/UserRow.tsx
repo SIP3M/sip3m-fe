@@ -8,6 +8,7 @@ const roleStyle: Record<string, string> = {
   MAHASISWA: "bg-cyan-100 text-cyan-700",
   REVIEWER: "bg-yellow-100 text-yellow-700",
   REVIEWER_EKSTERNAL: "bg-gray-100 text-gray-600",
+  KEUANGAN: "bg-emerald-100 text-emerald-700",
 };
 
 const statusStyle = {

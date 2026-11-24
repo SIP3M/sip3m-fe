@@ -35,6 +35,7 @@ const BADGE_CLASS: Record<string, string> = {
   REVIEWER: "bg-amber-50 text-amber-700",
   REVIEWER_EKSTERNAL: "bg-orange-50 text-orange-700",
   MAHASISWA: "bg-green-50 text-green-700",
+  KEUANGAN: "bg-emerald-50 text-emerald-700",
 };
 
 const badgeFor = (nama: string) =>

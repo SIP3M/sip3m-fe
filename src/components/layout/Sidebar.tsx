@@ -28,6 +28,7 @@ import {
   Tags,
   Briefcase,
   KeyRound,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -96,6 +97,7 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
             { name: "Daftar Proposal", icon: FileText, path: "/proposals" },
             { name: "Plotting Reviewer", icon: UserCheck, path: "/plotting-reviewer" },
             { name: "Monitoring Proyek", icon: Activity, path: "/monitoring-project" },
+            { name: "Keuangan & Hibah", icon: Wallet, path: "/keuangan-dashboard" },
             { name: "Repository Publik", icon: Globe, path: "/repository-publik" },
           ],
         },
@@ -272,6 +274,32 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
             { name: "Monitoring KKM", icon: Activity, path: "/staff-lppm/kkm/monitoring" },
             { name: "Laporan KKM", icon: FileText, path: "/staff-lppm/kkm/laporan" },
             { name: "Pengumuman KKM", icon: Megaphone, path: "/staff-lppm/kkm/pengumuman" },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ------------------------------------------------------------- KEUANGAN
+  [APP_ROLES.KEUANGAN]: {
+    penelitian: {
+      dashboard: {
+        name: "Dashboard Keuangan",
+        icon: LayoutDashboard,
+        path: "/keuangan-dashboard",
+      },
+      prefixes: ["/keuangan-dashboard"],
+      groups: [
+        {
+          key: "keuangan",
+          label: "KEUANGAN",
+          icon: Wallet,
+          items: [
+            {
+              name: "Pencairan Dana",
+              icon: FileText,
+              path: "/keuangan-dashboard/pencairan",
+            },
           ],
         },
       ],
