@@ -25,6 +25,7 @@ const FALLBACK_ROLE_OPTIONS: string[] = [
   "REVIEWER",
   "REVIEWER_EKSTERNAL",
   "MAHASISWA",
+  "KEUANGAN",
 ];
 
 export default function EditUserPage() {

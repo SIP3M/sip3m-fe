@@ -101,6 +101,9 @@ import MasterMahasiswa from "@/features/master/MasterMahasiswa";
 import MasterReviewer from "@/features/master/MasterReviewer";
 import RolePermission from "@/features/master/RolePermission";
 import MasterJabatanKelompok from "@/features/kkm/MasterJabatanKelompok";
+import KeuanganDashboard from "@/features/finance/KeuanganDashboard";
+import FinanceListPage from "@/features/finance/FinanceListPage";
+import FinanceDetailPage from "@/features/finance/FinanceDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -718,6 +721,40 @@ export const router = createBrowserRouter([
       {
         path: "reviews/:id",
         element: <ReviewDetailPage />,
+      },
+    ],
+  },
+
+  // =========================
+  // KEUANGAN — dashboard, daftar pencairan, detail proyek
+  // =========================
+  {
+    path: "keuangan-dashboard",
+    element: (
+      <ProtectedRoute
+        roles={[APP_ROLES.KEUANGAN]}
+        anyOf={[
+          PERMISSIONS.KEUANGAN_LIHAT,
+          PERMISSIONS.KEUANGAN_CAIKAN,
+          PERMISSIONS.KEUANGAN_SETUJUI,
+          PERMISSIONS.KEUANGAN_EXPORT,
+        ]}
+      >
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <KeuanganDashboard />,
+      },
+      {
+        path: "pencairan",
+        element: <FinanceListPage />,
+      },
+      {
+        path: "pencairan/:id",
+        element: <FinanceDetailPage />,
       },
     ],
   },
