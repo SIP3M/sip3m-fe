@@ -58,6 +58,7 @@ export default function RolePermission() {
   const [form, setForm] = useState({
     nama: "",
     deskripsi: "",
+    dashboard_path: "",
     salin_dari_role_id: "",
   });
   const [creating, setCreating] = useState(false);
@@ -147,12 +148,18 @@ export default function RolePermission() {
       const res = await createRole({
         nama,
         deskripsi: form.deskripsi.trim() || null,
+        dashboard_path: form.dashboard_path.trim() || null,
         salin_dari_role_id: form.salin_dari_role_id
           ? Number(form.salin_dari_role_id)
           : null,
       });
       await fetchRoles();
-      setForm({ nama: "", deskripsi: "", salin_dari_role_id: "" });
+      setForm({
+        nama: "",
+        deskripsi: "",
+        dashboard_path: "",
+        salin_dari_role_id: "",
+      });
       setView({ mode: "detail", roleId: res.data.id });
     } catch (err: any) {
       setFormError(err?.response?.data?.message || "Gagal membuat role.");
@@ -248,6 +255,26 @@ export default function RolePermission() {
               maxLength={255}
               className="mt-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Dashboard Setelah Login (opsional)
+            </label>
+            <input
+              type="text"
+              value={form.dashboard_path}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, dashboard_path: e.target.value }))
+              }
+              placeholder="contoh: /keuangan-dashboard"
+              className="mt-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-mono"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Path halaman tujuan setelah user role ini login (harus diawali
+              &quot;/&quot;). Bila kosong, sistem memakai dashboard sesuai izin
+              yang dimiliki role.
+            </p>
           </div>
 
           <div>

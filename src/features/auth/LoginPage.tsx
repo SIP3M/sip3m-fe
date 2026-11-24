@@ -6,27 +6,9 @@ import { login } from "../auth/auth.api";
 import axios from "axios";
 import { useAuthStore } from "./auth.store";
 import { motion } from "framer-motion";
-import { APP_ROLES } from "@/constant/roles";
 import { User } from "./auth.types";
 import { setAuthSession } from "@/services/storage";
-
-const getDashboardPathByRole = (role?: string, dashboardPath?: string | null) => {
-  if (role === APP_ROLES.KETUA_LPPM) return "/admin-dashboard";
-  // ADMIN_SISTEM hanya punya modul master data — langsung ke halaman itu
-  if (role === APP_ROLES.ADMIN_SISTEM) {
-    return "/admin-dashboard/master-data/fakultas";
-  }
-  if (role === APP_ROLES.STAFF_LPPM) return "/staff-lppm/staff-dashboard";
-  if (role === APP_ROLES.DOSEN) return "/dosen-dashboard";
-  if (role === APP_ROLES.MAHASISWA) return "/mahasiswa-dashboard";
-  if (role === APP_ROLES.REVIEWER) return "/reviewer-dashboard";
-  if (role === APP_ROLES.REVIEWER_EKSTERNAL) {
-    return "/reviewer-eksternal-dashboard";
-  }
-  // Role custom: ikut dashboard_path dari role (default: layout External).
-  if (dashboardPath) return dashboardPath;
-  return "/reviewer-eksternal-dashboard";
-};
+import { resolveDashboardPath } from "./dashboardPath";
 
 /** Pesan ramah untuk kode error alur OAuth Google (dari ?oauth_error=). */
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
@@ -119,12 +101,7 @@ const LoginPage = () => {
       setLoginSuccess(true);
 
       setTimeout(() => {
-        navigate(
-          getDashboardPathByRole(
-            role,
-            (user as User | undefined)?.roles?.dashboard_path,
-          ),
-        );
+        navigate(resolveDashboardPath(user as User | undefined));
       }, 1800);
     } catch (error) {
       if (axios.isAxiosError(error)) {

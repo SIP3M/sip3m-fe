@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   getRolePermissions,
+  updateRole,
   updateRolePermissions,
   RoleMatrixResponse,
 } from "../roles/roles.api";
@@ -36,6 +37,11 @@ export default function RolePermissionDetail({ roleId, onBack, onSaved }: Props)
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dirty, setDirty] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  // Halaman tujuan setelah login (dashboard_path) — bisa diubah tanpa seed.
+  const [dashboardPath, setDashboardPath] = useState("");
+  const [savedDashboardPath, setSavedDashboardPath] = useState("");
+  const [savingPath, setSavingPath] = useState(false);
+  const [pathFlash, setPathFlash] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,6 +57,8 @@ export default function RolePermissionDetail({ roleId, onBack, onSaved }: Props)
           ),
         );
         setDirty(false);
+        setDashboardPath(res.role?.dashboard_path ?? "");
+        setSavedDashboardPath(res.role?.dashboard_path ?? "");
       })
       .catch((err) => {
         if (!cancelled) {
@@ -120,6 +128,25 @@ export default function RolePermissionDetail({ roleId, onBack, onSaved }: Props)
 
   const role = data?.role;
   const readOnly = Boolean(role?.is_system);
+
+  const handleSaveDashboardPath = async () => {
+    setSavingPath(true);
+    setError(null);
+    try {
+      const value = dashboardPath.trim();
+      await updateRole(roleId, { dashboard_path: value || null });
+      setSavedDashboardPath(value);
+      setPathFlash(true);
+      setTimeout(() => setPathFlash(false), 2500);
+      onSaved?.();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message || "Gagal menyimpan dashboard role.",
+      );
+    } finally {
+      setSavingPath(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -217,6 +244,50 @@ export default function RolePermissionDetail({ roleId, onBack, onSaved }: Props)
           {error}
         </div>
       )}
+      {pathFlash && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm">
+          Dashboard role berhasil disimpan.
+        </div>
+      )}
+
+      {/* DASHBOARD SETELAH LOGIN */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-900">
+          Dashboard Setelah Login
+        </h2>
+        <p className="text-xs text-gray-400 mt-0.5">
+          Halaman tujuan user role ini setelah login. Bila kosong, sistem
+          memakai dashboard sesuai izin yang dimiliki role.
+        </p>
+        <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <input
+            type="text"
+            value={dashboardPath}
+            onChange={(e) => setDashboardPath(e.target.value)}
+            disabled={readOnly}
+            placeholder="contoh: /keuangan-dashboard"
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-50 disabled:text-gray-400"
+          />
+          <button
+            type="button"
+            onClick={handleSaveDashboardPath}
+            disabled={
+              readOnly ||
+              savingPath ||
+              dashboardPath.trim() === savedDashboardPath.trim()
+            }
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer"
+          >
+            {savingPath ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
+            Simpan Dashboard
+          </button>
+        </div>
+      </div>
+
       {savedFlash && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
           <Check size={16} /> Izin role berhasil disimpan.

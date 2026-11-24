@@ -27,6 +27,8 @@ export interface RolePermissionItem extends PermissionItem {
 export interface CreateRolePayload {
   nama: string;
   deskripsi?: string | null;
+  /** Halaman tujuan setelah login (contoh: /keuangan-dashboard). */
+  dashboard_path?: string | null;
   salin_dari_role_id?: number | null;
   permissions?: string[];
 }
