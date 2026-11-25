@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import type { Proposal } from "@/features/proposals/proposal.types";
+import { getUsers } from "@/features/users/Users.api";
+import type { User } from "@/features/users/users.types";
+import { APP_ROLES } from "@/constant/roles";
 import { getReviewerCandidates, reassignReviewer } from "../review.api";
 import type { ReviewerCandidate } from "../review.types";
 
@@ -54,6 +57,52 @@ const getErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
+const normalize = (value?: string | null) => (value ?? "").trim().toLowerCase();
+
+/**
+ * Fallback daftar reviewer pengganti: ambil semua user aktif ber-role REVIEWER
+ * lewat GET /users. Dipakai ketika endpoint reviewer-candidates menolak
+ * proposal yang sudah terplot (409), karena popup ini memang untuk MENGGANTI
+ * reviewer setelah plotting.
+ */
+const loadActiveReviewers = async (
+  proposal: Proposal,
+): Promise<ReviewerCandidate[]> => {
+  const users: User[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const res = await getUsers({
+      page,
+      roles: APP_ROLES.REVIEWER,
+      status: "active",
+    });
+    users.push(...res.data);
+    totalPages = res.pagination?.total_pages ?? 1;
+    page += 1;
+  } while (page <= totalPages);
+
+  return users
+    .filter((user) => user.is_active)
+    .map((user) => {
+      const facultyName = user.fakultas?.nama ?? null;
+      const isKetua = user.id === proposal.lead_researcher_id;
+
+      return {
+        id: user.id,
+        name: user.name,
+        faculty: facultyName,
+        is_sebidang:
+          !!facultyName &&
+          normalize(facultyName) === normalize(proposal.faculty),
+        beban: user.beban_review ?? 0,
+        eligible: !isKetua,
+        alasan: isKetua ? ["Ketua peneliti proposal ini"] : [],
+      };
+    });
+};
+
 /**
  * Modal untuk mengubah (edit) penugasan reviewer pada proposal yang
  * sudah terplot. Menampilkan informasi proposal + reviewer saat ini,
@@ -80,7 +129,7 @@ export default function EditReviewerModal({
   const [assignError, setAssignError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || proposalId <= 0) return;
+    if (!open || proposalId <= 0 || !proposal) return;
 
     let cancelled = false;
     setSelectedId(null);
@@ -93,11 +142,22 @@ export default function EditReviewerModal({
       .then((res) => {
         if (!cancelled) setCandidates(res.data.candidates);
       })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setLoadError(
-            getErrorMessage(err, "Gagal memuat daftar kandidat reviewer."),
-          );
+      .catch(async () => {
+        // Endpoint kandidat bisa menolak proposal yang sudah terplot (409).
+        // Untuk kebutuhan GANTI reviewer, pakai daftar reviewer aktif.
+        try {
+          const fallback = await loadActiveReviewers(proposal);
+          if (cancelled) return;
+          setCandidates(fallback);
+          if (fallback.length === 0) {
+            setLoadError("Tidak ada reviewer aktif yang bisa dipilih.");
+          }
+        } catch (err: unknown) {
+          if (!cancelled) {
+            setLoadError(
+              getErrorMessage(err, "Gagal memuat daftar kandidat reviewer."),
+            );
+          }
         }
       })
       .finally(() => {
@@ -107,7 +167,7 @@ export default function EditReviewerModal({
     return () => {
       cancelled = true;
     };
-  }, [open, proposalId]);
+  }, [open, proposalId, proposal]);
 
   const selectedCandidate = useMemo(
     () => candidates.find((candidate) => candidate.id === selectedId) ?? null,
