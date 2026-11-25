@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { Inbox, Pencil, Search } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
@@ -108,6 +108,27 @@ export default function ReviewList() {
     [],
   );
 
+  // Hasil ganti reviewer disimpan lokal agar tabel langsung menampilkan nama
+  // baru, meski respons daftar proposal dari server belum ikut terbarui.
+  const reviewerOverridesRef = useRef<
+    Record<number, { name: string; assigned_at: string }>
+  >({});
+
+  const applyReviewerOverrides = useCallback((items: Proposal[]) => {
+    return items.map((item) => {
+      const override = reviewerOverridesRef.current[item.id];
+      if (!override) return item;
+
+      // Server sudah mengembalikan nama terbaru — override tidak diperlukan lagi.
+      if (item.assigned_reviewer?.name === override.name) {
+        delete reviewerOverridesRef.current[item.id];
+        return item;
+      }
+
+      return { ...item, assigned_reviewer: override };
+    });
+  }, []);
+
   const loadProposals = useCallback(
     async (page = 1, search = "", status: StatusFilterValue = "ALL") => {
       setIsLoadingProposals(true);
@@ -145,14 +166,14 @@ export default function ReviewList() {
             startIndex + ITEMS_PER_PAGE,
           );
 
-          setProposals(pagedItems);
+          setProposals(applyReviewerOverrides(pagedItems));
           setCurrentPage(safePage);
           setTotalPages(computedTotalPages);
           setTotalItems(computedTotalItems);
           return;
         }
 
-        setProposals(response.data);
+        setProposals(applyReviewerOverrides(response.data));
         setCurrentPage(response.meta.currentPage);
         setTotalPages(response.meta.totalPages);
         setTotalItems(response.meta.totalData);
@@ -166,7 +187,7 @@ export default function ReviewList() {
         setIsLoadingProposals(false);
       }
     },
-    [loadAllProposalPages],
+    [loadAllProposalPages, applyReviewerOverrides],
   );
 
   useEffect(() => {
@@ -296,6 +317,9 @@ export default function ReviewList() {
         setWarningMessage(`Detail kegagalan: ${failedDetails}`);
       }
 
+      // Hasil plotting massal adalah sumber terbaru — buang override lama.
+      reviewerOverridesRef.current = {};
+
       await loadProposals(currentPage, debouncedSearch, statusFilter);
 
       setSelectedProposals([]);
@@ -314,11 +338,22 @@ export default function ReviewList() {
   };
 
   const handleAssigned = (reviewer: { id: number; name: string }) => {
+    const target = pickingProposal;
+    const assignedAt = new Date().toISOString();
     setPickingProposal(null);
     setSuccessMessage(
       `Reviewer ${reviewer.name} berhasil diplot untuk proposal ini.`,
     );
     setError(null);
+
+    if (target) {
+      // Tampilkan nama reviewer baru di tabel tanpa menunggu reload.
+      reviewerOverridesRef.current[target.id] = {
+        name: reviewer.name,
+        assigned_at: assignedAt,
+      };
+      setProposals((prev) => applyReviewerOverrides(prev));
+    }
 
     // Perbarui dialog detail agar nama reviewer langsung tampil.
     setDetailProposal((prev) =>
@@ -327,7 +362,7 @@ export default function ReviewList() {
             ...prev,
             assigned_reviewer: {
               name: reviewer.name,
-              assigned_at: new Date().toISOString(),
+              assigned_at: assignedAt,
             },
           }
         : prev,
@@ -344,19 +379,33 @@ export default function ReviewList() {
     );
     setError(null);
 
-    // Perbarui dialog detail agar nama reviewer langsung tampil.
-    setDetailProposal((prev) =>
-      prev
-        ? {
-            ...prev,
-            assigned_reviewer: {
-              name: reviewer.name,
-              assigned_at: edited?.assigned_reviewer?.assigned_at ??
-                new Date().toISOString(),
-            },
-          }
-        : prev,
-    );
+    if (edited) {
+      const assignedAt = new Date().toISOString();
+
+      // Simpan override agar baris tabel (termasuk setelah reload/pindah
+      // halaman) langsung menampilkan reviewer yang baru dipilih.
+      reviewerOverridesRef.current[edited.id] = {
+        name: reviewer.name,
+        assigned_at: assignedAt,
+      };
+
+      setProposals((prev) => applyReviewerOverrides(prev));
+      setSelectedProposals((prev) => applyReviewerOverrides(prev));
+      setAllSubmittedProposals((prev) => applyReviewerOverrides(prev));
+
+      // Perbarui dialog detail agar nama reviewer langsung tampil.
+      setDetailProposal((prev) =>
+        prev && prev.id === edited.id
+          ? {
+              ...prev,
+              assigned_reviewer: {
+                name: reviewer.name,
+                assigned_at: assignedAt,
+              },
+            }
+          : prev,
+      );
+    }
 
     void loadProposals(currentPage, debouncedSearch, statusFilter);
   };
