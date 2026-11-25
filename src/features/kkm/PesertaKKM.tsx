@@ -298,14 +298,35 @@ export default function PesertaKKM() {
   };
 
   const handleBulkStatus = async (status: "VERIFIED" | "REJECTED") => {
+    if (!hasPermission("kkm.peserta.verifikasi")) {
+      showToast(
+        "error",
+        "Verifikasi pendaftaran peserta KKM kini dilakukan oleh Reviewer Administrasi.",
+      );
+      return;
+    }
     if (selectedPeriodeId == null) {
       showToast("error", "Pilih periode dulu.");
       return;
     }
     if (selectedIds.length === 0) return;
+
+    // Penolakan wajib beralasan (dipakai notifikasi & jejak verifikasi).
+    let catatan: string | undefined;
+    if (status === "REJECTED") {
+      catatan = window.prompt("Alasan penolakan (wajib diisi):")?.trim() || undefined;
+      if (!catatan) {
+        showToast("error", "Catatan wajib diisi saat menolak pendaftaran.");
+        return;
+      }
+    }
+
     setBulkLoading(status);
     try {
-      await bulkUpdateKkmPesertaStatus({ periode_id: selectedPeriodeId, peserta_ids: selectedIds, status });
+      await bulkUpdateKkmPesertaStatus(
+        { periode_id: selectedPeriodeId, peserta_ids: selectedIds, status },
+        catatan,
+      );
       showToast("success", `Berhasil update ${selectedIds.length} peserta menjadi ${status}.`);
       setSelectedIds([]);
       await Promise.all([fetchStats(), fetchList()]);
@@ -323,9 +344,25 @@ export default function PesertaKKM() {
   };
 
   const handleSingleStatus = async (id: number, status: "VERIFIED" | "REJECTED" | "PENDING") => {
+    if (!hasPermission("kkm.peserta.verifikasi")) {
+      showToast(
+        "error",
+        "Verifikasi pendaftaran peserta KKM kini dilakukan oleh Reviewer Administrasi.",
+      );
+      return;
+    }
+    let catatan: string | undefined;
+    if (status === "REJECTED") {
+      catatan = window.prompt("Alasan penolakan (wajib diisi):")?.trim() || undefined;
+      if (!catatan) {
+        showToast("error", "Catatan wajib diisi saat menolak pendaftaran.");
+        return;
+      }
+    }
+
     setBulkLoading(`single-${id}`);
     try {
-      await updateKkmPesertaStatus(id, status);
+      await updateKkmPesertaStatus(id, status, catatan);
       showToast("success", `Peserta berhasil diupdate menjadi ${status}.`);
       await Promise.all([fetchStats(), fetchList()]);
     } catch (err: unknown) {

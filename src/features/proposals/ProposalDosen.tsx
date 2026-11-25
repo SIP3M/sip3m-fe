@@ -94,6 +94,7 @@ const statusLabelMap: Record<string, string> = {
   REVISION: "Revision",
   REJECTED: "Rejected",
   ADMIN_VERIFIED: "Admin Verified",
+  ADMIN_REVISION: "Revisi Administrasi",
   REVIEW_DONE: "Menunggu Keputusan",
 };
 
@@ -107,6 +108,7 @@ const statusStyleMap: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  ADMIN_REVISION: "bg-amber-100 text-amber-700",
   REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
@@ -1993,6 +1995,7 @@ export default function ProposalDosen() {
               <option value="ALL">Semua</option>
               <option value="REVIEW">Review</option>
               <option value="UNDER_REVIEW">Under Review</option>
+              <option value="ADMIN_REVISION">Revisi Administrasi</option>
               <option value="SUBMITTED">Submitted</option>
               <option value="ADMIN_VERIFIED">Admin Verified</option>
               <option value="APPROVED">Approved</option>
@@ -2035,10 +2038,15 @@ export default function ProposalDosen() {
               {!loading &&
                 paginated.map((proposal) => {
                   const status = normalizeStatus(proposal.status);
-                  const canEdit = status === "DRAFT";
+                  const canEdit =
+                    status === "DRAFT" || status === "ADMIN_REVISION";
                   const canDelete = status === "DRAFT";
-                  const canSubmit = status === "DRAFT" || status === "REVISION";
-                  const isDraft = status === "DRAFT";
+                  const canSubmit =
+                    status === "DRAFT" ||
+                    status === "REVISION" ||
+                    status === "ADMIN_REVISION";
+                  const isDraft =
+                    status === "DRAFT" || status === "ADMIN_REVISION";
                   const submittedYear = proposal.submitted_at
                     ? new Date(proposal.submitted_at).getFullYear()
                     : new Date(proposal.created_at).getFullYear();

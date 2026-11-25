@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Check,
+  CheckSquare,
   ClipboardList,
   Coins,
   Loader2,
@@ -96,6 +97,14 @@ export default function KelolaReferensi() {
         onToast={setToast}
         onAuthError={handleAuthError}
         usageLabel="form buat pengumuman"
+      />
+      <ReferensiCard
+        jenis="CHECKLIST_ADMINISTRASI"
+        title="Checklist Verifikasi Administrasi"
+        icon={CheckSquare}
+        onToast={setToast}
+        onAuthError={handleAuthError}
+        usageLabel="verifikasi administrasi proposal"
       />
     </div>
   );

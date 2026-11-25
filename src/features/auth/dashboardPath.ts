@@ -27,6 +27,10 @@ const PERMISSION_FALLBACK: Array<{ kodes: string[]; path: string }> = [
     kodes: ["kkm.kelompok.saya", "kkm.logbook.saya"],
     path: "/mahasiswa-dashboard",
   },
+  {
+    kodes: ["proposal.verifikasi-administrasi"],
+    path: "/reviewer-administrasi-dashboard",
+  },
   { kodes: ["proposal.review"], path: "/reviewer-dashboard" },
   { kodes: ["proposal.lihat"], path: "/reviewer-eksternal-dashboard" },
 ];

@@ -50,6 +50,7 @@ export type ProposalStatus =
   | "APPROVED"
   | "DRAFT"
   | "REVISION"
+  | "ADMIN_REVISION"
   | "ADMIN_VERIFIED"
   | "UNDER_REVIEW"
   | "REVIEW_DONE"
@@ -103,6 +104,26 @@ export interface Proposal {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Klaim & riwayat verifikasi administrasi (gate REVIEWER_ADMINISTRASI). */
+  admin_verifier_id?: number | null;
+  admin_claimed_at?: string | null;
+  admin_verifier?: { id: number; name: string } | null;
+  latest_admin_verification?: {
+    decision: string;
+    catatan: string | null;
+    created_at: string;
+    verifier: { name: string };
+  } | null;
+  adminVerifications?: Array<{
+    id: number;
+    decision: string;
+    catatan: string | null;
+    checklist:
+      | Array<{ kode: string; label: string; checked: boolean }>
+      | null;
+    created_at: string;
+    verifier: { id: number; name: string };
+  }>;
   /** Nama reviewer hasil plotting (auto atau manual); null bila belum terplot. */
   assigned_reviewer?: {
     name: string;

@@ -30,6 +30,8 @@ import {
 } from "./proposal.api";
 import { Proposal } from "./proposal.types";
 import { usePermission } from "@/features/auth/usePermission";
+import { useAuthStore } from "@/features/auth/auth.store";
+import { revokeAdminVerification } from "@/features/admin-verification/adminVerification.api";
 import { PERMISSIONS } from "@/constant/permissions";
 import { getKetuaNama, getKetuaNidn, isKetuaDiffFromUploader } from "@/utils/proposal";
 
@@ -65,6 +67,7 @@ const statusBadgeMap: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  ADMIN_REVISION: "bg-amber-100 text-amber-700",
   REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
@@ -85,6 +88,7 @@ const getStatusLabel = (status: string) => {
     APPROVED: "Approved",
     ACCEPTED: "Approved",
     ADMIN_VERIFIED: "Admin Verified",
+  ADMIN_REVISION: "Revisi Administrasi",
     DRAFT: "Draft",
     REVISION: "Revision",
     REJECTED: "Rejected",
@@ -264,12 +268,16 @@ export default function ProposalDetail() {
   const proposalId = Number(id);
   const { hasPermission } = usePermission();
   const isAdmin = hasPermission(PERMISSIONS.PROPOSAL_STATUS);
+  const currentRole = useAuthStore((state) =>
+    (state.user?.roles as unknown as { roles?: string } | undefined)?.roles,
+  );
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
   const [isDeciding, setIsDeciding] = useState(false);
+  const [isRevokingAdmin, setIsRevokingAdmin] = useState(false);
   const [decisionNotes, setDecisionNotes] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -334,9 +342,11 @@ export default function ProposalDetail() {
 
   const isSubmitted = statusKey === "SUBMITTED";
   const isRevision = statusKey === "REVISION";
+  const isAdminRevision = statusKey === "ADMIN_REVISION";
   const isDraft = statusKey === "DRAFT";
   const isDosen = hasPermission(PERMISSIONS.PROPOSAL_SAYA);
-  const canEditRevise = isDosen && (isDraft || isRevision);
+  const canEditRevise =
+    isDosen && (isDraft || isRevision || isAdminRevision);
   const isUnderReview = statusKey === "REVIEW" || statusKey === "UNDER_REVIEW";
 
   const latestReview = useMemo(
@@ -457,6 +467,33 @@ export default function ProposalDetail() {
     }
   };
 
+  const handleRevokeAdminVerification = async () => {
+    if (!proposal) return;
+    if (
+      !window.confirm(
+        "Tarik kembali verifikasi administrasi proposal ini? Proposal akan kembali ke antrean verifikasi.",
+      )
+    ) {
+      return;
+    }
+
+    setIsRevokingAdmin(true);
+    setFeedback(null);
+
+    try {
+      const res = await revokeAdminVerification(proposal.id);
+      await loadProposal({ silent: true });
+      setFeedback({ type: "success", message: res.message });
+    } catch (err: unknown) {
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(err, "Gagal menarik verifikasi administrasi."),
+      });
+    } finally {
+      setIsRevokingAdmin(false);
+    }
+  };
+
   const handleAdminDecision = async (status: "ACCEPTED" | "REJECTED") => {
     if (!proposal) return;
 
@@ -558,6 +595,48 @@ export default function ProposalDetail() {
               Proposal tidak dapat diedit selama proses review berlangsung.
             </p>
           </div>
+        </div>
+      )}
+
+      {isAdminRevision && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <Clock size={18} className="mt-0.5 flex-shrink-0 text-amber-600" />
+          <div>
+            <h3 className="text-sm font-bold text-amber-800">
+              Perlu Revisi Administrasi
+            </h3>
+            <p className="mt-0.5 text-xs text-amber-700">
+              {proposal?.adminVerifications?.[0]?.catatan
+                ? `Catatan verifikator: ${proposal.adminVerifications[0].catatan}`
+                : "Lengkapi berkas administrasi sesuai ketentuan LPPM."}
+            </p>
+            <p className="mt-1 text-xs text-amber-700">
+              Perbaiki berkas lalu kirim ulang dari halaman Proposal Saya —
+              proposal akan masuk kembali ke antrean verifikasi administrasi.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {currentRole === "KETUA_LPPM" && statusKey === "ADMIN_VERIFIED" && (
+        <div className="flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-emerald-800">
+              Sudah Lolos Verifikasi Administrasi
+            </h3>
+            <p className="mt-0.5 text-xs text-emerald-700">
+              Bila ditemukan masalah berkas, tarik kembali verifikasi agar
+              proposal diperiksa ulang oleh Reviewer Administrasi.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleRevokeAdminVerification()}
+            disabled={isRevokingAdmin}
+            className="self-start rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+          >
+            {isRevokingAdmin ? "Memproses..." : "Tarik Kembali Verifikasi"}
+          </button>
         </div>
       )}
 

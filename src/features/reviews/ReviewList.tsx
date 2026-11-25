@@ -24,7 +24,7 @@ const ITEMS_PER_PAGE = 5;
 const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "Semua Status" },
   { value: "DRAFT", label: "Draft" },
-  { value: "SUBMITTED", label: "Submitted" },
+  { value: "ADMIN_VERIFIED", label: "Terverifikasi — siap plotting" },
   { value: "UNDER_REVIEW", label: "Under Review" },
   { value: "REVISION", label: "Revision" },
   { value: "REVIEW_DONE", label: "Menunggu Keputusan" },
@@ -218,7 +218,7 @@ export default function ReviewList() {
     allSubmittedProposals.every((proposal) => selectedIds.has(proposal.id));
 
   const toggleProposalSelection = (proposal: Proposal) => {
-    if (normalizeStatus(proposal.status) !== "SUBMITTED") return;
+    if (normalizeStatus(proposal.status) !== "ADMIN_VERIFIED") return;
 
     setSelectedProposals((prev) => {
       const exists = prev.some((item) => item.id === proposal.id);
@@ -253,12 +253,12 @@ export default function ReviewList() {
         statusFilter,
       );
       const submittedItems = allItems.filter(
-        (item) => normalizeStatus(item.status) === "SUBMITTED",
+        (item) => normalizeStatus(item.status) === "ADMIN_VERIFIED",
       );
 
       if (submittedItems.length === 0) {
         setWarningMessage(
-          "Tidak ada proposal berstatus SUBMITTED untuk dipilih.",
+          "Tidak ada proposal berstatus ADMIN_VERIFIED untuk dipilih.",
         );
         setAllSubmittedProposals([]);
         return;
@@ -289,11 +289,11 @@ export default function ReviewList() {
     setWarningMessage(null);
 
     const proposalIds = selectedProposals
-      .filter((proposal) => normalizeStatus(proposal.status) === "SUBMITTED")
+      .filter((proposal) => normalizeStatus(proposal.status) === "ADMIN_VERIFIED")
       .map((proposal) => proposal.id);
 
     if (proposalIds.length === 0) {
-      setError("Tidak ada proposal SUBMITTED yang dipilih.");
+      setError("Tidak ada proposal ADMIN_VERIFIED yang dipilih.");
       return;
     }
 
@@ -431,9 +431,9 @@ export default function ReviewList() {
 
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
           Catatan: proposal berstatus{" "}
-          <span className="font-semibold">SUBMITTED</span> bisa dipilih untuk
+          <span className="font-semibold">ADMIN_VERIFIED</span> bisa dipilih untuk
           plotting massal; plotting manual tersedia untuk proposal{" "}
-          <span className="font-semibold">SUBMITTED</span> /{" "}
+          <span className="font-semibold">ADMIN_VERIFIED</span> /{" "}
           <span className="font-semibold">UNDER_REVIEW</span> yang belum terplot.
           Penugasan reviewer dapat diubah melalui ikon pensil pada kolom Aksi
           untuk proposal yang sudah terplot.
@@ -491,8 +491,8 @@ export default function ReviewList() {
               />
               <span>
                 {isSelectingAll
-                  ? "Memuat semua proposal SUBMITTED..."
-                  : "Pilih semua proposal SUBMITTED (semua halaman)"}
+                  ? "Memuat semua proposal ADMIN_VERIFIED..."
+                  : "Pilih semua proposal ADMIN_VERIFIED (semua halaman)"}
               </span>
             </label>
 
@@ -600,7 +600,7 @@ export default function ReviewList() {
                 <p className="text-sm text-gray-500">
                   {selectedCount > 0
                     ? "Proposal yang dipilih akan diproses sekaligus."
-                    : "Pilih proposal SUBMITTED dari tabel di sebelah kiri."}
+                    : "Pilih proposal ADMIN_VERIFIED dari tabel di sebelah kiri."}
                 </p>
               </div>
 
@@ -623,7 +623,7 @@ export default function ReviewList() {
                 </span>
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                Hanya proposal berstatus SUBMITTED yang akan dikirim ke endpoint
+                Hanya proposal berstatus ADMIN_VERIFIED yang akan dikirim ke endpoint
                 bulk plotting.
               </p>
             </div>
@@ -839,7 +839,7 @@ export default function ReviewList() {
                         Edit Penugasan
                       </button>
                     </div>
-                  ) : ["SUBMITTED", "UNDER_REVIEW"].includes(
+                  ) : ["ADMIN_VERIFIED", "UNDER_REVIEW"].includes(
                       normalizeStatus(detailProposal.status),
                     ) ? (
                     <button

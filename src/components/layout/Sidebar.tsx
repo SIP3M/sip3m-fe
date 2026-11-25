@@ -181,6 +181,11 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
               path: "/admin-dashboard/master-data/reviewer",
             },
             {
+              name: "Reviewer Administrasi",
+              icon: ClipboardCheck,
+              path: "/admin-dashboard/master-data/reviewer-administrasi",
+            },
+            {
               name: "DPL",
               icon: UserPlus,
               path: "/admin-dashboard/master-data/dpl",
@@ -299,6 +304,42 @@ const ROLE_CONFIGS: Record<string, RoleConfig> = {
               name: "Pencairan Dana",
               icon: FileText,
               path: "/keuangan-dashboard/pencairan",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ------------------------------------------------- REVIEWER ADMINISTRASI
+  [APP_ROLES.REVIEWER_ADMINISTRASI]: {
+    penelitian: {
+      dashboard: {
+        name: "Dashboard Verifikasi",
+        icon: LayoutDashboard,
+        path: "/reviewer-administrasi-dashboard",
+      },
+      prefixes: ["/reviewer-administrasi-dashboard"],
+      groups: [
+        {
+          key: "administrasi",
+          label: "VERIFIKASI ADMINISTRASI",
+          icon: ClipboardCheck,
+          items: [
+            {
+              name: "Antrean Verifikasi",
+              icon: ClipboardList,
+              path: "/reviewer-administrasi-dashboard/antrean",
+            },
+            {
+              name: "Riwayat Verifikasi",
+              icon: History,
+              path: "/reviewer-administrasi-dashboard/riwayat",
+            },
+            {
+              name: "Peserta KKM",
+              icon: Users,
+              path: "/reviewer-administrasi-dashboard/kkm/peserta",
             },
           ],
         },

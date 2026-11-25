@@ -8,8 +8,9 @@ import { Proposal } from "./proposal.types";
 
 const ITEMS_PER_PAGE = 5;
 
-type StatusFilterValue = "ALL" | "SUBMITTED";
-type ProposalStatusFilterValue = "SUBMITTED";
+// Hanya proposal yang SUDAH lolos verifikasi administrasi yang boleh di-plotting.
+type StatusFilterValue = "ALL" | "ADMIN_VERIFIED";
+type ProposalStatusFilterValue = "ADMIN_VERIFIED";
 
 const getErrorMessage = (err: unknown, fallback: string) => {
   if (axios.isAxiosError(err)) {
@@ -64,7 +65,7 @@ export default function ProposalStaff() {
   const fetchProposals = async (
     page = 1,
     search = "",
-    status: StatusFilterValue = "SUBMITTED",
+    status: StatusFilterValue = "ADMIN_VERIFIED",
   ) => {
     const requestId = ++latestRequestId.current;
     setIsLoading(true);
@@ -122,7 +123,8 @@ export default function ProposalStaff() {
           Plotting Reviewer Otomatis
         </h1>
         <p className="text-sm text-gray-500">
-          Daftar proposal untuk penugasan reviewer otomatis.
+          Daftar proposal yang sudah lolos verifikasi administrasi, siap
+          ditugaskan ke reviewer substansi.
         </p>
       </div>
 
@@ -193,11 +195,11 @@ export default function ProposalStaff() {
                   <td>
                     <button
                       onClick={() =>
-                        navigate(`/staff-lppm/verifikasi-proposal/${p.id}`)
+                        navigate("/staff-lppm/plotting-reviewer")
                       }
                       className="bg-red-600 text-white text-xs px-3 py-1 rounded-md hover:bg-red-700"
                     >
-                      verifikasi
+                      plotting
                     </button>
                   </td>
                 </tr>
