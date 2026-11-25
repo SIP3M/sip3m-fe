@@ -9,7 +9,6 @@ import {
   UpdateProposalStatusPayload,
   UpdateProposalStatusResponse,
 } from "./proposal.types";
-import axios from "axios";
 
 interface GetAllProposalsParams {
   page?: number;
@@ -111,12 +110,20 @@ export const editProposalApi = async (id: number, formData: FormData) => {
   return response.data;
 };
 
+/**
+ * Plotting massal.
+ * @param reviewerId Opsional — bila diisi, semua proposal yang valid
+ * ditugaskan ke 1 reviewer pilihan admin (mode manual); tanpa field ini →
+ * sistem memilih reviewer otomatis per proposal. Proposal bermasalah
+ * (sudah terplot/konflik) dilewati dan masuk `failed`.
+ */
 export const bulkAssignProposalReviewers = async (
   proposalIds: number[],
+  reviewerId?: number,
 ): Promise<BulkAssignReviewersResponse> => {
   const res = await api.post<BulkAssignReviewersResponse>(
     "/proposals/bulk-assign-reviewers",
-    { proposalIds },
+    reviewerId !== undefined ? { proposalIds, reviewerId } : { proposalIds },
   );
   return res.data;
 };

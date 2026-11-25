@@ -35,7 +35,8 @@ const assertValidProposalId = (proposalId: number) => {
 
 /**
  * Daftar kandidat reviewer untuk SATU proposal.
- * 409 bila proposal sudah terplot (plotting bersifat final).
+ * Berlaku untuk proposal yang belum maupun sudah terplot (untuk alur
+ * ubah penugasan/reassign).
  */
 export const getReviewerCandidates = async (
   proposalId: number,
@@ -50,7 +51,8 @@ export const getReviewerCandidates = async (
 
 /**
  * Plot reviewer MANUAL untuk satu proposal — hanya untuk proposal yang
- * belum terplot. 409 bila sudah terplot (final) atau ada konflik kepentingan.
+ * belum terplot. 409 bila sudah terplot (gunakan reassignReviewer) atau
+ * ada konflik kepentingan.
  */
 export const assignManualReviewer = async (
   proposalId: number,

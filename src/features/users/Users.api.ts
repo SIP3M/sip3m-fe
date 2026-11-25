@@ -131,6 +131,22 @@ export const clearUsersCache = () => {
   cache.clear();
 };
 
+export interface ReviewerOption {
+  id: number;
+  name: string;
+  email: string;
+}
+
+/**
+ * Daftar reviewer aktif (REVIEWER + REVIEWER_EKSTERNAL) — endpoint
+ * GET /users/reviewers. Tanpa paginasi; pencarian dilakukan di sisi klien.
+ * Diakses pemegang permission pengguna.lihat-reviewer (Ketua/Staff LPPM).
+ */
+export const getActiveReviewers = async (): Promise<ReviewerOption[]> => {
+  const res = await api.get<{ data: ReviewerOption[] }>("/users/reviewers");
+  return res.data.data;
+};
+
 /**
  * Create new user
  * @param data - User creation payload

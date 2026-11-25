@@ -4,10 +4,12 @@ import { Inbox, Pencil, Search } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
 import ReviewerPickerModal from "./components/ReviewerPickerModal";
 import EditReviewerModal from "./components/EditReviewerModal";
+import PlotToReviewerModal from "./components/PlotToReviewerModal";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import {
   bulkAssignProposalReviewers,
   getAllProposals,
+  type BulkAssignReviewersResponse,
 } from "@/features/proposals/proposal.api";
 import { Proposal } from "@/features/proposals/proposal.types";
 import Pagination from "@/components/common/Pagination";
@@ -85,6 +87,7 @@ export default function ReviewList() {
   const [pickingProposal, setPickingProposal] = useState<Proposal | null>(null);
   const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+  const [showPlotToReviewer, setShowPlotToReviewer] = useState(false);
 
   const loadAllProposalPages = useCallback(
     async (search = "", status: StatusFilterValue = "ALL") => {
@@ -281,26 +284,10 @@ export default function ReviewList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleBulkAssign = async () => {
-    if (selectedProposals.length === 0) return;
-
-    setError(null);
-    setSuccessMessage(null);
-    setWarningMessage(null);
-
-    const proposalIds = selectedProposals
-      .filter((proposal) => normalizeStatus(proposal.status) === "ADMIN_VERIFIED")
-      .map((proposal) => proposal.id);
-
-    if (proposalIds.length === 0) {
-      setError("Tidak ada proposal ADMIN_VERIFIED yang dipilih.");
-      return;
-    }
-
-    setIsAssigning(true);
-    try {
-      const res = await bulkAssignProposalReviewers(proposalIds);
-
+  // Rekap hasil bulk (otomatis maupun ke reviewer tertentu): sukses →
+  // "judul → reviewer", gagal → "#id: alasan".
+  const applyBulkResult = useCallback(
+    (res: BulkAssignReviewersResponse) => {
       const successDetails = res.data.success
         .map((item) => `${item.title} → ${item.reviewerName}`)
         .join("; ");
@@ -320,10 +307,34 @@ export default function ReviewList() {
       // Hasil plotting massal adalah sumber terbaru — buang override lama.
       reviewerOverridesRef.current = {};
 
-      await loadProposals(currentPage, debouncedSearch, statusFilter);
+      void loadProposals(currentPage, debouncedSearch, statusFilter);
 
       setSelectedProposals([]);
       setAllSubmittedProposals([]);
+    },
+    [loadProposals, currentPage, debouncedSearch, statusFilter],
+  );
+
+  const handleBulkAssign = async () => {
+    if (selectedProposals.length === 0) return;
+
+    setError(null);
+    setSuccessMessage(null);
+    setWarningMessage(null);
+
+    const proposalIds = selectedProposals
+      .filter((proposal) => normalizeStatus(proposal.status) === "ADMIN_VERIFIED")
+      .map((proposal) => proposal.id);
+
+    if (proposalIds.length === 0) {
+      setError("Tidak ada proposal ADMIN_VERIFIED yang dipilih.");
+      return;
+    }
+
+    setIsAssigning(true);
+    try {
+      const res = await bulkAssignProposalReviewers(proposalIds);
+      applyBulkResult(res);
     } catch (err: unknown) {
       setError(
         getErrorMessage(
@@ -335,6 +346,14 @@ export default function ReviewList() {
       setIsAssigning(false);
       setShowBulkConfirm(false);
     }
+  };
+
+  // Selesai dari modal "Plot ke Reviewer Tertentu".
+  const handlePlotToReviewerCompleted = (res: BulkAssignReviewersResponse) => {
+    setShowPlotToReviewer(false);
+    setError(null);
+    setWarningMessage(null);
+    applyBulkResult(res);
   };
 
   const handleAssigned = (reviewer: { id: number; name: string }) => {
@@ -686,6 +705,19 @@ export default function ReviewList() {
               {isAssigning ? "Memproses..." : "Plotting Reviewer Massal"}
             </button>
 
+            <button
+              type="button"
+              onClick={() => setShowPlotToReviewer(true)}
+              disabled={isAssigning || selectedCount === 0}
+              className={`w-full rounded-lg border px-4 py-2 font-semibold ${
+                isAssigning || selectedCount === 0
+                  ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
+                  : "border-blue-600 bg-white text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              Plot ke Reviewer Tertentu
+            </button>
+
             <p className="text-xs text-gray-500">
               Setelah proses berhasil, daftar proposal akan dimuat ulang dan
               pilihan yang sudah diproses akan dibersihkan.
@@ -877,7 +909,7 @@ export default function ReviewList() {
               {selectedCount} proposal
             </span>{" "}
             akan ditugaskan reviewer secara otomatis oleh sistem. Penugasan
-            bersifat final dan tidak dapat diganti.
+            masih dapat diubah melalui tombol Edit Penugasan bila diperlukan.
           </>
         }
         confirmLabel="Ya, Plot Massal"
@@ -904,6 +936,16 @@ export default function ReviewList() {
           if (!open) setEditingProposal(null);
         }}
         onReassigned={handleReassigned}
+      />
+
+      <PlotToReviewerModal
+        open={showPlotToReviewer}
+        proposals={selectedProposals.filter(
+          (proposal) =>
+            normalizeStatus(proposal.status) === "ADMIN_VERIFIED",
+        )}
+        onOpenChange={setShowPlotToReviewer}
+        onCompleted={handlePlotToReviewerCompleted}
       />
     </div>
   );

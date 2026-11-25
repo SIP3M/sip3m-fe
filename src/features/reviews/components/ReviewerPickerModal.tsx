@@ -34,8 +34,7 @@ const getErrorMessage = (err: unknown, fallback: string) => {
 /**
  * Modal pemilihan reviewer untuk SATU proposal (plotting manual).
  * Kandidat dengan konflik kepentingan tampil namun tidak bisa dipilih.
- * Konfirmasi final ditampilkan sebelum plotting — setelah terplot,
- * reviewer tidak dapat diganti (backend mengembalikan 409).
+ * Penugasan masih dapat diubah sesudahnya melalui Edit Penugasan.
  */
 export default function ReviewerPickerModal({
   open,
