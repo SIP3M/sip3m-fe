@@ -5,6 +5,7 @@ import type {
   AssignedProposalsResponse,
   EvaluatePayload,
   EvaluateResponse,
+  ReassignReviewerResponse,
   ReviewerCandidatesResponse,
   ReviewHistoryResponse,
   ProposalStatus,
@@ -61,6 +62,26 @@ export const assignManualReviewer = async (
   }
 
   const res = await api.post<AssignManualReviewerResponse>(
+    `/proposals/${proposalId}/reviewer`,
+    { reviewerId },
+  );
+  return res.data;
+};
+
+/**
+ * Ganti reviewer untuk proposal yang SUDAH terplot.
+ * Endpoint: PUT /proposals/{id}/reviewer
+ */
+export const reassignReviewer = async (
+  proposalId: number,
+  reviewerId: number,
+): Promise<ReassignReviewerResponse> => {
+  assertValidProposalId(proposalId);
+  if (!Number.isInteger(reviewerId) || reviewerId <= 0) {
+    throw new Error("ID reviewer tidak valid.");
+  }
+
+  const res = await api.put<ReassignReviewerResponse>(
     `/proposals/${proposalId}/reviewer`,
     { reviewerId },
   );

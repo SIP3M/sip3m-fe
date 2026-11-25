@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { Inbox, Search } from "lucide-react";
+import { Inbox, Pencil, Search } from "lucide-react";
 import ProposalReviewerRow from "./components/ProposalReviewerRow";
 import ReviewerPickerModal from "./components/ReviewerPickerModal";
+import EditReviewerModal from "./components/EditReviewerModal";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import {
   bulkAssignProposalReviewers,
@@ -82,6 +83,7 @@ export default function ReviewList() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("ALL");
   const [detailProposal, setDetailProposal] = useState<Proposal | null>(null);
   const [pickingProposal, setPickingProposal] = useState<Proposal | null>(null);
+  const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const loadAllProposalPages = useCallback(
@@ -105,6 +107,27 @@ export default function ReviewList() {
     },
     [],
   );
+
+  // Hasil ganti reviewer disimpan lokal agar tabel langsung menampilkan nama
+  // baru, meski respons daftar proposal dari server belum ikut terbarui.
+  const reviewerOverridesRef = useRef<
+    Record<number, { name: string; assigned_at: string }>
+  >({});
+
+  const applyReviewerOverrides = useCallback((items: Proposal[]) => {
+    return items.map((item) => {
+      const override = reviewerOverridesRef.current[item.id];
+      if (!override) return item;
+
+      // Server sudah mengembalikan nama terbaru — override tidak diperlukan lagi.
+      if (item.assigned_reviewer?.name === override.name) {
+        delete reviewerOverridesRef.current[item.id];
+        return item;
+      }
+
+      return { ...item, assigned_reviewer: override };
+    });
+  }, []);
 
   const loadProposals = useCallback(
     async (page = 1, search = "", status: StatusFilterValue = "ALL") => {
@@ -143,14 +166,14 @@ export default function ReviewList() {
             startIndex + ITEMS_PER_PAGE,
           );
 
-          setProposals(pagedItems);
+          setProposals(applyReviewerOverrides(pagedItems));
           setCurrentPage(safePage);
           setTotalPages(computedTotalPages);
           setTotalItems(computedTotalItems);
           return;
         }
 
-        setProposals(response.data);
+        setProposals(applyReviewerOverrides(response.data));
         setCurrentPage(response.meta.currentPage);
         setTotalPages(response.meta.totalPages);
         setTotalItems(response.meta.totalData);
@@ -164,7 +187,7 @@ export default function ReviewList() {
         setIsLoadingProposals(false);
       }
     },
-    [loadAllProposalPages],
+    [loadAllProposalPages, applyReviewerOverrides],
   );
 
   useEffect(() => {
@@ -235,7 +258,7 @@ export default function ReviewList() {
 
       if (submittedItems.length === 0) {
         setWarningMessage(
-          "Tidak ada proposal berstatus SUBMITTED untuk dipilih.",
+          "Tidak ada proposal berstatus ADMIN_VERIFIED untuk dipilih.",
         );
         setAllSubmittedProposals([]);
         return;
@@ -270,7 +293,7 @@ export default function ReviewList() {
       .map((proposal) => proposal.id);
 
     if (proposalIds.length === 0) {
-      setError("Tidak ada proposal SUBMITTED yang dipilih.");
+      setError("Tidak ada proposal ADMIN_VERIFIED yang dipilih.");
       return;
     }
 
@@ -294,6 +317,9 @@ export default function ReviewList() {
         setWarningMessage(`Detail kegagalan: ${failedDetails}`);
       }
 
+      // Hasil plotting massal adalah sumber terbaru — buang override lama.
+      reviewerOverridesRef.current = {};
+
       await loadProposals(currentPage, debouncedSearch, statusFilter);
 
       setSelectedProposals([]);
@@ -312,11 +338,22 @@ export default function ReviewList() {
   };
 
   const handleAssigned = (reviewer: { id: number; name: string }) => {
+    const target = pickingProposal;
+    const assignedAt = new Date().toISOString();
     setPickingProposal(null);
     setSuccessMessage(
-      `Reviewer ${reviewer.name} berhasil diplot — penugasan bersifat final.`,
+      `Reviewer ${reviewer.name} berhasil diplot untuk proposal ini.`,
     );
     setError(null);
+
+    if (target) {
+      // Tampilkan nama reviewer baru di tabel tanpa menunggu reload.
+      reviewerOverridesRef.current[target.id] = {
+        name: reviewer.name,
+        assigned_at: assignedAt,
+      };
+      setProposals((prev) => applyReviewerOverrides(prev));
+    }
 
     // Perbarui dialog detail agar nama reviewer langsung tampil.
     setDetailProposal((prev) =>
@@ -325,11 +362,50 @@ export default function ReviewList() {
             ...prev,
             assigned_reviewer: {
               name: reviewer.name,
-              assigned_at: new Date().toISOString(),
+              assigned_at: assignedAt,
             },
           }
         : prev,
     );
+
+    void loadProposals(currentPage, debouncedSearch, statusFilter);
+  };
+
+  const handleReassigned = (reviewer: { id: number; name: string }) => {
+    const edited = editingProposal;
+    setEditingProposal(null);
+    setSuccessMessage(
+      `Penugasan reviewer berhasil diubah menjadi ${reviewer.name}.`,
+    );
+    setError(null);
+
+    if (edited) {
+      const assignedAt = new Date().toISOString();
+
+      // Simpan override agar baris tabel (termasuk setelah reload/pindah
+      // halaman) langsung menampilkan reviewer yang baru dipilih.
+      reviewerOverridesRef.current[edited.id] = {
+        name: reviewer.name,
+        assigned_at: assignedAt,
+      };
+
+      setProposals((prev) => applyReviewerOverrides(prev));
+      setSelectedProposals((prev) => applyReviewerOverrides(prev));
+      setAllSubmittedProposals((prev) => applyReviewerOverrides(prev));
+
+      // Perbarui dialog detail agar nama reviewer langsung tampil.
+      setDetailProposal((prev) =>
+        prev && prev.id === edited.id
+          ? {
+              ...prev,
+              assigned_reviewer: {
+                name: reviewer.name,
+                assigned_at: assignedAt,
+              },
+            }
+          : prev,
+      );
+    }
 
     void loadProposals(currentPage, debouncedSearch, statusFilter);
   };
@@ -355,11 +431,12 @@ export default function ReviewList() {
 
         <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
           Catatan: proposal berstatus{" "}
-          <span className="font-semibold">SUBMITTED</span> bisa dipilih untuk
+          <span className="font-semibold">ADMIN_VERIFIED</span> bisa dipilih untuk
           plotting massal; plotting manual tersedia untuk proposal{" "}
-          <span className="font-semibold">SUBMITTED</span> /{" "}
+          <span className="font-semibold">ADMIN_VERIFIED</span> /{" "}
           <span className="font-semibold">UNDER_REVIEW</span> yang belum terplot.
-          Setelah terplot, reviewer bersifat final dan tidak dapat diganti.
+          Penugasan reviewer dapat diubah melalui ikon pensil pada kolom Aksi
+          untuk proposal yang sudah terplot.
         </div>
       </div>
 
@@ -414,8 +491,8 @@ export default function ReviewList() {
               />
               <span>
                 {isSelectingAll
-                  ? "Memuat semua proposal SUBMITTED..."
-                  : "Pilih semua proposal SUBMITTED (semua halaman)"}
+                  ? "Memuat semua proposal ADMIN_VERIFIED..."
+                  : "Pilih semua proposal ADMIN_VERIFIED (semua halaman)"}
               </span>
             </label>
 
@@ -436,7 +513,7 @@ export default function ReviewList() {
                 <th className="px-4 py-4 text-left font-medium">Bidang</th>
                 <th className="px-4 py-4 text-left font-medium">Status</th>
                 <th className="px-4 py-4 text-left font-medium">Reviewer</th>
-                <th className="px-4 py-4 text-center font-medium">Detail</th>
+                <th className="px-4 py-4 text-center font-medium">Aksi</th>
               </tr>
             </thead>
 
@@ -469,6 +546,7 @@ export default function ReviewList() {
                     onToggle={toggleProposalSelection}
                     onShowDetail={() => setDetailProposal(proposal)}
                     onPickReviewer={() => setPickingProposal(proposal)}
+                    onEditReviewer={() => setEditingProposal(proposal)}
                   />
                 ))
               )}
@@ -522,7 +600,7 @@ export default function ReviewList() {
                 <p className="text-sm text-gray-500">
                   {selectedCount > 0
                     ? "Proposal yang dipilih akan diproses sekaligus."
-                    : "Pilih proposal SUBMITTED dari tabel di sebelah kiri."}
+                    : "Pilih proposal ADMIN_VERIFIED dari tabel di sebelah kiri."}
                 </p>
               </div>
 
@@ -545,7 +623,7 @@ export default function ReviewList() {
                 </span>
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                Hanya proposal berstatus SUBMITTED yang akan dikirim ke endpoint
+                Hanya proposal berstatus ADMIN_VERIFIED yang akan dikirim ke endpoint
                 bulk plotting.
               </p>
             </div>
@@ -748,9 +826,19 @@ export default function ReviewList() {
                   </div>
 
                   {detailProposal.assigned_reviewer ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">
-                      Terplot: {detailProposal.assigned_reviewer.name}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">
+                        Terplot: {detailProposal.assigned_reviewer.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingProposal(detailProposal)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                      >
+                        <Pencil size={15} />
+                        Edit Penugasan
+                      </button>
+                    </div>
                   ) : ["ADMIN_VERIFIED", "UNDER_REVIEW"].includes(
                       normalizeStatus(detailProposal.status),
                     ) ? (
@@ -770,8 +858,8 @@ export default function ReviewList() {
 
                 <p className="mt-3 text-xs text-gray-500">
                   {detailProposal.assigned_reviewer
-                    ? "Penugasan bersifat final — reviewer tidak dapat diganti."
-                    : "Penugasan bersifat final — setelah terplot, reviewer tidak dapat diganti."}
+                    ? "Penugasan reviewer dapat diubah melalui tombol Edit Penugasan."
+                    : "Pilih reviewer aktif untuk menugaskan proposal ini. Penugasan masih dapat diubah setelah tersimpan."}
                 </p>
               </section>
             </>
@@ -807,6 +895,15 @@ export default function ReviewList() {
           if (!open) setPickingProposal(null);
         }}
         onAssigned={handleAssigned}
+      />
+
+      <EditReviewerModal
+        open={editingProposal !== null}
+        proposal={editingProposal}
+        onOpenChange={(open) => {
+          if (!open) setEditingProposal(null);
+        }}
+        onReassigned={handleReassigned}
       />
     </div>
   );

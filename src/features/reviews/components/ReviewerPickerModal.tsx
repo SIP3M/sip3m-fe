@@ -146,9 +146,9 @@ export default function ReviewerPickerModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-            Penugasan bersifat <span className="font-semibold">final</span> —
-            setelah terplot, reviewer tidak dapat diganti.
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            Reviewer yang dipilih akan ditugaskan untuk proposal ini. Penugasan
+            masih dapat diubah setelah tersimpan.
           </div>
 
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 px-3">
@@ -280,8 +280,8 @@ export default function ReviewerPickerModal({
             <span className="font-medium text-gray-700">
               {selectedCandidate?.name}
             </span>{" "}
-            akan ditugaskan sebagai reviewer untuk proposal ini. Penugasan
-            bersifat final dan tidak dapat diganti.
+            akan ditugaskan sebagai reviewer untuk proposal ini. Penugasan masih
+            dapat diubah setelah tersimpan.
           </>
         }
         confirmLabel="Ya, Plot Reviewer"
