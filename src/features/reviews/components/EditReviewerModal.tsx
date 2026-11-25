@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { ChevronDown, Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, Search, ShieldAlert } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import type { Proposal } from "@/features/proposals/proposal.types";
-import { getUsers } from "@/features/users/Users.api";
-import type { User } from "@/features/users/users.types";
-import { APP_ROLES } from "@/constant/roles";
 import { getReviewerCandidates, reassignReviewer } from "../review.api";
 import type { ReviewerCandidate } from "../review.types";
 
@@ -57,56 +54,11 @@ const getErrorMessage = (err: unknown, fallback: string) => {
   return fallback;
 };
 
-const normalize = (value?: string | null) => (value ?? "").trim().toLowerCase();
-
-/**
- * Fallback daftar reviewer pengganti: ambil semua user aktif ber-role REVIEWER
- * lewat GET /users. Dipakai ketika endpoint reviewer-candidates menolak
- * proposal yang sudah terplot (409), karena popup ini memang untuk MENGGANTI
- * reviewer setelah plotting.
- */
-const loadActiveReviewers = async (
-  proposal: Proposal,
-): Promise<ReviewerCandidate[]> => {
-  const users: User[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const res = await getUsers({
-      page,
-      roles: APP_ROLES.REVIEWER,
-      status: "active",
-    });
-    users.push(...res.data);
-    totalPages = res.pagination?.total_pages ?? 1;
-    page += 1;
-  } while (page <= totalPages);
-
-  return users
-    .filter((user) => user.is_active)
-    .map((user) => {
-      const facultyName = user.fakultas?.nama ?? null;
-      const isKetua = user.id === proposal.lead_researcher_id;
-
-      return {
-        id: user.id,
-        name: user.name,
-        faculty: facultyName,
-        is_sebidang:
-          !!facultyName &&
-          normalize(facultyName) === normalize(proposal.faculty),
-        beban: user.beban_review ?? 0,
-        eligible: !isKetua,
-        alasan: isKetua ? ["Ketua peneliti proposal ini"] : [],
-      };
-    });
-};
-
 /**
  * Modal untuk mengubah (edit) penugasan reviewer pada proposal yang
  * sudah terplot. Menampilkan informasi proposal + reviewer saat ini,
- * lalu memilih reviewer pengganti dari daftar kandidat.
+ * lalu memilih reviewer pengganti dari daftar kandidat (endpoint
+ * reviewer-candidates tetap melayani proposal yang sudah terplot).
  */
 export default function EditReviewerModal({
   open,
@@ -123,6 +75,7 @@ export default function EditReviewerModal({
   const [candidates, setCandidates] = useState<ReviewerCandidate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -135,6 +88,7 @@ export default function EditReviewerModal({
     setSelectedId(null);
     setAssignError(null);
     setLoadError(null);
+    setSearch("");
     setCandidates([]);
 
     setIsLoading(true);
@@ -142,22 +96,11 @@ export default function EditReviewerModal({
       .then((res) => {
         if (!cancelled) setCandidates(res.data.candidates);
       })
-      .catch(async () => {
-        // Endpoint kandidat bisa menolak proposal yang sudah terplot (409).
-        // Untuk kebutuhan GANTI reviewer, pakai daftar reviewer aktif.
-        try {
-          const fallback = await loadActiveReviewers(proposal);
-          if (cancelled) return;
-          setCandidates(fallback);
-          if (fallback.length === 0) {
-            setLoadError("Tidak ada reviewer aktif yang bisa dipilih.");
-          }
-        } catch (err: unknown) {
-          if (!cancelled) {
-            setLoadError(
-              getErrorMessage(err, "Gagal memuat daftar kandidat reviewer."),
-            );
-          }
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setLoadError(
+            getErrorMessage(err, "Gagal memuat daftar kandidat reviewer."),
+          );
         }
       })
       .finally(() => {
@@ -168,6 +111,16 @@ export default function EditReviewerModal({
       cancelled = true;
     };
   }, [open, proposalId, proposal]);
+
+  const filteredCandidates = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return candidates;
+    return candidates.filter(
+      (candidate) =>
+        candidate.name.toLowerCase().includes(query) ||
+        (candidate.faculty || "").toLowerCase().includes(query),
+    );
+  }, [candidates, search]);
 
   const selectedCandidate = useMemo(
     () => candidates.find((candidate) => candidate.id === selectedId) ?? null,
@@ -308,98 +261,149 @@ export default function EditReviewerModal({
 
               <div className="mt-4">
                 <label
-                  htmlFor={`reviewer-pengganti-${proposal.id}`}
+                  htmlFor={`reviewer-pengganti-search-${proposal.id}`}
                   className="text-sm font-semibold text-gray-800"
                 >
                   Nama Reviewer Pengganti
                 </label>
 
-                <div className="relative mt-2">
-                  <select
-                    id={`reviewer-pengganti-${proposal.id}`}
-                    value={selectedId ?? ""}
-                    onChange={(event) =>
-                      setSelectedId(
-                        event.target.value ? Number(event.target.value) : null,
-                      )
-                    }
-                    disabled={isLoading || isAssigning || loadError !== null}
-                    className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 pr-10 text-sm text-gray-700 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-50"
-                  >
-                    <option value="" disabled>
-                      {isLoading
-                        ? "Memuat reviewer..."
-                        : "Cari dan pilih reviewer..."}
-                    </option>
-                    {candidates.map((candidate) => (
-                      <option
-                        key={candidate.id}
-                        value={candidate.id}
-                        disabled={!candidate.eligible}
-                      >
-                        {candidate.name}
-                        {candidate.faculty ? ` — ${candidate.faculty}` : ""}
-                        {!candidate.eligible
-                          ? " (konflik kepentingan)"
-                          : ` (beban ${candidate.beban})`}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={18}
-                    className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-400"
-                  />
-                </div>
-
-                {isLoading && (
-                  <p className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                    <Loader2 size={14} className="animate-spin" />
-                    Memuat kandidat reviewer...
-                  </p>
-                )}
-
-                {loadError && (
-                  <p className="mt-2 flex items-start gap-1.5 text-xs text-red-600">
-                    <ShieldAlert size={14} className="mt-0.5 shrink-0" />
-                    {loadError}
-                  </p>
-                )}
-
-                {!isLoading && !loadError && candidates.length === 0 && (
-                  <p className="mt-2 text-xs text-gray-500">
-                    Tidak ada kandidat reviewer tersedia.
-                  </p>
-                )}
-
-                {selectedCandidate && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                    <span
-                      className={`rounded-full px-2 py-0.5 font-medium ${
-                        selectedCandidate.is_sebidang
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {selectedCandidate.is_sebidang
-                        ? "Sebidang"
-                        : "Lintas fakultas"}
-                    </span>
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
-                      Beban {selectedCandidate.beban}
-                    </span>
-                    {selectedCandidate.alasan.length > 0 && (
-                      <span className="text-red-600">
-                        {selectedCandidate.alasan.join("; ")}
-                      </span>
-                    )}
+                <div className="mt-2">
+                  <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 transition focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100">
+                    <Search size={16} className="shrink-0 text-gray-400" />
+                    <input
+                      id={`reviewer-pengganti-search-${proposal.id}`}
+                      type="search"
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Cari nama atau fakultas reviewer..."
+                      disabled={isLoading || isAssigning}
+                      className="w-full bg-transparent py-2 text-sm text-gray-700 outline-none disabled:cursor-not-allowed"
+                    />
                   </div>
-                )}
 
-                {assignError && (
-                  <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {assignError}
-                  </p>
-                )}
+                  {isLoading && (
+                    <p className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                      <Loader2 size={14} className="animate-spin" />
+                      Memuat kandidat reviewer...
+                    </p>
+                  )}
+
+                  {loadError && (
+                    <p className="mt-2 flex items-start gap-1.5 text-xs text-red-600">
+                      <ShieldAlert size={14} className="mt-0.5 shrink-0" />
+                      {loadError}
+                    </p>
+                  )}
+
+                  {!isLoading && !loadError && candidates.length === 0 && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Tidak ada kandidat reviewer tersedia.
+                    </p>
+                  )}
+
+                  {!isLoading && !loadError && filteredCandidates.length === 0 && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Tidak ada kandidat yang cocok dengan pencarian.
+                    </p>
+                  )}
+
+                  {!isLoading && !loadError && filteredCandidates.length > 0 && (
+                    <fieldset className="mt-2">
+                      <legend className="sr-only">Daftar kandidat reviewer</legend>
+                      <div className="max-h-[260px] space-y-2 overflow-y-auto pr-1">
+                        {filteredCandidates.map((candidate) => {
+                          const isSelected = selectedId === candidate.id;
+                          const isDisabled = !candidate.eligible;
+
+                          return (
+                            <label
+                              key={candidate.id}
+                              className={`flex items-start gap-3 rounded-xl border p-3 transition ${
+                                isDisabled
+                                  ? "cursor-not-allowed border-gray-200 bg-gray-50 opacity-70"
+                                  : isSelected
+                                    ? "cursor-pointer border-red-400 bg-red-50"
+                                    : "cursor-pointer border-gray-200 bg-white hover:border-red-300"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name={`reviewer-pengganti-${proposal.id}`}
+                                checked={isSelected}
+                                disabled={isDisabled || isAssigning}
+                                onChange={() => setSelectedId(candidate.id)}
+                                className="mt-1 shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-sm font-medium text-gray-800">
+                                    {candidate.name}
+                                  </span>
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                      candidate.is_sebidang
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-gray-100 text-gray-600"
+                                    }`}
+                                  >
+                                    {candidate.is_sebidang
+                                      ? "Sebidang"
+                                      : "Lintas fakultas"}
+                                  </span>
+                                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                                    Beban {candidate.beban}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 text-xs text-gray-500">
+                                  {candidate.faculty || "Fakultas tidak terdaftar"}
+                                </p>
+                                {isDisabled && candidate.alasan.length > 0 && (
+                                  <p className="mt-1 flex items-start gap-1 text-xs text-red-600">
+                                    <ShieldAlert
+                                      size={13}
+                                      className="mt-0.5 shrink-0"
+                                    />
+                                    <span>{candidate.alasan.join("; ")}</span>
+                                  </p>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+                  )}
+
+                  {selectedCandidate && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span
+                        className={`rounded-full px-2 py-0.5 font-medium ${
+                          selectedCandidate.is_sebidang
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {selectedCandidate.is_sebidang
+                          ? "Sebidang"
+                          : "Lintas fakultas"}
+                      </span>
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
+                        Beban {selectedCandidate.beban}
+                      </span>
+                      {selectedCandidate.alasan.length > 0 && (
+                        <span className="text-red-600">
+                          {selectedCandidate.alasan.join("; ")}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {assignError && (
+                    <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                      {assignError}
+                    </p>
+                  )}
+                </div>
               </div>
             </section>
           </div>
