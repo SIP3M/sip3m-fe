@@ -9,7 +9,8 @@ import { api } from "@/services/api";
 export type JenisReferensi =
   | "SKEMA"
   | "SUMBER_PENDANAAN"
-  | "KATEGORI_PENGUMUMAN";
+  | "KATEGORI_PENGUMUMAN"
+  | "CHECKLIST_ADMINISTRASI";
 
 export interface ReferensiItem {
   id: number;

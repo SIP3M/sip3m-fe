@@ -44,7 +44,7 @@ export default function ProposalReviewerRow({
   onPickReviewer,
 }: Props) {
   const normalizedStatus = getStatusKey(proposal.status || "");
-  const canSelect = normalizedStatus === "SUBMITTED";
+  const canSelect = normalizedStatus === "ADMIN_VERIFIED";
 
   return (
     <tr className="hover:bg-gray-50 transition">

@@ -36,7 +36,10 @@ import ProjectList from "@/features/projects/ProjectList";
 import ProjectDetail from "@/features/projects/ProjectDetail";
 import LandingPage from "@/features/dashboard/LandingPage";
 import ProposalStaff from "@/features/proposals/ProposalStaff";
-import ProposalVerifyDetail from "@/features/proposals/ProposalVerifyDetail";
+import AdminVerificationDashboard from "@/features/admin-verification/AdminVerificationDashboard";
+import AdminVerificationList from "@/features/admin-verification/AdminVerificationList";
+import AdminVerificationDetail from "@/features/admin-verification/AdminVerificationDetail";
+import AdminVerificationHistory from "@/features/admin-verification/AdminVerificationHistory";
 import ReviewListStaff from "@/features/reviews/ReviewListStaff";
 import AuditLogPage from "@/features/logs/AuditLogPage";
 
@@ -100,6 +103,7 @@ import KelolaReferensi from "@/features/master/KelolaReferensi";
 import MasterDosen from "@/features/master/MasterDosen";
 import MasterMahasiswa from "@/features/master/MasterMahasiswa";
 import MasterReviewer from "@/features/master/MasterReviewer";
+import MasterReviewerAdministrasi from "@/features/master/MasterReviewerAdministrasi";
 import RolePermission from "@/features/master/RolePermission";
 import MasterJabatanKelompok from "@/features/kkm/MasterJabatanKelompok";
 import KeuanganDashboard from "@/features/finance/KeuanganDashboard";
@@ -343,6 +347,10 @@ export const router = createBrowserRouter([
         element: <MasterReviewer />,
       },
       {
+        path: "admin-dashboard/master-data/reviewer-administrasi",
+        element: <MasterReviewerAdministrasi />,
+      },
+      {
         // Reuse halaman Manajemen DPL KKM (list, stats, assign, cabut)
         path: "admin-dashboard/master-data/dpl",
         element: <DPLKKM />,
@@ -429,10 +437,6 @@ export const router = createBrowserRouter([
       {
         path: "verifikasi-proposal",
         element: <ProposalStaff />,
-      },
-      {
-        path: "/staff-lppm/verifikasi-proposal/:id",
-        element: <ProposalVerifyDetail />,
       },
       {
         path: "plotting-reviewer",
@@ -722,6 +726,47 @@ export const router = createBrowserRouter([
       {
         path: "reviews/:id",
         element: <ReviewDetailPage />,
+      },
+    ],
+  },
+
+  // =========================
+  // =========================
+  // REVIEWER ADMINISTRASI — gerbang verifikasi berkas
+  // =========================
+  {
+    path: "reviewer-administrasi-dashboard",
+    element: (
+      <ProtectedRoute
+        roles={[APP_ROLES.REVIEWER_ADMINISTRASI]}
+        anyOf={[
+          PERMISSIONS.PROPOSAL_VERIFIKASI_ADMINISTRASI,
+          PERMISSIONS.KKM_PESERTA_VERIFIKASI,
+        ]}
+      >
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <AdminVerificationDashboard />,
+      },
+      {
+        path: "antrean",
+        element: <AdminVerificationList />,
+      },
+      {
+        path: "antrean/:id",
+        element: <AdminVerificationDetail />,
+      },
+      {
+        path: "riwayat",
+        element: <AdminVerificationHistory />,
+      },
+      {
+        path: "kkm/peserta",
+        element: <PesertaKKM />,
       },
     ],
   },

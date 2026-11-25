@@ -23,7 +23,7 @@ const ITEMS_PER_PAGE = 5;
 const STATUS_FILTER_OPTIONS = [
   { value: "ALL", label: "Semua Status" },
   { value: "DRAFT", label: "Draft" },
-  { value: "SUBMITTED", label: "Submitted" },
+  { value: "ADMIN_VERIFIED", label: "Terverifikasi — siap plotting" },
   { value: "UNDER_REVIEW", label: "Under Review" },
   { value: "REVISION", label: "Revision" },
   { value: "REVIEW_DONE", label: "Menunggu Keputusan" },
@@ -195,7 +195,7 @@ export default function ReviewList() {
     allSubmittedProposals.every((proposal) => selectedIds.has(proposal.id));
 
   const toggleProposalSelection = (proposal: Proposal) => {
-    if (normalizeStatus(proposal.status) !== "SUBMITTED") return;
+    if (normalizeStatus(proposal.status) !== "ADMIN_VERIFIED") return;
 
     setSelectedProposals((prev) => {
       const exists = prev.some((item) => item.id === proposal.id);
@@ -230,7 +230,7 @@ export default function ReviewList() {
         statusFilter,
       );
       const submittedItems = allItems.filter(
-        (item) => normalizeStatus(item.status) === "SUBMITTED",
+        (item) => normalizeStatus(item.status) === "ADMIN_VERIFIED",
       );
 
       if (submittedItems.length === 0) {
@@ -266,7 +266,7 @@ export default function ReviewList() {
     setWarningMessage(null);
 
     const proposalIds = selectedProposals
-      .filter((proposal) => normalizeStatus(proposal.status) === "SUBMITTED")
+      .filter((proposal) => normalizeStatus(proposal.status) === "ADMIN_VERIFIED")
       .map((proposal) => proposal.id);
 
     if (proposalIds.length === 0) {
@@ -751,7 +751,7 @@ export default function ReviewList() {
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">
                       Terplot: {detailProposal.assigned_reviewer.name}
                     </span>
-                  ) : ["SUBMITTED", "UNDER_REVIEW"].includes(
+                  ) : ["ADMIN_VERIFIED", "UNDER_REVIEW"].includes(
                       normalizeStatus(detailProposal.status),
                     ) ? (
                     <button

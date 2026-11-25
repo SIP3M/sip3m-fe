@@ -39,13 +39,26 @@ export const getKkmPesertaById = async (id: number | string): Promise<GetKkmPese
   return res.data;
 };
 
-export const updateKkmPesertaStatus = async (id: number | string, status: KkmPesertaStatus): Promise<{ message: string; data?: unknown }> => {
-  const res = await api.patch<{ message: string; data?: unknown }>(`${BASE}/${id}/status`, { status });
+export const updateKkmPesertaStatus = async (
+  id: number | string,
+  status: KkmPesertaStatus,
+  catatan_verifikasi?: string,
+): Promise<{ message: string; data?: unknown }> => {
+  const res = await api.patch<{ message: string; data?: unknown }>(
+    `${BASE}/${id}/status`,
+    { status, catatan_verifikasi },
+  );
   return res.data;
 };
 
-export const bulkUpdateKkmPesertaStatus = async (payload: BulkStatusPayload): Promise<{ message: string; data?: { count: number } }> => {
-  const res = await api.patch<{ message: string; data?: { count: number } }>(`${BASE}/bulk-status`, payload);
+export const bulkUpdateKkmPesertaStatus = async (
+  payload: BulkStatusPayload,
+  catatan_verifikasi?: string,
+): Promise<{ message: string; data?: { count: number } }> => {
+  const res = await api.patch<{ message: string; data?: { count: number } }>(
+    `${BASE}/bulk-status`,
+    { ...payload, catatan_verifikasi },
+  );
   return res.data;
 };
 

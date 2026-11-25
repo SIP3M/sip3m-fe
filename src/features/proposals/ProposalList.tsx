@@ -14,6 +14,7 @@ const ITEMS_PER_PAGE = 5;
 
 const STATUS_OPTIONS: { value: ProposalStatus | ""; label: string }[] = [
   { value: "", label: "Semua status" },
+  { value: "ADMIN_REVISION", label: "Revisi Administrasi" },
   { value: "SUBMITTED", label: "Diajukan" },
   { value: "ADMIN_VERIFIED", label: "Terverifikasi" },
   { value: "UNDER_REVIEW", label: "Sedang Direview" },

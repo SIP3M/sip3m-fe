@@ -40,6 +40,7 @@ const proposalStatusLabel: Record<string, string> = {
   REVISION: "Revision",
   REJECTED: "Rejected",
   ADMIN_VERIFIED: "Admin Verified",
+  ADMIN_REVISION: "Revisi Administrasi",
   REVIEW_DONE: "Menunggu Keputusan",
 };
 
@@ -53,6 +54,7 @@ const proposalStatusStyle: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  ADMIN_REVISION: "bg-amber-100 text-amber-700",
   REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 

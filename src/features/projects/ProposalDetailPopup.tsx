@@ -61,6 +61,7 @@ const statusBadgeMap: Record<string, string> = {
   REVISION: "bg-red-100 text-red-600",
   REJECTED: "bg-red-100 text-red-700",
   ADMIN_VERIFIED: "bg-blue-100 text-blue-700",
+  ADMIN_REVISION: "bg-amber-100 text-amber-700",
   REVIEW_DONE: "bg-indigo-100 text-indigo-700",
 };
 
@@ -81,6 +82,7 @@ const getStatusLabel = (status: string) => {
     APPROVED: "Approved",
     ACCEPTED: "Approved",
     ADMIN_VERIFIED: "Admin Verified",
+  ADMIN_REVISION: "Revisi Administrasi",
     DRAFT: "Draft",
     REVISION: "Revision",
     REJECTED: "Rejected",
