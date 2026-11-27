@@ -71,7 +71,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <div
-        className={`w-65 h-screen bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)] z-50 transition-transform duration-300 ${
+        className={`w-65 h-[125dvh] bg-white fixed left-0 top-0 flex flex-col justify-between shadow-[2px_0_10px_rgba(0,0,0,0.05)] z-50 transition-transform duration-300 ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >

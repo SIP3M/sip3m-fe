@@ -133,7 +133,7 @@ const LoginPage = () => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="relative min-h-dvh flex flex-col items-center justify-center bg-cover bg-center px-4 py-8 sm:px-6"
+      className="relative min-h-[125dvh] flex flex-col items-center justify-center bg-cover bg-center px-4 py-8 sm:px-6"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="relative z-10 w-full flex flex-col items-center justify-center">
