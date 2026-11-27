@@ -130,6 +130,12 @@
     }
 }
 
+@media screen {
+  html {
+    zoom: 0.8;
+  }
+}
+
 /* Cetak (window.print): sembunyikan navbar/sidebar & rapikan halaman */
 @media print {
   [data-print-hide] {
