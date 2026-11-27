@@ -448,8 +448,9 @@ export default function HistoryReview() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 text-left">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-500 text-left">
                 <tr>
                   <th className="px-5 py-3 text-xs font-medium uppercase tracking-wide">
                     #
@@ -543,8 +544,9 @@ export default function HistoryReview() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

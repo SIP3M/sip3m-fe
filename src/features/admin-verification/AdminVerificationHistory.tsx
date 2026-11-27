@@ -116,8 +116,9 @@ export default function AdminVerificationHistory() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50 text-left text-gray-500">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-gray-50 text-left text-gray-500">
             <tr>
               <th className="px-4 py-3">Waktu</th>
               <th className="px-4 py-3">Proposal</th>
@@ -170,8 +171,9 @@ export default function AdminVerificationHistory() {
                 </tr>
               ))
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
 
         {totalPages > 1 && (
           <div className="flex justify-center border-t border-gray-100 p-4">

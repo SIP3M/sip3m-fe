@@ -94,7 +94,7 @@ function StatCard({
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider truncate">
+          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider 2xl:text-xs">
             {label}
           </p>
           {loading ? (

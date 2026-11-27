@@ -115,6 +115,7 @@ export default function LogsPage() {
       {/* TABLE */}
 
       <div className="bg-white rounded-xl shadow overflow-hidden">
+        <div className="w-full overflow-x-auto">
 
         <table className="w-full text-sm">
 
@@ -145,6 +146,7 @@ export default function LogsPage() {
           </tbody>
 
         </table>
+        </div>
 
 
         {/* FOOTER */}

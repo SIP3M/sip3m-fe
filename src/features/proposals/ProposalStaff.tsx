@@ -153,8 +153,9 @@ export default function ProposalStaff() {
 
         {/* TABLE */}
 
-        <table className="w-full text-sm">
-          <thead className="text-gray-500 text-left border-b">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-gray-500 text-left border-b">
             <tr>
               <th className="py-3">Tgl Masuk</th>
               <th>Judul Proposal</th>
@@ -205,8 +206,9 @@ export default function ProposalStaff() {
                 </tr>
               ))
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
 
         {totalPages > 1 && (
           <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">

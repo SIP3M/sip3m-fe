@@ -2007,8 +2007,9 @@ export default function ProposalDosen() {
             </select>
           </div>
 
-          <table className="w-full text-sm">
-            <thead className="border-b text-left text-gray-400">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b text-left text-gray-400">
               <tr>
                 <th className="pb-3">Judul Proposal</th>
                 <th>Skema</th>
@@ -2133,8 +2134,9 @@ export default function ProposalDosen() {
                     </tr>
                   );
                 })}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
 
           <div className="mt-4 flex items-center justify-end gap-2 text-sm">
             <Button

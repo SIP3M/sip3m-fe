@@ -520,8 +520,9 @@ export default function ReviewList() {
             </span>
           </div>
 
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-500">
               <tr>
                 <th className="px-4 py-4 text-left font-medium">
                   <span className="sr-only">Pilih</span>
@@ -569,8 +570,9 @@ export default function ReviewList() {
                   />
                 ))
               )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="border-t border-gray-200">

@@ -162,8 +162,9 @@ export default function AdminVerificationList() {
           </select>
         </div>
 
-        <table className="w-full text-sm">
-          <thead className="border-b text-left text-gray-500">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b text-left text-gray-500">
             <tr>
               <th className="py-3">Tgl Masuk</th>
               <th>Judul Proposal</th>
@@ -243,8 +244,9 @@ export default function AdminVerificationList() {
                 );
               })
             )}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
 
         {totalPages > 1 && (
           <div className="mt-4 flex justify-center border-t border-gray-200 pt-4">
