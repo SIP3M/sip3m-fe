@@ -471,7 +471,7 @@ export default function ReviewList() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[2fr_1fr]">
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
             <div className="flex items-center gap-2 rounded-lg border px-3 md:w-80">

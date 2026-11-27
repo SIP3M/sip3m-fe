@@ -62,7 +62,7 @@ export default function ProposalReviewerRow({
       </td>
 
       <td className="px-6 py-4 text-sm font-medium text-gray-800">
-        <div className="max-w-[320px] line-clamp-2">{proposal.title}</div>
+        <div className="max-w-[320px]">{proposal.title}</div>
       </td>
 
       <td className="px-6 py-4 text-sm text-gray-600">
